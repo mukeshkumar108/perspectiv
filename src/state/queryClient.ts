@@ -26,4 +26,5 @@ export const queryKeys = {
   today: ['today'] as const,
   streaks: ['streaks'] as const,
   me: ['me'] as const,
+  moments: ['moments'] as const,
 };

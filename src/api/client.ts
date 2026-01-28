@@ -2,19 +2,29 @@ import { z } from "zod";
 import { createLogger } from "../lib/logger";
 import {
   MeResponseSchema,
+  MomentsListResponseSchema,
+  MoodRequestSchema,
+  MoodResponseSchema,
+  MomentRequestSchema,
+  MomentResponseSchema,
   ReflectionRequestSchema,
   ReflectionResponseSchema,
   StreaksResponseSchema,
   TodayResponseSchema,
   type MeResponse,
+  type MomentsListResponse,
+  type MoodRequest,
+  type MoodResponse,
+  type MomentRequest,
+  type MomentResponse,
   type ReflectionRequest,
   type ReflectionResponse,
   type StreaksResponse,
   type TodayResponse,
 } from "./schemas";
 
-export const API_BASE_URL = "https://b-attic.vercel.app";
-//export const API_BASE_URL = "http://192.168.0.18:3000";
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL || "https://b-attic.vercel.app";
 const apiLogger = createLogger("api");
 
 export class ApiError extends Error {
@@ -195,5 +205,50 @@ export const api = {
    */
   getMe(): Promise<MeResponse> {
     return request("/api/bluum/me", { method: "GET" }, MeResponseSchema);
+  },
+
+  /**
+   * Submit mood
+   */
+  submitMood(data: MoodRequest): Promise<MoodResponse> {
+    MoodRequestSchema.parse(data);
+    return request(
+      "/api/bluum/mood",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      MoodResponseSchema,
+    );
+  },
+
+  /**
+   * Capture a moment
+   */
+  captureMoment(data: MomentRequest): Promise<MomentResponse> {
+    MomentRequestSchema.parse(data);
+    return request(
+      "/api/bluum/moment",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      MomentResponseSchema,
+    );
+  },
+
+  /**
+   * Get moments list
+   */
+  getMoments(params?: {
+    limit?: number;
+    cursor?: string;
+  }): Promise<MomentsListResponse> {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.cursor) searchParams.set("cursor", params.cursor);
+    const query = searchParams.toString();
+    const endpoint = `/api/bluum/moments${query ? `?${query}` : ""}`;
+    return request(endpoint, { method: "GET" }, MomentsListResponseSchema);
   },
 };

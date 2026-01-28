@@ -14,8 +14,9 @@ import { useRouter } from 'expo-router';
 import { X, ExternalLink } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { ScreenContainer, Text, Button, TextInput, Card, spacing } from '@/src/ui';
+import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
+import { Composer } from '@/src/components';
 import { useAuthReady } from '@/src/auth';
 import { useToday, useSubmitReflection } from '@/src/hooks';
 import { ApiError } from '@/src/api';
@@ -26,20 +27,16 @@ export default function ReflectScreen() {
   const { data: todayData } = useToday();
   const submitMutation = useSubmitReflection();
   const authReady = useAuthReady();
+  const hasReflectedToday =
+    todayData?.hasReflected ?? todayData?.hasReflectedToday ?? false;
 
   const [responseText, setResponseText] = useState('');
   const [showSafetyResources, setShowSafetyResources] = useState(false);
 
-  // Handle already reflected
   useEffect(() => {
-    if (todayData?.hasReflectedToday) {
-      Alert.alert(
-        'Already done',
-        "You already reflected today. Come back tomorrow.",
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    }
-  }, [todayData?.hasReflectedToday, router]);
+    if (!hasReflectedToday) return;
+    setResponseText('');
+  }, [hasReflectedToday]);
 
   const handleClose = () => {
     Keyboard.dismiss();
@@ -47,7 +44,7 @@ export default function ReflectScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!authReady) return;
+    if (!authReady || hasReflectedToday) return;
     if (!responseText.trim()) return;
 
     try {
@@ -60,10 +57,12 @@ export default function ReflectScreen() {
         return;
       }
 
-      // Navigate to success with message
       router.replace({
         pathname: '/(main)/success' as any,
-        params: { message: result.message || 'Reflection saved' },
+        params: {
+          message:
+            result.successMessage || result.message || 'Reflection saved',
+        },
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -75,11 +74,6 @@ export default function ReflectScreen() {
           return;
         }
         if (error.status === 409) {
-          Alert.alert(
-            'Already done',
-            "You already reflected today. Come back tomorrow.",
-            [{ text: 'OK', onPress: () => router.back() }]
-          );
           return;
         }
       }
@@ -101,7 +95,7 @@ export default function ReflectScreen() {
       <ScreenContainer style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={handleDismissSafety} hitSlop={16}>
-            <X size={24} color={theme.text} strokeWidth={1.5} />
+            <X size={24} color={theme.textTertiary} strokeWidth={1.5} />
           </Pressable>
         </View>
 
@@ -174,52 +168,52 @@ export default function ReflectScreen() {
         >
           <View style={styles.header}>
             <Pressable onPress={handleClose} hitSlop={16}>
-              <X size={24} color={theme.text} strokeWidth={1.5} />
+              <X size={24} color={theme.textTertiary} strokeWidth={1.5} />
             </Pressable>
           </View>
 
           <View style={styles.content}>
             <Animated.View entering={FadeInUp.duration(600).delay(100)}>
-              <Text variant="caption" color={theme.textTertiary}>
-                {"Today's prompt"}
-              </Text>
               <Text variant="title" style={styles.prompt}>
                 {todayData?.prompt?.text || "What's on your mind?"}
               </Text>
             </Animated.View>
-
-            <Animated.View
-              style={styles.inputContainer}
-              entering={FadeInUp.duration(600).delay(200)}
-            >
-              <TextInput
-                placeholder="Write your reflection..."
-                value={responseText}
-                onChangeText={setResponseText}
-                multiline
-                autoFocus
-                style={styles.input}
-              />
-            </Animated.View>
           </View>
         </ScrollView>
 
-      <Animated.View
-        style={styles.footer}
-        entering={FadeInUp.duration(600).delay(300)}
-      >
-        <Button
-          title="Save reflection"
-          onPress={handleSubmit}
-          disabled={!responseText.trim() || !authReady}
-          loading={submitMutation.isPending}
-        />
-        {!authReady ? (
-          <Text variant="small" color={theme.textSecondary} style={styles.authMessage}>
-            Preparing secure session…
-          </Text>
-        ) : null}
-      </Animated.View>
+        <Animated.View
+          style={styles.composerContainer}
+          entering={FadeInUp.duration(600).delay(200)}
+        >
+          <Composer
+            value={responseText}
+            onChangeText={setResponseText}
+            onSubmit={handleSubmit}
+            placeholder="Write your reflection..."
+            disabled={!authReady || hasReflectedToday}
+            loading={submitMutation.isPending}
+            maxLength={2000}
+            maxHeight={200}
+          />
+          {!authReady && (
+            <Text
+              variant="small"
+              color={theme.textSecondary}
+              style={styles.statusMessage}
+            >
+              Preparing secure session...
+            </Text>
+          )}
+          {hasReflectedToday && (
+            <Text
+              variant="small"
+              color={theme.textSecondary}
+              style={styles.statusMessage}
+            >
+              Already reflected today
+            </Text>
+          )}
+        </Animated.View>
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
@@ -251,19 +245,12 @@ const styles = StyleSheet.create({
   prompt: {
     marginTop: spacing.sm,
   },
-  inputContainer: {
-    flex: 1,
-  },
-  input: {
-    flex: 1,
-    minHeight: 200,
-  },
-  footer: {
+  composerContainer: {
     paddingBottom: spacing.lg,
     gap: spacing.xs,
-    alignItems: 'center',
   },
-  authMessage: {
+  statusMessage: {
+    textAlign: 'center',
     marginTop: spacing.xs,
   },
   safetyContent: {

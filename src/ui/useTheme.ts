@@ -1,12 +1,10 @@
-import { useColorScheme } from 'react-native';
 import { colors, type Colors } from './tokens';
 
+// Paper/editorial theme - always light for now
 export function useTheme(): Colors {
-  const colorScheme = useColorScheme();
-  return colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  return colors.light;
 }
 
 export function useIsDarkMode(): boolean {
-  const colorScheme = useColorScheme();
-  return colorScheme === 'dark';
+  return false;
 }

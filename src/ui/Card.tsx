@@ -4,18 +4,26 @@ import { useTheme } from './useTheme';
 
 interface CardProps extends ViewProps {
   padding?: keyof typeof spacing;
+  variant?: 'default' | 'subtle';
 }
 
-export function Card({ padding = 'lg', style, children, ...props }: CardProps) {
+export function Card({
+  padding = 'lg',
+  variant = 'default',
+  style,
+  children,
+  ...props
+}: CardProps) {
   const theme = useTheme();
+
+  const isSubtle = variant === 'subtle';
 
   return (
     <View
       style={[
         styles.base,
         {
-          backgroundColor: theme.surface,
-          borderColor: theme.borderLight,
+          backgroundColor: isSubtle ? 'transparent' : theme.backgroundSecondary,
           padding: spacing[padding],
         },
         style,
@@ -29,7 +37,6 @@ export function Card({ padding = 'lg', style, children, ...props }: CardProps) {
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    borderRadius: radius.md,
   },
 });

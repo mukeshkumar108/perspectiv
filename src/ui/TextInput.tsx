@@ -27,7 +27,7 @@ export function TextInput({ error, style, ...props }: TextInputProps) {
         {
           fontFamily,
           color: theme.text,
-          backgroundColor: theme.backgroundSecondary,
+          backgroundColor: theme.surface,
           borderColor: error ? theme.error : theme.border,
         },
         style,

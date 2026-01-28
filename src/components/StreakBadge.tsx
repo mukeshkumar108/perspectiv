@@ -13,9 +13,9 @@ export function StreakBadge({ count }: StreakBadgeProps) {
   if (count === 0) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.accentLight }]}>
-      <Flame size={16} color={theme.accent} strokeWidth={2} />
-      <Text variant="small" color={theme.accent}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundSecondary }]}>
+      <Flame size={16} color={theme.textSecondary} strokeWidth={2} />
+      <Text variant="small" color={theme.textSecondary}>
         {count} day{count !== 1 ? 's' : ''}
       </Text>
     </View>

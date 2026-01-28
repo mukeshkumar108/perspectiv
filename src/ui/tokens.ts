@@ -54,43 +54,50 @@ export const typography = {
   },
 } as const;
 
-// Clean, premium color palette
+// Paper/editorial light theme - warm, premium, minimal
 export const colors = {
   light: {
-    background: '#FFFFFF',
-    backgroundSecondary: '#F8F8F8',
-    surface: '#FFFFFF',
-    text: '#1A1A1A',
-    textSecondary: '#6B6B6B',
-    textTertiary: '#9A9A9A',
-    border: '#E8E8E8',
-    borderLight: '#F0F0F0',
-    primary: '#2D2D2D',
-    primaryText: '#FFFFFF',
-    accent: '#7C9A8E', // Muted sage green
-    accentLight: '#E8F0EC',
-    error: '#C45C5C',
-    errorLight: '#FCEAEA',
-    success: '#5C8C6C',
-    successLight: '#E8F5EC',
+    // Warm off-white paper backgrounds
+    background: '#FAF9F7',
+    backgroundSecondary: '#F5F4F2',
+    surface: '#FEFDFB',
+    // Soft black text hierarchy (meaningful contrast steps)
+    text: '#2C2A26',
+    textSecondary: '#807D76',
+    textTertiary: '#B5B2AA',
+    // Warm grey borders (hairline subtle)
+    border: '#ECEAE5',
+    borderLight: '#F5F3EF',
+    // Near-black primary
+    primary: '#2C2A26',
+    primaryText: '#FAF9F7',
+    // Muted sage accents
+    accent: '#7A917F',
+    accentLight: '#F0F4F1',
+    // Warm error/success
+    error: '#B85C5C',
+    errorLight: '#F8EEEE',
+    success: '#6B9B73',
+    successLight: '#F0F7F1',
   },
+  // Keep dark theme as fallback (not actively used)
   dark: {
-    background: '#0A0A0A',
-    backgroundSecondary: '#141414',
-    surface: '#1A1A1A',
-    text: '#FAFAFA',
-    textSecondary: '#A0A0A0',
-    textTertiary: '#6B6B6B',
-    border: '#2A2A2A',
-    borderLight: '#1F1F1F',
-    primary: '#FAFAFA',
-    primaryText: '#0A0A0A',
-    accent: '#8FB3A4', // Lighter sage for dark mode
-    accentLight: '#1A2420',
-    error: '#E07070',
-    errorLight: '#2A1A1A',
-    success: '#70B080',
-    successLight: '#1A2A1E',
+    background: '#1A1918',
+    backgroundSecondary: '#242320',
+    surface: '#2C2A26',
+    text: '#FAF9F7',
+    textSecondary: '#A8A69E',
+    textTertiary: '#6B6965',
+    border: '#3D3B36',
+    borderLight: '#2C2A26',
+    primary: '#FAF9F7',
+    primaryText: '#1A1918',
+    accent: '#8FA894',
+    accentLight: '#2A322C',
+    error: '#D87070',
+    errorLight: '#2A2020',
+    success: '#70A87A',
+    successLight: '#202A22',
   },
 } as const;
 

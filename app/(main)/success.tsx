@@ -1,5 +1,5 @@
 import { View, StyleSheet } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 
@@ -11,7 +11,6 @@ import { useStreaks } from '@/src/hooks';
 export default function SuccessScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { message } = useLocalSearchParams<{ message?: string }>();
   const { data: streaksData } = useStreaks();
 
   const handleDone = () => {
@@ -33,10 +32,7 @@ export default function SuccessScreen() {
           entering={FadeInUp.duration(600).delay(200)}
         >
           <Text variant="title" center>
-            {message || 'Reflection saved'}
-          </Text>
-          <Text variant="body" color={theme.textSecondary} center>
-            You took time to reflect today.
+            Noted.
           </Text>
         </Animated.View>
 

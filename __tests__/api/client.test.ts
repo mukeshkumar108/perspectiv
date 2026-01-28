@@ -22,7 +22,7 @@ describe('API Client', () => {
           id: '123',
           text: 'What are you grateful for today?',
         },
-        hasReflectedToday: false,
+        hasReflected: false,
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -42,7 +42,7 @@ describe('API Client', () => {
         })
       );
       expect(result.prompt.text).toBe('What are you grateful for today?');
-      expect(result.hasReflectedToday).toBe(false);
+      expect(result.hasReflected).toBe(false);
     });
 
     it('should handle 401 unauthorized', async () => {
@@ -68,8 +68,8 @@ describe('API Client', () => {
   describe('submitReflection', () => {
     it('should submit reflection successfully', async () => {
       const mockResponse = {
-        success: true,
-        message: 'Great reflection!',
+        saved: true,
+        successMessage: 'Great reflection!',
         reflection: {
           id: '456',
           responseText: 'I am grateful for my family.',
@@ -93,8 +93,8 @@ describe('API Client', () => {
           body: JSON.stringify({ responseText: 'I am grateful for my family.' }),
         })
       );
-      expect(result.success).toBe(true);
-      expect(result.message).toBe('Great reflection!');
+      expect(result.saved).toBe(true);
+      expect(result.successMessage).toBe('Great reflection!');
     });
 
     it('should handle 409 already reflected', async () => {
@@ -111,7 +111,7 @@ describe('API Client', () => {
 
     it('should handle safety flagged response', async () => {
       const mockResponse = {
-        success: true,
+        saved: true,
         safetyFlagged: true,
         message: 'We noticed your message. Are you okay?',
       };

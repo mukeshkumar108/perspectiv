@@ -1,9 +1,11 @@
+import { ReactNode } from 'react';
 import {
   Pressable,
   PressableProps,
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
+  View,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -21,6 +23,8 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   variant?: ButtonVariant;
   loading?: boolean;
   style?: ViewStyle;
+  icon?: ReactNode;
+  iconPosition?: 'left' | 'right';
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -31,6 +35,8 @@ export function Button({
   loading = false,
   disabled,
   style,
+  icon,
+  iconPosition = 'left',
   onPressIn,
   onPressOut,
   ...props
@@ -60,14 +66,20 @@ export function Button({
     primary: {
       backgroundColor: theme.primary,
       textColor: theme.primaryText,
+      borderColor: 'transparent',
+      borderWidth: 0,
     },
     secondary: {
       backgroundColor: theme.backgroundSecondary,
-      textColor: theme.text,
+      textColor: theme.textSecondary,
+      borderColor: 'transparent',
+      borderWidth: 0,
     },
     ghost: {
       backgroundColor: 'transparent',
-      textColor: theme.text,
+      textColor: theme.textSecondary,
+      borderColor: 'transparent',
+      borderWidth: 0,
     },
   };
 
@@ -79,8 +91,8 @@ export function Button({
         styles.base,
         {
           backgroundColor: currentVariant.backgroundColor,
-          borderColor: variant === 'ghost' ? theme.border : 'transparent',
-          borderWidth: variant === 'ghost' ? 1 : 0,
+          borderColor: currentVariant.borderColor,
+          borderWidth: currentVariant.borderWidth,
           opacity: disabled ? 0.5 : 1,
         },
         animatedStyle,
@@ -94,13 +106,21 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={currentVariant.textColor} size="small" />
       ) : (
-        <Text
-          variant="bodyMedium"
-          color={currentVariant.textColor}
-          style={styles.text}
-        >
-          {title}
-        </Text>
+        <View style={styles.content}>
+          {icon && iconPosition === 'left' && (
+            <View style={styles.iconLeft}>{icon}</View>
+          )}
+          <Text
+            variant="bodyMedium"
+            color={currentVariant.textColor}
+            style={styles.text}
+          >
+            {title}
+          </Text>
+          {icon && iconPosition === 'right' && (
+            <View style={styles.iconRight}>{icon}</View>
+          )}
+        </View>
       )}
     </AnimatedPressable>
   );
@@ -115,8 +135,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 52,
   },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   text: {
     fontSize: typography.bodyMedium.fontSize,
     fontWeight: typography.bodyMedium.fontWeight,
+  },
+  iconLeft: {
+    marginRight: spacing.sm,
+  },
+  iconRight: {
+    marginLeft: spacing.sm,
   },
 });
