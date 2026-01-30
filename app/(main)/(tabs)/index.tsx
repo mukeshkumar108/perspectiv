@@ -10,8 +10,7 @@ import { useRouter } from 'expo-router';
 import homeHeadlines from '@/src/content/homeHeadlines.json';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Settings, Check } from 'lucide-react-native';
-import { Asset } from 'expo-asset';
-import { SvgUri } from 'react-native-svg';
+import { Image } from 'react-native';
 
 import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
@@ -125,12 +124,10 @@ export default function HomeScreen() {
           entering={FadeInUp.duration(600).delay(100)}
         >
           <View style={styles.logoWrap}>
-            <SvgUri
-              width={72}
-              height={72}
-              uri={Asset.fromModule(
-                require('../../../assets/images/bluum-logo-v1.svg')
-              ).uri}
+            <Image
+              source={require('../../../assets/images/bluum-logo-v1.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
           </View>
           <View style={styles.dateCenter}>
@@ -241,6 +238,10 @@ const styles = StyleSheet.create({
   },
   logoWrap: {
     marginLeft: -spacing.md,
+  },
+  logo: {
+    width: 72,
+    height: 72,
   },
   dateCenter: {
     flex: 1,
