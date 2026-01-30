@@ -57,23 +57,21 @@ export const typography = {
 // Paper/editorial light theme - warm, premium, minimal
 export const colors = {
   light: {
-    // Warm off-white paper backgrounds
-    background: '#FAF9F7',
-    backgroundSecondary: '#F5F4F2',
-    surface: '#FEFDFB',
-    // Soft black text hierarchy (meaningful contrast steps)
-    text: '#2C2A26',
-    textSecondary: '#807D76',
-    textTertiary: '#B5B2AA',
-    // Warm grey borders (hairline subtle)
-    border: '#ECEAE5',
-    borderLight: '#F5F3EF',
-    // Near-black primary
-    primary: '#2C2A26',
-    primaryText: '#FAF9F7',
-    // Muted sage accents
-    accent: '#7A917F',
-    accentLight: '#F0F4F1',
+    // Bold warm palette
+    background: '#FFDC61',
+    backgroundSecondary: '#D79637',
+    surface: '#FFFFFF',
+    text: '#231E15',
+    textSecondary: '#231E15',
+    textTertiary: '#6F675C',
+    border: '#DBD9D2',
+    borderLight: '#F0F0EB',
+    // Primary button
+    primary: '#231E15',
+    primaryText: '#FFDC61',
+    // Accent highlights
+    accent: '#D79637',
+    accentLight: '#FFDC61',
     // Warm error/success
     error: '#B85C5C',
     errorLight: '#F8EEEE',

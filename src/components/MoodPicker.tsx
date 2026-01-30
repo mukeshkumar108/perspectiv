@@ -18,6 +18,11 @@ interface MoodPickerProps {
   disabled?: boolean;
   currentMood?: number | null;
   showChangeOption?: boolean;
+  alwaysShowPicker?: boolean;
+  iconColor?: string;
+  selectedIconColor?: string;
+  selectedBackgroundColor?: string;
+  selectedScale?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -78,17 +83,29 @@ function MoodButton({
   onPress,
   disabled,
   isSelected,
+  iconColor,
+  selectedIconColor,
+  selectedBackgroundColor,
+  selectedScale,
 }: {
   rating: number;
   onPress: () => void;
   disabled?: boolean;
   isSelected?: boolean;
+  iconColor: string;
+  selectedIconColor: string;
+  selectedBackgroundColor: string;
+  selectedScale: number;
 }) {
   const theme = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      {
+        scale: (isSelected ? selectedScale : 1) * scale.value,
+      },
+    ],
   }));
 
   const handlePressIn = () => {
@@ -117,13 +134,19 @@ function MoodButton({
         styles.moodButton,
         animatedStyle,
         { opacity: disabled ? 0.5 : 1 },
-        isSelected && { backgroundColor: theme.accentLight },
+        isSelected
+          ? {
+              backgroundColor: selectedBackgroundColor,
+            }
+          : {
+              backgroundColor: 'transparent',
+            },
       ]}
     >
       <MoodFace
         rating={rating}
         size={36}
-        color={isSelected ? theme.accent : theme.textTertiary}
+        color={isSelected ? selectedIconColor : iconColor}
       />
     </AnimatedPressable>
   );
@@ -134,10 +157,19 @@ export function MoodPicker({
   disabled,
   currentMood,
   showChangeOption,
+  alwaysShowPicker = false,
+  iconColor,
+  selectedIconColor,
+  selectedBackgroundColor,
+  selectedScale = 1.15,
 }: MoodPickerProps) {
   const theme = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPicker, setShowPicker] = useState(!currentMood);
+  const shouldShowPicker = alwaysShowPicker ? true : showPicker;
+  const resolvedIconColor = iconColor ?? theme.surface;
+  const resolvedSelectedIconColor = selectedIconColor ?? theme.text;
+  const resolvedSelectedBackground = selectedBackgroundColor ?? theme.surface;
 
   const handleSelect = async (rating: number) => {
     if (isSubmitting || disabled) return;
@@ -148,7 +180,9 @@ export function MoodPicker({
     try {
       await onSelect(rating);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setShowPicker(false);
+      if (!alwaysShowPicker) {
+        setShowPicker(false);
+      }
     } catch {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
@@ -157,11 +191,12 @@ export function MoodPicker({
   };
 
   const handleChange = async () => {
+    if (alwaysShowPicker) return;
     await Haptics.selectionAsync();
     setShowPicker(true);
   };
 
-  if (currentMood && !showPicker) {
+  if (currentMood && !shouldShowPicker) {
     return (
       <Animated.View style={styles.currentMood} entering={FadeIn.duration(300)}>
         <View style={styles.moodChip}>
@@ -194,6 +229,10 @@ export function MoodPicker({
             onPress={() => handleSelect(rating)}
             disabled={isSubmitting || disabled}
             isSelected={currentMood === rating}
+            iconColor={resolvedIconColor}
+            selectedIconColor={resolvedSelectedIconColor}
+            selectedBackgroundColor={resolvedSelectedBackground}
+            selectedScale={selectedScale}
           />
         ))}
       </View>

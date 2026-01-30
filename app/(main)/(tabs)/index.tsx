@@ -10,6 +10,8 @@ import { useRouter } from 'expo-router';
 import homeHeadlines from '@/src/content/homeHeadlines.json';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Settings, Check } from 'lucide-react-native';
+import { Asset } from 'expo-asset';
+import { SvgUri } from 'react-native-svg';
 
 import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
@@ -107,6 +109,7 @@ export default function HomeScreen() {
   return (
     <ScreenContainer
       scroll
+      style={{ backgroundColor: '#ffcc00' }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -121,9 +124,20 @@ export default function HomeScreen() {
           style={styles.topRow}
           entering={FadeInUp.duration(600).delay(100)}
         >
-          <Text variant="caption" color={theme.textTertiary}>
-            {dateLabel}
-          </Text>
+          <View style={styles.logoWrap}>
+            <SvgUri
+              width={72}
+              height={72}
+              uri={Asset.fromModule(
+                require('../../../assets/images/bluum-logo-v1.svg')
+              ).uri}
+            />
+          </View>
+          <View style={styles.dateCenter}>
+            <Text variant="caption" color={theme.textTertiary}>
+              {dateLabel}
+            </Text>
+          </View>
           <View style={styles.topRowActions}>
             <StreakBadge count={streaksData?.currentStreak ?? 0} />
             <Pressable
@@ -140,7 +154,9 @@ export default function HomeScreen() {
           style={styles.greetingContainer}
           entering={FadeInUp.duration(600).delay(150)}
         >
-          <Text variant="hero">{dailyHeadline}</Text>
+          <Text variant="hero" style={styles.headline}>
+            {dailyHeadline}
+          </Text>
         </Animated.View>
 
         {/* Mood picker */}
@@ -223,6 +239,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xxl,
   },
+  logoWrap: {
+    marginLeft: -spacing.md,
+  },
+  dateCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
   topRowActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,6 +253,9 @@ const styles = StyleSheet.create({
   },
   greetingContainer: {
     marginBottom: spacing.xxl,
+  },
+  headline: {
+    lineHeight: 34,
   },
   greetingSecondary: {
     marginTop: spacing.sm,

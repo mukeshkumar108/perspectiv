@@ -59,7 +59,7 @@ export default function CaptureScreen() {
   };
 
   return (
-    <ScreenContainer style={styles.container}>
+    <ScreenContainer style={[styles.container, { backgroundColor: '#FFDC61' }]}>
       <KeyboardAvoidingView
         style={styles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -73,7 +73,9 @@ export default function CaptureScreen() {
 
         <View style={styles.content}>
           <Animated.View entering={FadeInUp.duration(600).delay(100)}>
-            <Text variant="title">{captureHeadline}</Text>
+            <Text variant="title" style={styles.headline}>
+              {captureHeadline}
+            </Text>
           </Animated.View>
 
           {showSuccess && (
@@ -127,6 +129,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     gap: spacing.lg,
+  },
+  headline: {
+    lineHeight: 28,
   },
   successContainer: {
     alignItems: 'center',

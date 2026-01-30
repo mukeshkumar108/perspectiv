@@ -11,14 +11,14 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { X, ExternalLink } from 'lucide-react-native';
+import { ArrowLeft, ExternalLink } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
-import { Composer } from '@/src/components';
+import { Composer, MoodPicker } from '@/src/components';
 import { useAuthReady } from '@/src/auth';
-import { useToday, useSubmitReflection } from '@/src/hooks';
+import { useToday, useSubmitReflection, useSubmitMood } from '@/src/hooks';
 import { ApiError } from '@/src/api';
 
 export default function ReflectScreen() {
@@ -26,12 +26,15 @@ export default function ReflectScreen() {
   const theme = useTheme();
   const { data: todayData } = useToday();
   const submitMutation = useSubmitReflection();
+  const moodMutation = useSubmitMood();
   const authReady = useAuthReady();
   const hasReflectedToday =
     todayData?.hasReflected ?? todayData?.hasReflectedToday ?? false;
 
   const [responseText, setResponseText] = useState('');
   const [showSafetyResources, setShowSafetyResources] = useState(false);
+  const [step, setStep] = useState<'mood' | 'reflect'>('mood');
+  const [selectedMood, setSelectedMood] = useState<number | null>(null);
 
   useEffect(() => {
     if (!hasReflectedToday) return;
@@ -41,6 +44,19 @@ export default function ReflectScreen() {
   const handleClose = () => {
     Keyboard.dismiss();
     router.back();
+  };
+
+  const handleMoodSelect = async (rating: number) => {
+    setSelectedMood(rating);
+    try {
+      await moodMutation.mutateAsync({ rating });
+    } catch {
+      // Offline-first; ignore submission errors here.
+    }
+  };
+
+  const handleContinue = () => {
+    setStep('reflect');
   };
 
   const handleSubmit = async () => {
@@ -153,8 +169,49 @@ export default function ReflectScreen() {
     );
   }
 
+  if (step === 'mood') {
+    return (
+      <ScreenContainer style={[styles.container, { backgroundColor: theme.surface }]}>
+        <View style={styles.header}>
+          <Pressable onPress={handleClose} hitSlop={16}>
+            <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
+          </Pressable>
+        </View>
+
+        <View style={styles.moodStep}>
+          <Animated.View entering={FadeInUp.duration(600).delay(100)}>
+            <Text variant="title" style={styles.moodTitle}>
+              First, let’s check in.
+            </Text>
+            <Text variant="body" color={theme.textSecondary} style={styles.moodSubtitle}>
+              How are you feeling right now?
+            </Text>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.duration(600).delay(200)}>
+            <MoodPicker
+              onSelect={handleMoodSelect}
+              disabled={!authReady || moodMutation.isPending}
+              currentMood={selectedMood}
+              showChangeOption={false}
+              alwaysShowPicker
+              iconColor={theme.text}
+              selectedIconColor={theme.surface}
+              selectedBackgroundColor={theme.text}
+              selectedScale={1.2}
+            />
+          </Animated.View>
+        </View>
+
+        <View style={styles.moodFooter}>
+          <Button title="Continue" onPress={handleContinue} />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   return (
-    <ScreenContainer style={styles.container}>
+    <ScreenContainer style={[styles.container, { backgroundColor: theme.surface }]}>
       <KeyboardAvoidingView
         style={styles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -168,7 +225,7 @@ export default function ReflectScreen() {
         >
           <View style={styles.header}>
             <Pressable onPress={handleClose} hitSlop={16}>
-              <X size={24} color={theme.textTertiary} strokeWidth={1.5} />
+              <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
             </Pressable>
           </View>
 
@@ -234,9 +291,22 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     paddingTop: spacing.md,
     marginBottom: spacing.lg,
+  },
+  moodStep: {
+    flex: 1,
+    gap: spacing.xl,
+  },
+  moodTitle: {
+    marginBottom: spacing.sm,
+  },
+  moodSubtitle: {
+    lineHeight: 22,
+  },
+  moodFooter: {
+    paddingBottom: spacing.xl,
   },
   content: {
     flex: 1,

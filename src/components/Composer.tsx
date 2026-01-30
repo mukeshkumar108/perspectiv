@@ -89,8 +89,8 @@ export function Composer({
       style={[
         styles.container,
         {
-          backgroundColor: theme.backgroundSecondary,
-          borderColor: theme.borderLight,
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
         },
       ]}
     >
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     fontSize: typography.body.fontSize,
     lineHeight: typography.body.lineHeight,
     paddingVertical: spacing.sm,
-    paddingHorizontal: 0,
+    paddingHorizontal: spacing.md,
   },
   sendButton: {
     width: 36,

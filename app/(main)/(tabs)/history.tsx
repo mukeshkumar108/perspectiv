@@ -76,7 +76,7 @@ export default function HistoryScreen() {
   const showLoading = moments.length === 0 && momentsLoading;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer style={{ backgroundColor: '#F0F0EB' }}>
       <View style={styles.content}>
         <Animated.View entering={FadeInUp.duration(600).delay(100)}>
           <View style={styles.headerRow}>
@@ -98,7 +98,7 @@ export default function HistoryScreen() {
           style={styles.stats}
           entering={FadeInUp.duration(600).delay(200)}
         >
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
             <Text variant="hero" color={theme.text}>
               {streaksData?.totalReflections ?? 0}
             </Text>
@@ -107,7 +107,7 @@ export default function HistoryScreen() {
             </Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
             <Text variant="hero" color={theme.text}>
               {streaksData?.longestStreak ?? 0}
             </Text>
@@ -172,6 +172,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     gap: spacing.xs,
+    borderRadius: 16,
+    paddingVertical: spacing.lg,
   },
   momentsSection: {
     marginTop: spacing.xxl,
