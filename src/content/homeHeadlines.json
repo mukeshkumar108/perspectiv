@@ -1,0 +1,254 @@
+{
+  "headlines": [
+    {
+      "id": "home_001",
+      "text": "The internet is heavy. This is not.",
+      "tags": ["modern", "low-demand", "internal"]
+    },
+    {
+      "id": "home_002",
+      "text": "The clouds are doing something unrepeatable right now.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_003",
+      "text": "The specific, low-stakes relief of a plan being cancelled.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_004",
+      "text": "You’re real. Your tabs are not. Both feel equally urgent.",
+      "tags": ["modern", "cognitive", "internal"]
+    },
+    {
+      "id": "home_005",
+      "text": "Nobody is waiting for a reply right now.",
+      "tags": ["social-reality", "low-demand", "modern"]
+    },
+    {
+      "id": "home_006",
+      "text": "The world is loud. This is the quiet part.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_007",
+      "text": "Somewhere, a dog is having a very successful nap.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_008",
+      "text": "Most conversations don’t actually need a follow-up.",
+      "tags": ["social-reality", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_009",
+      "text": "The light hit the wall in a way that felt almost intentional.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_010",
+      "text": "You survived another series of meetings that could have been avoided.",
+      "tags": ["modern", "social-reality", "cognitive"]
+    },
+    {
+      "id": "home_011",
+      "text": "The group chat will survive without you today.",
+      "tags": ["social-reality", "modern", "low-demand"]
+    },
+    {
+      "id": "home_012",
+      "text": "The 'no unread messages' version of peace and quiet.",
+      "tags": ["modern", "internal", "low-demand"]
+    },
+    {
+      "id": "home_013",
+      "text": "You made it to the afternoon. That is plenty.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    },
+    {
+      "id": "home_014",
+      "text": "Someone misunderstood you earlier. It’s already fading.",
+      "tags": ["social-reality", "internal", "low-demand"]
+    },
+    {
+      "id": "home_015",
+      "text": "The way a house sounds when it’s finally, actually quiet.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_016",
+      "text": "You exist, which is a statistically significant occurrence.",
+      "tags": ["internal", "cognitive", "external"]
+    },
+    {
+      "id": "home_017",
+      "text": "The world is unhinged. You are gently hinged.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_018",
+      "text": "No one is actually tracking your response time.",
+      "tags": ["social-reality", "modern", "low-demand"]
+    },
+    {
+      "id": "home_019",
+      "text": "The sun doesn't care about your inbox. It is doing its thing anyway.",
+      "tags": ["external", "modern", "low-demand"]
+    },
+    {
+      "id": "home_020",
+      "text": "Just a moment to acknowledge that you are here, and that counts.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    },
+    {
+      "id": "home_021",
+      "text": "Glad you found your way back to the calmest three inches of glass in your pocket.",
+      "tags": ["modern", "internal", "cognitive"]
+    },
+    {
+      "id": "home_022",
+      "text": "Still a person with a phone and a posture problem.",
+      "tags": ["modern", "internal", "cognitive"]
+    },
+    {
+      "id": "home_023",
+      "text": "The algorithm doesn't know you as well as it thinks it does.",
+      "tags": ["modern", "cognitive", "internal"]
+    },
+    {
+      "id": "home_024",
+      "text": "A brief intermission from having to be 'on.'",
+      "tags": ["internal", "low-demand", "social-reality"]
+    },
+    {
+      "id": "home_025",
+      "text": "You don't need a position on every story you see today.",
+      "tags": ["social-reality", "modern", "low-demand"]
+    },
+    {
+      "id": "home_026",
+      "text": "The trees are doing their thing regardless of your inbox.",
+      "tags": ["external", "modern", "low-demand"]
+    },
+    {
+      "id": "home_027",
+      "text": "The floor is holding you up without asking for credit.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_028",
+      "text": "The windows are reflecting light you’re not currently looking at.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_029",
+      "text": "Most people are too busy worrying about themselves to judge you.",
+      "tags": ["social-reality", "low-demand", "cognitive"]
+    },
+    {
+      "id": "home_030",
+      "text": "The shadows are moving across the floor, even if you aren’t.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_031",
+      "text": "Your favorite mug is sitting exactly where you left it.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_032",
+      "text": "Clean sheets and a room that is exactly the right temperature.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_033",
+      "text": "You don't have to be the funny one today.",
+      "tags": ["social-reality", "internal", "low-demand"]
+    },
+    {
+      "id": "home_034",
+      "text": "You don’t need to be interesting for anyone right now.",
+      "tags": ["social-reality", "low-demand", "internal"]
+    },
+    {
+      "id": "home_035",
+      "text": "The world outside is louder than your notifications.",
+      "tags": ["external", "modern", "low-demand"]
+    },
+    {
+      "id": "home_036",
+      "text": "There are plants growing without anybody watching.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_037",
+      "text": "The specific satisfaction of a quiet kitchen at night.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_038",
+      "text": "You are allowed to be unremarkable today.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    },
+    {
+      "id": "home_039",
+      "text": "The day will end at the same time regardless of how much you do.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_040",
+      "text": "Not every hour needs defending.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    },
+    {
+      "id": "home_041",
+      "text": "The earth turned. You turned with it.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_042",
+      "text": "Reality showed up. You did too.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_043",
+      "text": "Another day of free-range consciousness.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_044",
+      "text": "Life remains weirdly specific today.",
+      "tags": ["external", "low-demand", "observational"]
+    },
+    {
+      "id": "home_045",
+      "text": "Everything is temporary, which is actually pretty great news.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "home_046",
+      "text": "There are birds conducting their entire lives outside your awareness.",
+      "tags": ["external", "observational", "low-demand"]
+    },
+    {
+      "id": "home_047",
+      "text": "You can be as medium about today as you want.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    },
+    {
+      "id": "home_048",
+      "text": "You can leave that read receipt on read.",
+      "tags": ["social-reality", "modern", "low-demand"]
+    },
+    {
+      "id": "home_049",
+      "text": "The world is not waiting for your take on this.",
+      "tags": ["social-reality", "modern", "low-demand"]
+    },
+    {
+      "id": "home_050",
+      "text": "You're here. That's the whole headline.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    }
+  ]
+}

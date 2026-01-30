@@ -9,12 +9,15 @@ import 'react-native-reanimated';
 
 import { AuthProvider } from '@/src/auth';
 import { setOnUnauthorized } from '@/src/api';
+import { useAuthReady } from '@/src/auth';
+import { useOutboxSync } from '@/src/storage';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutNav() {
   const { isLoaded, isSignedIn } = useAuth();
+  const authReady = useAuthReady();
   const segments = useSegments();
   const router = useRouter();
   const [appIsReady, setAppIsReady] = useState(false);
@@ -51,6 +54,8 @@ function RootLayoutNav() {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [appIsReady, rootViewLayout]);
+
+  useOutboxSync(authReady);
 
   const onLayoutRootView = useCallback(() => {
     setRootViewLayout(true);

@@ -1,0 +1,129 @@
+{
+  "capture_prompts": [
+    {
+      "id": "cap_001",
+      "text": "Okay, tell me. What happened.",
+      "tags": ["low-demand", "external", "social-reality"]
+    },
+    {
+      "id": "cap_002",
+      "text": "Something went right for a second. What was it.",
+      "tags": ["low-demand", "internal", "cognitive"]
+    },
+    {
+      "id": "cap_003",
+      "text": "I’m listening. What was the one thing you wanted to remember.",
+      "tags": ["low-demand", "internal", "cognitive"]
+    },
+    {
+      "id": "cap_004",
+      "text": "Whatever just happened that didn't suck—put it here.",
+      "tags": ["low-demand", "modern", "internal"]
+    },
+    {
+      "id": "cap_005",
+      "text": "You noticed something. Tell me about it.",
+      "tags": ["observational", "external", "low-demand"]
+    },
+    {
+      "id": "cap_006",
+      "text": "So, what was the best part of the last few hours.",
+      "tags": ["low-demand", "external", "internal"]
+    },
+    {
+      "id": "cap_007",
+      "text": "Something caught your eye. What was the move.",
+      "tags": ["observational", "external", "low-demand"]
+    },
+    {
+      "id": "cap_008",
+      "text": "Just between us. What was that one small win.",
+      "tags": ["social-reality", "internal", "low-demand"]
+    },
+    {
+      "id": "cap_009",
+      "text": "You're here for a reason. What made you open the app just now.",
+      "tags": ["modern", "internal", "cognitive"]
+    },
+    {
+      "id": "cap_010",
+      "text": "Tell me the story.",
+      "tags": ["low-demand", "external", "social-reality"]
+    },
+    {
+      "id": "cap_011",
+      "text": "What was the highlight. Don't overthink it.",
+      "tags": ["low-demand", "cognitive", "internal"]
+    },
+    {
+      "id": "cap_012",
+      "text": "Something felt right. Tell me why.",
+      "tags": ["internal", "cognitive", "observational"]
+    },
+    {
+      "id": "cap_013",
+      "text": "The floor is yours.",
+      "tags": ["low-demand", "internal", "external"]
+    },
+    {
+      "id": "cap_014",
+      "text": "What was the vibe.",
+      "tags": ["modern", "social-reality", "observational"]
+    },
+    {
+      "id": "cap_015",
+      "text": "A tiny piece of the day you’d actually like to keep.",
+      "tags": ["internal", "low-demand", "cognitive"]
+    },
+    {
+      "id": "cap_016",
+      "text": "Something happened that was worth a second look. What was it.",
+      "tags": ["observational", "external", "low-demand"]
+    },
+    {
+      "id": "cap_017",
+      "text": "Found something worth keeping. Let's hear it.",
+      "tags": ["external", "low-demand", "internal"]
+    },
+    {
+      "id": "cap_018",
+      "text": "Okay, talk to me. What’s up.",
+      "tags": ["low-demand", "social-reality", "internal"]
+    },
+    {
+      "id": "cap_019",
+      "text": "Give me the details.",
+      "tags": ["low-demand", "observational", "external"]
+    },
+    {
+      "id": "cap_020",
+      "text": "Go ahead. The world is quiet for a minute.",
+      "tags": ["low-demand", "modern", "external"]
+    },
+    {
+      "id": "cap_021",
+      "text": "Nobody else noticed, but you did. What was the thing.",
+      "tags": ["social-reality", "observational", "internal"]
+    },
+    {
+      "id": "cap_022",
+      "text": "That one thing that didn't feel like an obligation. Describe it.",
+      "tags": ["anti-productivity", "internal", "cognitive"]
+    },
+    {
+      "id": "cap_023",
+      "text": "A thought that is too good to let go of yet.",
+      "tags": ["internal", "cognitive", "low-demand"]
+    },
+    {
+      "id": "cap_024",
+      "text": "Write it down. Just for you.",
+      "tags": ["low-demand", "internal", "modern"]
+    },
+    {
+      "id": "cap_025",
+      "text": "What was the best thing you saw today.",
+      "tags": ["observational", "external", "low-demand"]
+    }
+  ]
+}

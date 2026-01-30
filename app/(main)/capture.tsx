@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,6 +17,7 @@ import { Composer } from '@/src/components';
 import { useCaptureMoment } from '@/src/hooks';
 import { useAuthReady } from '@/src/auth';
 import { ApiError } from '@/src/api';
+import captureHeadlines from '@/src/content/captureHeadlines.json';
 
 export default function CaptureScreen() {
   const router = useRouter();
@@ -26,6 +27,12 @@ export default function CaptureScreen() {
 
   const [text, setText] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const captureHeadline = useMemo(() => {
+    const items = captureHeadlines.capture_prompts.map((item) => item.text);
+    if (items.length === 0) return 'Capture a moment';
+    const index = Math.floor(Math.random() * items.length);
+    return items[index];
+  }, []);
 
   const handleClose = () => {
     router.back();
@@ -66,7 +73,7 @@ export default function CaptureScreen() {
 
         <View style={styles.content}>
           <Animated.View entering={FadeInUp.duration(600).delay(100)}>
-            <Text variant="title">Capture a moment</Text>
+            <Text variant="title">{captureHeadline}</Text>
           </Animated.View>
 
           {showSuccess && (

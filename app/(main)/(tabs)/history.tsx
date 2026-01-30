@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer, Text, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { useStreaks, useMoments } from '@/src/hooks';
+import { useMomentCache } from '@/src/storage';
 import type { MomentItem } from '@/src/api/schemas';
 
 function formatDate(dateString: string): string {
@@ -46,13 +47,33 @@ function MomentListItem({ item }: { item: MomentItem }) {
   );
 }
 
+function mergeMoments(local: MomentItem[], remote: MomentItem[]) {
+  const seenTextDates = new Set<string>();
+  const seenIds = new Set<string>();
+  const merged: MomentItem[] = [];
+  const all = [...local, ...remote];
+
+  for (const item of all) {
+    const key = `${item.text ?? ''}::${item.createdAt}`;
+    if (item.id && seenIds.has(item.id)) continue;
+    if (seenTextDates.has(key)) continue;
+    seenTextDates.add(key);
+    if (item.id) seenIds.add(item.id);
+    merged.push(item);
+  }
+
+  return merged;
+}
+
 export default function HistoryScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { data: streaksData } = useStreaks();
   const { data: momentsData, isLoading: momentsLoading } = useMoments(20);
 
-  const moments = momentsData?.items ?? [];
+  const cachedMoments = useMomentCache(20) as MomentItem[];
+  const moments = mergeMoments(cachedMoments, momentsData?.items ?? []);
+  const showLoading = moments.length === 0 && momentsLoading;
 
   return (
     <ScreenContainer>
@@ -104,7 +125,7 @@ export default function HistoryScreen() {
             Recent moments
           </Text>
 
-          {momentsLoading ? (
+          {showLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator color={theme.textSecondary} />
             </View>

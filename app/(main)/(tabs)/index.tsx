@@ -7,7 +7,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import homeHeadlines from '@/src/content/homeHeadlines.json';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Settings, Check } from 'lucide-react-native';
 
@@ -30,99 +30,28 @@ function formatDateLabel(): string {
   return `${day} · ${date} ${month}`;
 }
 
-function getDayOfYear(): number {
+function formatDateKey(): string {
   const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - start.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 18) return 'afternoon';
-  return 'evening';
-}
-
-interface GreetingResult {
-  primary: string;
-  secondary: string | null;
-}
-
-function getGreeting(
-  name: string,
-  hasReflected: boolean,
-  hasMood: boolean
-): GreetingResult {
-  const timeOfDay = getTimeOfDay();
-  const dayOfYear = getDayOfYear();
-
-  // Primary greeting pools (time-based)
-  const primaryPools = {
-    morning: [
-      `Good morning, ${name}.`,
-      'Morning.',
-      'A new day.',
-    ],
-    afternoon: [
-      'Good afternoon.',
-      'Midday.',
-      'Checking in.',
-    ],
-    evening: [
-      'Good evening.',
-      'End of the day.',
-      'Before the day fades.',
-    ],
-  };
-
-  // Secondary greeting pools (state-based)
-  const secondaryPools = {
-    notReflected: [
-      "There's time for one thought.",
-      'Take a minute.',
-      'Pause here.',
-    ],
-    reflected: [
-      "That's done for today.",
-      'Marked.',
-    ],
-    noMood: [
-      'Where are you at?',
-      'Name it.',
-    ],
-    moodLogged: [
-      'Noted.',
-      'Logged.',
-    ],
-  };
-
-  const primaryPool = primaryPools[timeOfDay];
-  const primary = primaryPool[dayOfYear % primaryPool.length];
-
-  // Determine secondary line (reflection > mood priority)
-  let secondary: string | null = null;
-  if (!hasReflected) {
-    const pool = secondaryPools.notReflected;
-    secondary = pool[dayOfYear % pool.length];
-  } else if (hasReflected) {
-    const pool = secondaryPools.reflected;
-    secondary = pool[dayOfYear % pool.length];
-  } else if (!hasMood) {
-    const pool = secondaryPools.noMood;
-    secondary = pool[dayOfYear % pool.length];
-  } else if (hasMood) {
-    const pool = secondaryPools.moodLogged;
-    secondary = pool[dayOfYear % pool.length];
+function pickDailyHeadline(headlines: string[]): string {
+  if (headlines.length === 0) return 'Today';
+  const dateKey = formatDateKey();
+  let hash = 0;
+  for (let i = 0; i < dateKey.length; i += 1) {
+    hash = (hash * 31 + dateKey.charCodeAt(i)) >>> 0;
   }
-
-  return { primary, secondary };
+  const index = hash % headlines.length;
+  return headlines[index];
 }
 
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { user } = useUser();
   const authReady = useAuthReady();
 
   const {
@@ -146,17 +75,16 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetchToday, refetchStreaks]);
 
-  const firstName = user?.firstName || 'there';
   const dateLabel = useMemo(() => formatDateLabel(), []);
   const isLoading = todayLoading || streaksLoading;
   const hasReflectedToday =
     todayData?.hasReflected ?? todayData?.hasReflectedToday ?? false;
   const hasMood = todayData?.hasMood ?? false;
 
-  const greeting = useMemo(
-    () => getGreeting(firstName, hasReflectedToday, hasMood),
-    [firstName, hasReflectedToday, hasMood]
-  );
+  const dailyHeadline = useMemo(() => {
+    const items = homeHeadlines.headlines.map((item) => item.text);
+    return pickDailyHeadline(items);
+  }, []);
 
   const handleReflect = () => {
     if (hasReflectedToday) return;
@@ -173,7 +101,8 @@ export default function HomeScreen() {
   };
 
   // Use local state if available, otherwise show generic indicator when hasMood
-  const displayMood = submittedMood ?? (hasMood ? 3 : null);
+  const cachedMoodRating = (todayData as any)?.moodRating ?? null;
+  const displayMood = submittedMood ?? cachedMoodRating ?? (hasMood ? 3 : null);
 
   return (
     <ScreenContainer
@@ -211,12 +140,7 @@ export default function HomeScreen() {
           style={styles.greetingContainer}
           entering={FadeInUp.duration(600).delay(150)}
         >
-          <Text variant="hero">{greeting.primary}</Text>
-          {greeting.secondary && (
-            <Text variant="body" color={theme.textTertiary} style={styles.greetingSecondary}>
-              {greeting.secondary}
-            </Text>
-          )}
+          <Text variant="hero">{dailyHeadline}</Text>
         </Animated.View>
 
         {/* Mood picker */}

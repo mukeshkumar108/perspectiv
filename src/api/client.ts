@@ -23,9 +23,14 @@ import {
   type TodayResponse,
 } from "./schemas";
 
-export const API_BASE_URL =
+const RAW_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL || "https://b-attic.vercel.app";
+const NORMALIZED_BASE_URL = RAW_BASE_URL.trim().replace(/\/+$/, "");
+export const API_BASE_URL = NORMALIZED_BASE_URL;
 const apiLogger = createLogger("api");
+let didLogBaseUrl = false;
+let routingBackoffUntil = 0;
+const ROUTING_BACKOFF_MS = 10_000;
 
 export class ApiError extends Error {
   constructor(
@@ -62,6 +67,20 @@ async function request<T>(
   schema?: z.ZodSchema<T>,
 ): Promise<T> {
   const token = await tokenGetter?.();
+  const normalizedEndpoint = endpoint.trim().replace(/^\/+/, "");
+  const fullPath = `/${normalizedEndpoint}`;
+
+  if (!didLogBaseUrl) {
+    didLogBaseUrl = true;
+    apiLogger.info("baseUrl", {
+      baseUrl: API_BASE_URL,
+      fullUrl: `${API_BASE_URL}${fullPath}`,
+    });
+  }
+
+  if (Date.now() < routingBackoffUntil) {
+    throw new ApiError(503, "Routing backoff active", "ROUTING_BACKOFF");
+  }
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -73,7 +92,7 @@ async function request<T>(
   }
 
   const method = options.method ?? "GET";
-  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  const fullUrl = `${API_BASE_URL}${fullPath}`;
   const requestId = `${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .slice(2, 8)}`;
@@ -83,7 +102,7 @@ async function request<T>(
   apiLogger.info("request", {
     requestId,
     method,
-    path: endpoint,
+    path: fullPath,
     fullUrl,
     hasAuthHeader,
     tokenLength: token ? token.length : 0,
@@ -97,6 +116,9 @@ async function request<T>(
 
   const elapsedMs = Date.now() - startedAt;
   const responseText = await response.text();
+  const trimmedBody = responseText.trimStart();
+  const isHtmlResponse =
+    trimmedBody.startsWith("<!DOCTYPE") || trimmedBody.startsWith("<html");
   let parsedBody: unknown = null;
   if (responseText) {
     try {
@@ -108,12 +130,16 @@ async function request<T>(
 
   const bodyPreview = responseText.slice(0, 200);
 
-  if (!response.ok) {
+  if (!response.ok || isHtmlResponse) {
     let errorMessage = `Request failed with status ${response.status}`;
     let errorCode: string | undefined;
 
     try {
-      if (parsedBody && typeof parsedBody === "object") {
+      if (isHtmlResponse) {
+        errorMessage = "HTML response from API (routing error)";
+        errorCode = "HTML_RESPONSE";
+        routingBackoffUntil = Date.now() + ROUTING_BACKOFF_MS;
+      } else if (parsedBody && typeof parsedBody === "object") {
         const errorRecord = parsedBody as Record<string, string>;
         errorMessage = errorRecord.message || errorRecord.error || errorMessage;
         errorCode = errorRecord.code;
