@@ -6,6 +6,12 @@ import { Alert, useColorScheme, View } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
+import { useFonts as useGeistFonts, Geist_200ExtraLight, Geist_400Regular } from '@expo-google-fonts/geist';
+import {
+  useFonts as useRadioCanadaBigFonts,
+  RadioCanadaBig_400Regular,
+  RadioCanadaBig_600SemiBold,
+} from '@expo-google-fonts/radio-canada-big';
 
 import { AuthProvider } from '@/src/auth';
 import { setOnUnauthorized } from '@/src/api';
@@ -70,6 +76,18 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [geistLoaded] = useGeistFonts({
+    Geist_200ExtraLight,
+    Geist_400Regular,
+  });
+  const [radioLoaded] = useRadioCanadaBigFonts({
+    RadioCanadaBig_400Regular,
+    RadioCanadaBig_600SemiBold,
+  });
+
+  if (!geistLoaded || !radioLoaded) {
+    return null;
+  }
 
   return (
     <AuthProvider>

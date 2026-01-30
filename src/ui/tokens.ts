@@ -25,7 +25,7 @@ export const typography = {
   hero: {
     fontSize: 32,
     lineHeight: 40,
-    fontWeight: '700' as const,
+    fontWeight: '600' as const,
   },
   title: {
     fontSize: 24,
@@ -35,12 +35,12 @@ export const typography = {
   body: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '400' as const,
+    fontWeight: '200' as const,
   },
   bodyMedium: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '500' as const,
+    fontWeight: '400' as const,
   },
   small: {
     fontSize: 14,
