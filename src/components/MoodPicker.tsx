@@ -23,6 +23,9 @@ interface MoodPickerProps {
   selectedIconColor?: string;
   selectedBackgroundColor?: string;
   selectedScale?: number;
+  showLabel?: boolean;
+  iconSize?: number;
+  buttonPadding?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -87,6 +90,8 @@ function MoodButton({
   selectedIconColor,
   selectedBackgroundColor,
   selectedScale,
+  iconSize,
+  padding,
 }: {
   rating: number;
   onPress: () => void;
@@ -96,6 +101,8 @@ function MoodButton({
   selectedIconColor: string;
   selectedBackgroundColor: string;
   selectedScale: number;
+  iconSize: number;
+  padding?: number;
 }) {
   const theme = useTheme();
   const scale = useSharedValue(1);
@@ -134,6 +141,7 @@ function MoodButton({
         styles.moodButton,
         animatedStyle,
         { opacity: disabled ? 0.5 : 1 },
+        padding !== undefined ? { padding } : null,
         isSelected
           ? {
               backgroundColor: selectedBackgroundColor,
@@ -145,7 +153,7 @@ function MoodButton({
     >
       <MoodFace
         rating={rating}
-        size={36}
+        size={iconSize}
         color={isSelected ? selectedIconColor : iconColor}
       />
     </AnimatedPressable>
@@ -162,6 +170,9 @@ export function MoodPicker({
   selectedIconColor,
   selectedBackgroundColor,
   selectedScale = 1.15,
+  showLabel = true,
+  iconSize = 36,
+  buttonPadding,
 }: MoodPickerProps) {
   const theme = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -218,9 +229,11 @@ export function MoodPicker({
 
   return (
     <Animated.View style={styles.container} entering={FadeIn.duration(300)}>
-      <Text variant="caption" color={theme.textTertiary} style={styles.label}>
-        Check in.
-      </Text>
+      {showLabel ? (
+        <Text variant="caption" color={theme.textTertiary} style={styles.label}>
+          Check in.
+        </Text>
+      ) : null}
       <View style={styles.picker}>
         {[1, 2, 3, 4, 5].map((rating) => (
           <MoodButton
@@ -233,6 +246,8 @@ export function MoodPicker({
             selectedIconColor={resolvedSelectedIconColor}
             selectedBackgroundColor={resolvedSelectedBackground}
             selectedScale={selectedScale}
+            iconSize={iconSize}
+            padding={buttonPadding}
           />
         ))}
       </View>

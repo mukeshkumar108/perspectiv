@@ -68,7 +68,7 @@ export const colors = {
     borderLight: '#F0F0EB',
     // Primary button
     primary: '#231E15',
-    primaryText: '#FFDC61',
+    primaryText: '#FFFFFF',
     // Accent highlights
     accent: '#D79637',
     accentLight: '#FFDC61',

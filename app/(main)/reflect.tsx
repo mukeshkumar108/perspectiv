@@ -9,10 +9,17 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, ExternalLink } from 'lucide-react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import { ArrowLeft, ExternalLink, X } from 'lucide-react-native';
+import Animated, {
+  FadeInUp,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
 import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
@@ -28,13 +35,25 @@ export default function ReflectScreen() {
   const submitMutation = useSubmitReflection();
   const moodMutation = useSubmitMood();
   const authReady = useAuthReady();
+  const { width } = useWindowDimensions();
   const hasReflectedToday =
     todayData?.hasReflected ?? todayData?.hasReflectedToday ?? false;
+  const moodIconSize = Math.max(36, Math.min(56, Math.floor(width / 8)));
+  const moodButtonPadding = Math.max(8, Math.min(18, Math.floor(width / 28)));
 
   const [responseText, setResponseText] = useState('');
   const [showSafetyResources, setShowSafetyResources] = useState(false);
   const [step, setStep] = useState<'mood' | 'reflect'>('mood');
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
+  const moodProgress = useSharedValue(-1);
+
+  const moodBackground = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      moodProgress.value,
+      [-1, 0, 1, 2, 3, 4],
+      ['#F0F0EB', '#FA8A8A', '#B8BDCC', '#98C6FD', '#76D8AA', '#FFDC61']
+    ),
+  }));
 
   useEffect(() => {
     if (!hasReflectedToday) return;
@@ -46,8 +65,29 @@ export default function ReflectScreen() {
     router.back();
   };
 
+  const handleBack = () => {
+    if (step === 'reflect') {
+      setStep('mood');
+      return;
+    }
+    handleClose();
+  };
+
   const handleMoodSelect = async (rating: number) => {
+    if (selectedMood === rating) {
+      setSelectedMood(null);
+      moodProgress.value = withSpring(-1, {
+        damping: 14,
+        stiffness: 180,
+      });
+      return;
+    }
+
     setSelectedMood(rating);
+    moodProgress.value = withSpring(rating - 1, {
+      damping: 14,
+      stiffness: 180,
+    });
     try {
       await moodMutation.mutateAsync({ rating });
     } catch {
@@ -169,22 +209,47 @@ export default function ReflectScreen() {
     );
   }
 
+  const StepPill = ({ stepIndex }: { stepIndex: 0 | 1 }) => (
+    <View
+      style={styles.stepPill}
+      accessibilityLabel={`Step ${stepIndex + 1} of 2`}
+    >
+      <View
+        style={[
+          styles.stepSegment,
+          stepIndex === 0 && styles.stepSegmentActive,
+        ]}
+      />
+      <View
+        style={[
+          styles.stepSegment,
+          stepIndex === 1 && styles.stepSegmentActive,
+        ]}
+      />
+    </View>
+  );
+
   if (step === 'mood') {
     return (
       <ScreenContainer style={[styles.container, { backgroundColor: theme.surface }]}>
+        <Animated.View style={[styles.moodBackground, moodBackground]} />
         <View style={styles.header}>
-          <Pressable onPress={handleClose} hitSlop={16}>
+          <Pressable onPress={handleBack} hitSlop={16}>
             <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
+          </Pressable>
+          <Pressable onPress={handleClose} hitSlop={16}>
+            <X size={22} color={theme.text} strokeWidth={1.6} />
           </Pressable>
         </View>
 
         <View style={styles.moodStep}>
           <Animated.View entering={FadeInUp.duration(600).delay(100)}>
+            <StepPill stepIndex={0} />
             <Text variant="title" style={styles.moodTitle}>
-              First, let’s check in.
+              How are you feeling right now?
             </Text>
             <Text variant="body" color={theme.textSecondary} style={styles.moodSubtitle}>
-              How are you feeling right now?
+              Take a second. It helps.
             </Text>
           </Animated.View>
 
@@ -199,12 +264,19 @@ export default function ReflectScreen() {
               selectedIconColor={theme.surface}
               selectedBackgroundColor={theme.text}
               selectedScale={1.2}
+              showLabel={false}
+              iconSize={moodIconSize}
+              buttonPadding={moodButtonPadding}
             />
           </Animated.View>
         </View>
 
         <View style={styles.moodFooter}>
-          <Button title="Continue" onPress={handleContinue} />
+          <Button
+            title={selectedMood ? 'Continue' : 'Skip for now'}
+            onPress={handleContinue}
+            withArrow
+          />
         </View>
       </ScreenContainer>
     );
@@ -224,13 +296,17 @@ export default function ReflectScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Pressable onPress={handleClose} hitSlop={16}>
+            <Pressable onPress={handleBack} hitSlop={16}>
               <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
+            </Pressable>
+            <Pressable onPress={handleClose} hitSlop={16}>
+              <X size={22} color={theme.text} strokeWidth={1.6} />
             </Pressable>
           </View>
 
           <View style={styles.content}>
             <Animated.View entering={FadeInUp.duration(600).delay(100)}>
+              <StepPill stepIndex={1} />
               <Text variant="title" style={styles.prompt}>
                 {todayData?.prompt?.text || "What's on your mind?"}
               </Text>
@@ -291,7 +367,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     paddingTop: spacing.md,
     marginBottom: spacing.lg,
   },
@@ -299,11 +375,29 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.xl,
   },
+  moodBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
   moodTitle: {
     marginBottom: spacing.sm,
   },
   moodSubtitle: {
     lineHeight: 22,
+  },
+  stepPill: {
+    marginBottom: spacing.md,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  stepSegment: {
+    width: 36,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+  },
+  stepSegmentActive: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
   },
   moodFooter: {
     paddingBottom: spacing.xl,

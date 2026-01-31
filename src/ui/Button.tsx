@@ -12,6 +12,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { ArrowRight } from 'lucide-react-native';
 import { spacing, radius, typography } from './tokens';
 import { useTheme } from './useTheme';
 import { Text } from './Text';
@@ -25,6 +26,7 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   style?: ViewStyle;
   icon?: ReactNode;
   iconPosition?: 'left' | 'right';
+  withArrow?: boolean;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -37,6 +39,7 @@ export function Button({
   style,
   icon,
   iconPosition = 'left',
+  withArrow = false,
   onPressIn,
   onPressOut,
   ...props
@@ -84,6 +87,7 @@ export function Button({
   };
 
   const currentVariant = variantStyles[variant];
+  const showArrow = withArrow && !loading;
 
   return (
     <AnimatedPressable
@@ -120,6 +124,20 @@ export function Button({
           {icon && iconPosition === 'right' && (
             <View style={styles.iconRight}>{icon}</View>
           )}
+          {showArrow && (
+            <View
+              style={[
+                styles.arrowWrap,
+                { backgroundColor: theme.background },
+              ]}
+            >
+              <ArrowRight
+                size={16}
+                color={currentVariant.backgroundColor}
+                strokeWidth={2}
+              />
+            </View>
+          )}
         </View>
       )}
     </AnimatedPressable>
@@ -130,7 +148,7 @@ const styles = StyleSheet.create({
   base: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 52,
@@ -147,6 +165,14 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   iconRight: {
+    marginLeft: spacing.sm,
+  },
+  arrowWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: spacing.sm,
   },
 });
