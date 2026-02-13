@@ -10,14 +10,23 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { spacing, radius, typography } from './tokens';
 import { useTheme } from './useTheme';
 import { Text } from './Text';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+type VariantStyle = {
+  backgroundColor: string;
+  textColor: string;
+  borderColor: string;
+  borderWidth: number;
+  labelBackground?: string;
+  arrowBackground?: string;
+};
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
@@ -42,6 +51,7 @@ export function Button({
   withArrow = false,
   onPressIn,
   onPressOut,
+  onPress,
   ...props
 }: ButtonProps) {
   const theme = useTheme();
@@ -54,29 +64,38 @@ export function Button({
   }));
 
   const handlePressIn = (e: any) => {
-    scale.value = withTiming(0.98, { duration: 100 });
-    opacity.value = withTiming(0.9, { duration: 100 });
+    scale.value = withSpring(0.97, { stiffness: 240, damping: 18 });
+    opacity.value = withSpring(0.92, { stiffness: 240, damping: 18 });
+    if (!disabled && !loading) {
+      void Haptics.selectionAsync();
+    }
     onPressIn?.(e);
   };
 
   const handlePressOut = (e: any) => {
-    scale.value = withTiming(1, { duration: 150 });
-    opacity.value = withTiming(1, { duration: 150 });
+    scale.value = withSpring(1, { stiffness: 220, damping: 16 });
+    opacity.value = withSpring(1, { stiffness: 220, damping: 16 });
     onPressOut?.(e);
   };
 
-  const variantStyles = {
+  const handlePress = (e: any) => {
+    onPress?.(e);
+  };
+
+  const variantStyles: Record<ButtonVariant, VariantStyle> = {
     primary: {
-      backgroundColor: theme.primary,
-      textColor: theme.primaryText,
+      backgroundColor: 'transparent',
+      textColor: theme.surface,
+      labelBackground: theme.text,
+      arrowBackground: '#FF7DAF',
       borderColor: 'transparent',
       borderWidth: 0,
     },
     secondary: {
-      backgroundColor: theme.backgroundSecondary,
-      textColor: theme.textSecondary,
-      borderColor: 'transparent',
-      borderWidth: 0,
+      backgroundColor: 'transparent',
+      textColor: theme.text,
+      borderColor: theme.text,
+      borderWidth: 1,
     },
     ghost: {
       backgroundColor: 'transparent',
@@ -87,12 +106,16 @@ export function Button({
   };
 
   const currentVariant = variantStyles[variant];
-  const showArrow = withArrow && !loading;
+  const showArrow = (variant === 'primary' ? true : withArrow) && !loading;
+
+  const isPrimary = variant === 'primary';
+  const primaryVariant = variantStyles.primary;
 
   return (
     <AnimatedPressable
       style={[
         styles.base,
+        !isPrimary && styles.secondaryBase,
         {
           backgroundColor: currentVariant.backgroundColor,
           borderColor: currentVariant.borderColor,
@@ -105,10 +128,46 @@ export function Button({
       disabled={disabled || loading}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      onPress={handlePress}
       {...props}
     >
       {loading ? (
         <ActivityIndicator color={currentVariant.textColor} size="small" />
+      ) : isPrimary ? (
+        <View style={styles.primaryWrap}>
+          <View
+            style={[
+              styles.primaryLabel,
+              { backgroundColor: primaryVariant.labelBackground },
+            ]}
+          >
+            <View style={styles.primaryContent}>
+              {icon && iconPosition === 'left' && (
+                <View style={styles.iconLeft}>{icon}</View>
+              )}
+              <Text
+                variant="bodyMedium"
+                color={currentVariant.textColor}
+                style={[styles.text, styles.primaryText]}
+              >
+                {title}
+              </Text>
+              {icon && iconPosition === 'right' && (
+                <View style={styles.iconRight}>{icon}</View>
+              )}
+            </View>
+          </View>
+          {showArrow && (
+            <View
+              style={[
+                styles.primaryArrow,
+                { backgroundColor: primaryVariant.arrowBackground },
+              ]}
+            >
+              <ArrowRight size={24} color="#231E15" strokeWidth={2.5} />
+            </View>
+          )}
+        </View>
       ) : (
         <View style={styles.content}>
           {icon && iconPosition === 'left' && (
@@ -128,12 +187,12 @@ export function Button({
             <View
               style={[
                 styles.arrowWrap,
-                { backgroundColor: theme.background },
+                { backgroundColor: '#FF7782' },
               ]}
             >
               <ArrowRight
                 size={16}
-                color={currentVariant.backgroundColor}
+                color="#FFFFFF"
                 strokeWidth={2}
               />
             </View>
@@ -146,12 +205,15 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    alignSelf: 'flex-start',
+  },
+  secondaryBase: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxl,
+    borderRadius: radius.full,
+    minHeight: 56,
   },
   content: {
     flexDirection: 'row',
@@ -160,6 +222,11 @@ const styles = StyleSheet.create({
   text: {
     fontSize: typography.bodyMedium.fontSize,
     fontWeight: typography.bodyMedium.fontWeight,
+    fontFamily: 'InstrumentSans_500Medium',
+  },
+  primaryText: {
+    fontSize: 18,
+    letterSpacing: -0.2,
   },
   iconLeft: {
     marginRight: spacing.sm,
@@ -168,11 +235,34 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   arrowWrap: {
-    width: 28,
-    height: 28,
+    width: 48,
+    height: 48,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.sm,
+  },
+  primaryWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  primaryLabel: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxxl,
+    borderRadius: radius.full,
+    minHeight: 60,
+    justifyContent: 'center',
+  },
+  primaryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  primaryArrow: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 0,
   },
 });

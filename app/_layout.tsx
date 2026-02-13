@@ -2,17 +2,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Alert, useColorScheme, View } from 'react-native';
+import { Alert, useColorScheme, View, Image } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts as useGeistFonts, Geist_200ExtraLight, Geist_400Regular } from '@expo-google-fonts/geist';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 import {
-  useFonts as useRadioCanadaBigFonts,
-  RadioCanadaBig_400Regular,
-  RadioCanadaBig_600SemiBold,
-} from '@expo-google-fonts/radio-canada-big';
+  useFonts as useInstrumentSansFonts,
+  InstrumentSans_400Regular,
+  InstrumentSans_500Medium,
+} from '@expo-google-fonts/instrument-sans';
 
 import { AuthProvider } from '@/src/auth';
 import { setOnUnauthorized } from '@/src/api';
@@ -77,27 +83,75 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [geistLoaded] = useGeistFonts({
-    Geist_200ExtraLight,
-    Geist_400Regular,
+  const [instrumentLoaded] = useInstrumentSansFonts({
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
   });
-  const [radioLoaded] = useRadioCanadaBigFonts({
-    RadioCanadaBig_400Regular,
-    RadioCanadaBig_600SemiBold,
-  });
+  const [showSplashOverlay, setShowSplashOverlay] = useState(true);
+  const [minSplashElapsed, setMinSplashElapsed] = useState(false);
+  const splashOpacity = useSharedValue(1);
+  const splashTranslateY = useSharedValue(0);
 
-  if (!geistLoaded || !radioLoaded) {
-    return null;
-  }
+  const hideSplash = () => {
+    setShowSplashOverlay(false);
+  };
+
+  const splashStyle = useAnimatedStyle(() => ({
+    opacity: splashOpacity.value,
+    transform: [{ translateY: splashTranslateY.value }],
+  }));
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinSplashElapsed(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const fontsReady = instrumentLoaded;
+
+  useEffect(() => {
+    if (!fontsReady || !minSplashElapsed) return;
+    splashOpacity.value = withDelay(200, withTiming(0, { duration: 600 }));
+    splashTranslateY.value = withDelay(200, withTiming(-24, { duration: 600 }, () => {
+      runOnJS(hideSplash)();
+    }));
+  }, [fontsReady, minSplashElapsed]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <RootLayoutNav />
+          {fontsReady ? <RootLayoutNav /> : null}
           <StatusBar style="auto" />
+          {showSplashOverlay ? (
+            <Animated.View style={[styles.splashOverlay, splashStyle]}>
+              <Image
+                source={require('../assets/images/bluum-logo-v1.png')}
+                style={styles.splashLogo}
+                resizeMode="contain"
+              />
+            </Animated.View>
+          ) : null}
         </ThemeProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   );
 }
+
+const styles = {
+  splashOverlay: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#D79637',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  splashLogo: {
+    width: 160,
+    height: 160,
+  },
+};

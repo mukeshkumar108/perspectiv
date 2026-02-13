@@ -14,8 +14,23 @@ export default function MainLayout() {
       <Stack.Screen
         name="capture"
         options={{
-          presentation: 'modal',
+          presentation: 'transparentModal',
           animation: 'slide_from_bottom',
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
+      <Stack.Screen
+        name="guides"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="guide/[id]"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen

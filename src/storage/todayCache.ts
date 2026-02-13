@@ -47,9 +47,13 @@ export async function updateTodayCache(
       ? existing
       : { dateLocal, updatedAt: Date.now() };
 
+  const cleanedUpdate = Object.fromEntries(
+    Object.entries(update).filter(([, value]) => value !== undefined)
+  ) as Partial<TodayCache> & { dateLocal?: string };
+
   const next: TodayCache = {
     ...base,
-    ...update,
+    ...cleanedUpdate,
     dateLocal,
     updatedAt: Date.now(),
   };
@@ -61,11 +65,32 @@ export async function updateTodayCache(
 export async function updateTodayCacheFromApi(
   data: TodayResponse
 ): Promise<TodayCache> {
+  const localDate = getLocalDateKey();
+  const dateLocal = data.dateLocal || localDate;
+  const existing = await readCache();
+  const shouldPreserveLocalMood =
+    existing?.dateLocal === localDate && existing?.moodRating != null;
+  const targetDate = shouldPreserveLocalMood ? localDate : dateLocal;
+  const sameDay = existing?.dateLocal === targetDate;
+
   return updateTodayCache({
-    dateLocal: data.dateLocal || getLocalDateKey(),
-    hasMood: data.hasMood ?? false,
+    dateLocal: targetDate,
+    hasMood:
+      shouldPreserveLocalMood
+        ? true
+        : sameDay && existing?.hasMood === true
+          ? true
+          : data.hasMood ?? false,
+    moodRating:
+      shouldPreserveLocalMood
+        ? existing?.moodRating ?? undefined
+        : sameDay && existing?.moodRating != null
+          ? existing.moodRating
+          : undefined,
     hasReflected:
-      data.hasReflected ?? data.hasReflectedToday ?? false,
-    lastPromptText: data.prompt?.text,
+      sameDay && existing?.hasReflected === true
+        ? true
+        : data.hasReflected ?? data.hasReflectedToday ?? false,
+    lastPromptText: data.prompt?.text || existing?.lastPromptText,
   });
 }

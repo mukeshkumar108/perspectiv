@@ -109,10 +109,28 @@ async function request<T>(
   });
 
   const startedAt = Date.now();
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    const elapsedMs = Date.now() - startedAt;
+    apiLogger.warn("response", {
+      requestId,
+      status: 0,
+      ok: false,
+      elapsedMs,
+      bodyPreview: "",
+      error: {
+        status: 0,
+        message: "Network error",
+        code: "FETCH_FAILED",
+      },
+    });
+    throw new ApiError(0, "Network error", "FETCH_FAILED");
+  }
 
   const elapsedMs = Date.now() - startedAt;
   const responseText = await response.text();

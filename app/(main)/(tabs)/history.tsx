@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, View, FlatList, ActivityIndicator } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
 import { ScreenContainer, Text, spacing } from '@/src/ui';
+import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
 import { useStreaks, useMoments } from '@/src/hooks';
 import { useMomentCache } from '@/src/storage';
@@ -73,12 +74,18 @@ export default function HistoryScreen() {
 
   const cachedMoments = useMomentCache(20) as MomentItem[];
   const moments = mergeMoments(cachedMoments, momentsData?.items ?? []);
+  const weeklyMomentCount = moments.filter((item) => {
+    const createdAt = new Date(item.createdAt).getTime();
+    if (Number.isNaN(createdAt)) return false;
+    const ageMs = Date.now() - createdAt;
+    return ageMs >= 0 && ageMs <= 7 * 24 * 60 * 60 * 1000;
+  }).length;
   const showLoading = moments.length === 0 && momentsLoading;
 
   return (
-    <ScreenContainer style={{ backgroundColor: '#F0F0EB' }}>
+    <ScreenContainer>
       <View style={styles.content}>
-        <Animated.View entering={FadeInUp.duration(600).delay(100)}>
+        <Animated.View entering={motion.itemEnter(60, 'up')}>
           <View style={styles.headerRow}>
             <View>
               <Text variant="title">History</Text>
@@ -96,7 +103,7 @@ export default function HistoryScreen() {
 
         <Animated.View
           style={styles.stats}
-          entering={FadeInUp.duration(600).delay(200)}
+          entering={motion.itemEnter(140, 'up')}
         >
           <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
             <Text variant="hero" color={theme.text}>
@@ -118,8 +125,20 @@ export default function HistoryScreen() {
         </Animated.View>
 
         <Animated.View
+          style={styles.recapSection}
+          entering={motion.itemEnter(210, 'up')}
+        >
+          <View style={[styles.recapCard, { backgroundColor: theme.surface }]}>
+            <Text variant="bodyMedium">Weekly recap</Text>
+            <Text variant="small" color={theme.textSecondary}>
+              {weeklyMomentCount} moments captured in the last 7 days.
+            </Text>
+          </View>
+        </Animated.View>
+
+        <Animated.View
           style={styles.momentsSection}
-          entering={FadeInUp.duration(600).delay(300)}
+          entering={motion.itemEnter(280, 'up')}
         >
           <Text variant="caption" color={theme.textTertiary} style={styles.sectionTitle}>
             Recent moments
@@ -176,8 +195,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   momentsSection: {
-    marginTop: spacing.xxl,
+    marginTop: spacing.xl,
     flex: 1,
+  },
+  recapSection: {
+    marginTop: spacing.lg,
+  },
+  recapCard: {
+    borderRadius: 16,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
   },
   sectionTitle: {
     marginBottom: spacing.lg,

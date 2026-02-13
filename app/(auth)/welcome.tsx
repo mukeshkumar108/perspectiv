@@ -1,8 +1,9 @@
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
+import { motion } from '@/src/ui/motion';
 import { BloomVisual } from '@/src/components/BloomVisual';
 
 export default function WelcomeScreen() {
@@ -15,13 +16,13 @@ export default function WelcomeScreen() {
   return (
     <ScreenContainer style={styles.container}>
       <View style={styles.content}>
-        <Animated.View entering={FadeIn.duration(800).delay(200)}>
+        <Animated.View entering={FadeIn.duration(320).delay(80)}>
           <BloomVisual size={180} />
         </Animated.View>
 
         <Animated.View
           style={styles.textContainer}
-          entering={FadeInUp.duration(600).delay(400)}
+          entering={motion.itemEnter(140, 'up')}
         >
           <Text variant="hero" center style={styles.title}>
             Perspectiv
@@ -34,7 +35,7 @@ export default function WelcomeScreen() {
 
       <Animated.View
         style={styles.footer}
-        entering={FadeInUp.duration(600).delay(600)}
+        entering={motion.itemEnter(200, 'up')}
       >
         <Button title="Continue" onPress={handleContinue} />
       </Animated.View>

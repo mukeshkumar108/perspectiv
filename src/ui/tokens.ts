@@ -24,12 +24,12 @@ export const radius = {
 export const typography = {
   hero: {
     fontSize: 32,
-    lineHeight: 40,
+    lineHeight: 38,
     fontWeight: '600' as const,
   },
   title: {
     fontSize: 24,
-    lineHeight: 32,
+    lineHeight: 30,
     fontWeight: '600' as const,
   },
   body: {
@@ -58,14 +58,14 @@ export const typography = {
 export const colors = {
   light: {
     // Bold warm palette
-    background: '#FFDC61',
+    background: '#F7F6EB',
     backgroundSecondary: '#D79637',
     surface: '#FFFFFF',
     text: '#231E15',
     textSecondary: '#231E15',
     textTertiary: '#6F675C',
     border: '#DBD9D2',
-    borderLight: '#F0F0EB',
+    borderLight: '#EEE2D2',
     // Primary button
     primary: '#231E15',
     primaryText: '#FFFFFF',

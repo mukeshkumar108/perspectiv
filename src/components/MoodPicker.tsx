@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, G } from 'react-native-svg';
 import Animated, {
@@ -12,6 +12,20 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { Text, spacing } from '../ui';
 import { useTheme } from '../ui/useTheme';
+
+function withAlpha(hex: string, alpha: number) {
+  if (!hex.startsWith('#') || (hex.length !== 7 && hex.length !== 4)) {
+    return hex;
+  }
+  const normalized =
+    hex.length === 4
+      ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+      : hex;
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
+}
 
 interface MoodPickerProps {
   onSelect: (rating: number) => Promise<void>;
@@ -86,10 +100,12 @@ function MoodButton({
   onPress,
   disabled,
   isSelected,
+  hasSelection,
   iconColor,
   selectedIconColor,
   selectedBackgroundColor,
   selectedScale,
+  unselectedScale,
   iconSize,
   padding,
 }: {
@@ -97,23 +113,31 @@ function MoodButton({
   onPress: () => void;
   disabled?: boolean;
   isSelected?: boolean;
+  hasSelection: boolean;
   iconColor: string;
   selectedIconColor: string;
   selectedBackgroundColor: string;
   selectedScale: number;
+  unselectedScale: number;
   iconSize: number;
   padding?: number;
 }) {
   const theme = useTheme();
   const scale = useSharedValue(1);
+  const baseScale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       {
-        scale: (isSelected ? selectedScale : 1) * scale.value,
+        scale: baseScale.value * scale.value,
       },
     ],
   }));
+
+  useEffect(() => {
+    const target = isSelected ? selectedScale : hasSelection ? unselectedScale : 1;
+    baseScale.value = withSpring(target, { damping: 14, stiffness: 220 });
+  }, [isSelected, hasSelection, selectedScale, unselectedScale, baseScale]);
 
   const handlePressIn = () => {
     scale.value = withTiming(0.9, { duration: 100 });
@@ -151,6 +175,15 @@ function MoodButton({
             },
       ]}
     >
+      {isSelected ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.halo,
+            { borderColor: withAlpha(selectedBackgroundColor, 0.35) },
+          ]}
+        />
+      ) : null}
       <MoodFace
         rating={rating}
         size={iconSize}
@@ -174,6 +207,7 @@ export function MoodPicker({
   iconSize = 36,
   buttonPadding,
 }: MoodPickerProps) {
+  const unselectedScale = 0.94;
   const theme = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPicker, setShowPicker] = useState(!currentMood);
@@ -181,6 +215,7 @@ export function MoodPicker({
   const resolvedIconColor = iconColor ?? theme.surface;
   const resolvedSelectedIconColor = selectedIconColor ?? theme.text;
   const resolvedSelectedBackground = selectedBackgroundColor ?? theme.surface;
+  const hasSelection = currentMood !== null && currentMood !== undefined;
 
   const handleSelect = async (rating: number) => {
     if (isSubmitting || disabled) return;
@@ -242,10 +277,12 @@ export function MoodPicker({
             onPress={() => handleSelect(rating)}
             disabled={isSubmitting || disabled}
             isSelected={currentMood === rating}
+            hasSelection={hasSelection}
             iconColor={resolvedIconColor}
             selectedIconColor={resolvedSelectedIconColor}
             selectedBackgroundColor={resolvedSelectedBackground}
             selectedScale={selectedScale}
+            unselectedScale={unselectedScale}
             iconSize={iconSize}
             padding={buttonPadding}
           />
@@ -270,6 +307,17 @@ const styles = StyleSheet.create({
   moodButton: {
     padding: spacing.sm,
     borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  halo: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    right: -6,
+    bottom: -6,
+    borderRadius: 999,
+    borderWidth: 1.5,
   },
   currentMood: {
     flexDirection: 'row',

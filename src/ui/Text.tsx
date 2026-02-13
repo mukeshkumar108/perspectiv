@@ -11,12 +11,12 @@ interface TextProps extends RNTextProps {
 }
 
 const fontFamilyByVariant: Record<TextVariant, string> = {
-  hero: 'RadioCanadaBig_600SemiBold',
-  title: 'RadioCanadaBig_600SemiBold',
-  body: 'Geist_200ExtraLight',
-  bodyMedium: 'Geist_400Regular',
-  small: 'Geist_400Regular',
-  caption: 'Geist_400Regular',
+  hero: 'InstrumentSans_400Regular',
+  title: 'InstrumentSans_400Regular',
+  body: 'InstrumentSans_400Regular',
+  bodyMedium: 'InstrumentSans_400Regular',
+  small: 'InstrumentSans_400Regular',
+  caption: 'InstrumentSans_400Regular',
 };
 
 export function Text({
@@ -29,6 +29,7 @@ export function Text({
 }: TextProps) {
   const theme = useTheme();
   const variantStyle = typography[variant];
+  const headingLetterSpacing = variant === 'hero' ? -0.9 : variant === 'title' ? -0.6 : -0.2;
 
   return (
     <RNText
@@ -39,6 +40,7 @@ export function Text({
           fontSize: variantStyle.fontSize,
           lineHeight: variantStyle.lineHeight,
           fontWeight: undefined,
+          letterSpacing: headingLetterSpacing,
           color: color ?? theme.text,
           textAlign: center ? 'center' : undefined,
         },

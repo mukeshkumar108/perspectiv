@@ -19,6 +19,7 @@ export function useSubmitMood() {
       queryClient.setQueryData(queryKeys.today, (prev: any) => ({
         ...(prev ?? {}),
         hasMood: true,
+        moodRating: data.rating,
       }));
 
       await enqueueOutbox({

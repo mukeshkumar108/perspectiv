@@ -1,22 +1,29 @@
-import { useCallback, useState, useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
   Pressable,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import homeHeadlines from '@/src/content/homeHeadlines.json';
-import Animated, { FadeInUp } from 'react-native-reanimated';
-import { Settings, Check } from 'lucide-react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { Settings } from 'lucide-react-native';
 import { Image } from 'react-native';
 
 import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
+import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
-import { StreakBadge, MoodPicker } from '@/src/components';
-import { useToday, useStreaks, useSubmitMood } from '@/src/hooks';
-import { useAuthReady } from '@/src/auth';
+import { StreakBadge, Character } from '@/src/components';
+import { useToday, useStreaks } from '@/src/hooks';
+
+let hasPlayedHomeCharacterIntro = false;
 
 function formatDateLabel(): string {
   const now = new Date();
@@ -53,34 +60,19 @@ function pickDailyHeadline(headlines: string[]): string {
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const authReady = useAuthReady();
+  const tabBarHeight = useBottomTabBarHeight();
+  const introTranslateY = useSharedValue(8);
 
   const {
     data: todayData,
-    isLoading: todayLoading,
-    refetch: refetchToday,
   } = useToday();
   const {
     data: streaksData,
-    isLoading: streaksLoading,
-    refetch: refetchStreaks,
   } = useStreaks();
 
-  const moodMutation = useSubmitMood();
-  const [refreshing, setRefreshing] = useState(false);
-  const [submittedMood, setSubmittedMood] = useState<number | null>(null);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await Promise.all([refetchToday(), refetchStreaks()]);
-    setRefreshing(false);
-  }, [refetchToday, refetchStreaks]);
-
   const dateLabel = useMemo(() => formatDateLabel(), []);
-  const isLoading = todayLoading || streaksLoading;
-  const hasReflectedToday =
-    todayData?.hasReflected ?? todayData?.hasReflectedToday ?? false;
-  const hasMood = todayData?.hasMood ?? false;
+  const today = (todayData ?? {}) as any;
+  const hasReflectedToday = today.hasReflected ?? today.hasReflectedToday ?? false;
 
   const dailyHeadline = useMemo(() => {
     const items = homeHeadlines.headlines.map((item) => item.text);
@@ -88,40 +80,52 @@ export default function HomeScreen() {
   }, []);
 
   const handleReflect = () => {
-    if (hasReflectedToday) return;
     router.push('/(main)/reflect' as any);
   };
 
-  const handleCapture = () => {
-    router.push('/(main)/capture' as any);
+  const runCharacterIntro = () => {
+    if (hasPlayedHomeCharacterIntro) {
+      introTranslateY.value = 8;
+      return;
+    }
+    hasPlayedHomeCharacterIntro = true;
+    introTranslateY.value = 42;
+    introTranslateY.value = withSequence(
+      withTiming(-4, {
+        duration: 360,
+        easing: Easing.out(Easing.cubic),
+      }),
+      withTiming(8, {
+        duration: 520,
+        easing: Easing.out(Easing.exp),
+      })
+    );
   };
 
-  const handleMoodSelect = async (rating: number) => {
-    await moodMutation.mutateAsync({ rating });
-    setSubmittedMood(rating);
-  };
+  useFocusEffect(
+    useCallback(
+      () => {
+        runCharacterIntro();
+        return undefined;
+      },
+      []
+    )
+  );
 
-  // Use local state if available, otherwise show generic indicator when hasMood
-  const cachedMoodRating = (todayData as any)?.moodRating ?? null;
-  const displayMood = submittedMood ?? cachedMoodRating ?? (hasMood ? 3 : null);
+  const characterIntroStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: introTranslateY.value },
+    ],
+  }));
 
   return (
-    <ScreenContainer
-      scroll
-      style={{ backgroundColor: '#ffcc00' }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={theme.textSecondary}
-        />
-      }
-    >
-      <View style={styles.content}>
+    <ScreenContainer padded={false} safeBottom={false}>
+      <View style={styles.root}>
+        <View style={styles.content}>
         {/* Top row: date on left, streak + settings on right */}
         <Animated.View
           style={styles.topRow}
-          entering={FadeInUp.duration(600).delay(100)}
+          entering={motion.itemEnter(70, 'up')}
         >
           <View style={styles.logoWrap}>
             <Image
@@ -149,76 +153,32 @@ export default function HomeScreen() {
         {/* Greeting headline */}
         <Animated.View
           style={styles.greetingContainer}
-          entering={FadeInUp.duration(600).delay(150)}
+          entering={motion.itemEnter(140, 'up')}
         >
           <Text variant="hero" style={styles.headline}>
             {dailyHeadline}
           </Text>
         </Animated.View>
 
-        {/* Mood picker */}
-        <Animated.View
-          style={styles.moodContainer}
-          entering={FadeInUp.duration(600).delay(200)}
-        >
-          <MoodPicker
-            onSelect={handleMoodSelect}
-            disabled={!authReady || moodMutation.isPending}
-            currentMood={displayMood}
-            showChangeOption={hasMood}
-          />
-        </Animated.View>
-
-        {/* Spacer to replace bloom visual */}
+        {/* Spacer to reserve room for ambient character */}
         <View style={styles.spacer} />
-
-        {/* Prompt */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator color={theme.textSecondary} />
-          </View>
-        ) : todayData?.prompt ? (
-          <Animated.View
-            style={styles.promptSection}
-            entering={FadeInUp.duration(600).delay(300)}
-          >
-            <Text variant="body" style={styles.promptText}>
-              {todayData.prompt.text}
-            </Text>
-          </Animated.View>
-        ) : null}
 
         {/* Actions */}
         <Animated.View
           style={styles.actions}
-          entering={FadeInUp.duration(600).delay(400)}
+          entering={motion.itemEnter(210, 'up')}
         >
-          {hasReflectedToday ? (
-            <>
-              <Button
-                title="Capture a moment"
-                onPress={handleCapture}
-              />
-              <View style={styles.reflectedStamp}>
-                <Check size={16} color={theme.textTertiary} strokeWidth={2} />
-                <Text variant="small" color={theme.textTertiary}>
-                  Reflected
-                </Text>
-              </View>
-            </>
-          ) : (
-            <>
-              <Button
-                title="Reflect"
-                onPress={handleReflect}
-              />
-              <Button
-                title="Capture a moment"
-                variant="ghost"
-                onPress={handleCapture}
-              />
-            </>
-          )}
+          <Button
+            title={hasReflectedToday ? 'Reflect again' : 'Reflect'}
+            onPress={handleReflect}
+          />
+        </Animated.View>
+        </View>
+        <Animated.View
+          style={[styles.characterDock, { bottom: tabBarHeight }, characterIntroStyle]}
+          pointerEvents="none"
+        >
+          <Character state="idle" sizeScale={0.665} liftScale={-0.02} visibleRatio={0.5} />
         </Animated.View>
       </View>
     </ScreenContainer>
@@ -226,9 +186,14 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   content: {
     flex: 1,
     paddingTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    zIndex: 2,
   },
   topRow: {
     flexDirection: 'row',
@@ -253,7 +218,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   greetingContainer: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
   },
   headline: {
     lineHeight: 34,
@@ -261,33 +226,18 @@ const styles = StyleSheet.create({
   greetingSecondary: {
     marginTop: spacing.sm,
   },
-  moodContainer: {
-    paddingVertical: spacing.lg,
-  },
   spacer: {
-    height: spacing.lg,
-  },
-  loadingContainer: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  promptSection: {
-    paddingVertical: spacing.lg,
-  },
-  promptText: {
-    lineHeight: 28,
-    color: '#6B6965',
+    height: spacing.md,
   },
   actions: {
     gap: spacing.sm,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.lg,
   },
-  reflectedStamp: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
+  characterDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 1,
   },
 });

@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import { useSignUp, useOAuth } from '@clerk/clerk-expo';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
+import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -47,7 +48,7 @@ export default function SignUpScreen() {
   return (
     <ScreenContainer style={styles.container}>
       <View style={styles.content}>
-        <Animated.View entering={FadeInUp.duration(600).delay(100)}>
+        <Animated.View entering={motion.itemEnter(60, 'up')}>
           <Text variant="title" center>
             Create account
           </Text>
@@ -58,7 +59,7 @@ export default function SignUpScreen() {
 
         <Animated.View
           style={styles.buttons}
-          entering={FadeInUp.duration(600).delay(200)}
+          entering={motion.itemEnter(120, 'up')}
         >
           <Button
             title="Continue with Google"
@@ -75,7 +76,7 @@ export default function SignUpScreen() {
 
       <Animated.View
         style={styles.footer}
-        entering={FadeInUp.duration(600).delay(300)}
+        entering={motion.itemEnter(180, 'up')}
       >
         <Pressable onPress={handleSignIn}>
           <Text variant="small" center color={theme.textSecondary}>

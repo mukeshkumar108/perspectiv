@@ -1,9 +1,10 @@
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
-import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ScreenContainer, Text, Button, spacing, radius } from '@/src/ui';
+import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
 import { StreakBadge } from '@/src/components';
 import { useStreaks } from '@/src/hooks';
@@ -22,14 +23,14 @@ export default function SuccessScreen() {
       <View style={styles.content}>
         <Animated.View
           style={[styles.checkCircle, { backgroundColor: theme.successLight }]}
-          entering={FadeIn.duration(600)}
+          entering={FadeIn.duration(260)}
         >
           <Check size={48} color={theme.success} strokeWidth={2} />
         </Animated.View>
 
         <Animated.View
           style={styles.textContainer}
-          entering={FadeInUp.duration(600).delay(200)}
+          entering={motion.itemEnter(140, 'up')}
         >
           <Text variant="title" center>
             Noted.
@@ -38,7 +39,7 @@ export default function SuccessScreen() {
 
         <Animated.View
           style={styles.streakContainer}
-          entering={FadeInUp.duration(600).delay(300)}
+          entering={motion.itemEnter(210, 'up')}
         >
           <StreakBadge count={streaksData?.currentStreak ?? 0} />
         </Animated.View>
@@ -46,7 +47,7 @@ export default function SuccessScreen() {
 
       <Animated.View
         style={styles.footer}
-        entering={FadeInUp.duration(600).delay(400)}
+        entering={motion.itemEnter(280, 'up')}
       >
         <Button title="Done" onPress={handleDone} />
       </Animated.View>

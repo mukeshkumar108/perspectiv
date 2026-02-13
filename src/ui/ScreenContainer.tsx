@@ -9,6 +9,8 @@ interface ScreenContainerProps extends ViewProps {
   safeTop?: boolean;
   safeBottom?: boolean;
   refreshControl?: ScrollViewProps['refreshControl'];
+  ambient?: boolean;
+  ambientIntensity?: number;
 }
 
 export function ScreenContainer({
@@ -17,6 +19,8 @@ export function ScreenContainer({
   safeTop = true,
   safeBottom = true,
   refreshControl,
+  ambient = false,
+  ambientIntensity = 1,
   style,
   children,
   ...props
@@ -27,7 +31,7 @@ export function ScreenContainer({
   const containerStyle = [
     styles.base,
     {
-      backgroundColor: theme.background,
+      backgroundColor: ambient ? 'transparent' : theme.background,
       paddingTop: safeTop ? insets.top : 0,
       paddingBottom: safeBottom ? insets.bottom : 0,
       paddingHorizontal: padded ? spacing.lg : 0,
@@ -37,22 +41,26 @@ export function ScreenContainer({
 
   if (scroll) {
     return (
-      <ScrollView
-        style={{ flex: 1, backgroundColor: theme.background }}
-        contentContainerStyle={[containerStyle, { flexGrow: 1 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={refreshControl}
-        {...props}
-      >
-        {children}
-      </ScrollView>
+      <View style={[styles.base, { backgroundColor: theme.background }]}>
+        <ScrollView
+          style={styles.base}
+          contentContainerStyle={[containerStyle, { flexGrow: 1 }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}
+          {...props}
+        >
+          {children}
+        </ScrollView>
+      </View>
     );
   }
 
   return (
-    <View style={containerStyle} {...props}>
-      {children}
+    <View style={[styles.base, { backgroundColor: theme.background }]}>
+      <View style={containerStyle} {...props}>
+        {children}
+      </View>
     </View>
   );
 }
