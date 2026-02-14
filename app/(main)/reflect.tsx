@@ -123,7 +123,11 @@ export default function ReflectScreen() {
         setShowSafetyResources(true);
         return;
       }
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        // Ignore haptic failures so successful submissions never show error.
+      }
       setShowCelebration(true);
       setTimeout(() => {
         router.replace('/(main)/(tabs)' as any);
@@ -140,6 +144,8 @@ export default function ReflectScreen() {
         if (error.status === 409) {
           return;
         }
+        Alert.alert('Could not submit reflection', error.message);
+        return;
       }
       Alert.alert('Error', 'Something went wrong. Please try again.');
     }

@@ -223,14 +223,44 @@ export const api = {
    */
   submitReflection(data: ReflectionRequest): Promise<ReflectionResponse> {
     ReflectionRequestSchema.parse(data); // Validate input
-    return request(
-      "/api/bluum/reflection",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      },
-      ReflectionResponseSchema,
-    );
+    const payload: RequestInit = {
+      method: "POST",
+      body: JSON.stringify(data),
+    };
+
+    const primary = () =>
+      request("/api/bluum/reflection", payload, ReflectionResponseSchema);
+
+    // Some deployed API versions may still use alternate reflection routes.
+    // Retry on routing-style failures to avoid breaking submission flow.
+    return primary().catch((error) => {
+      if (!(error instanceof ApiError)) {
+        throw error;
+      }
+      const shouldFallback =
+        error.status === 404 ||
+        error.code === "HTML_RESPONSE" ||
+        error.code === "ROUTING_BACKOFF";
+      if (!shouldFallback) {
+        throw error;
+      }
+
+      return request("/api/bluum/reflect", payload, ReflectionResponseSchema).catch(
+        (fallbackError) => {
+          if (
+            fallbackError instanceof ApiError &&
+            (fallbackError.status === 404 || fallbackError.code === "HTML_RESPONSE")
+          ) {
+            return request(
+              "/api/bluum/reflections",
+              payload,
+              ReflectionResponseSchema,
+            );
+          }
+          throw fallbackError;
+        },
+      );
+    });
   },
 
   /**
