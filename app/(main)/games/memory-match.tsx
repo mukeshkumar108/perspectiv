@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, {
   Easing,
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -18,13 +17,25 @@ import { addMemoryMatchSession } from '@/src/games/memoryMatch/storage';
 type CardItem = {
   id: string;
   emoji: string;
+  label: string;
   pairId: string;
   matched: boolean;
 };
 
-const EMOJI_POOL = ['🌤️', '🌧️', '🌈', '🌙', '⭐', '🔥', '🍀', '🌊', '🫧', '🎈'];
+const EMOJI_POOL = [
+  { emoji: '🌤️', label: 'SUN' },
+  { emoji: '🌧️', label: 'RAIN' },
+  { emoji: '🌈', label: 'RAINBOW' },
+  { emoji: '🌙', label: 'MOON' },
+  { emoji: '⭐', label: 'STAR' },
+  { emoji: '🔥', label: 'FIRE' },
+  { emoji: '🍀', label: 'LUCK' },
+  { emoji: '🌊', label: 'WAVE' },
+  { emoji: '🫧', label: 'BUBBLE' },
+  { emoji: '🎈', label: 'BALLOON' },
+] as const;
 
-function shuffle<T>(items: T[]) {
+function shuffle<T>(items: readonly T[]) {
   const next = [...items];
   for (let i = next.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -37,11 +48,11 @@ function shuffle<T>(items: T[]) {
 
 function makeDeck() {
   const selected = shuffle(EMOJI_POOL).slice(0, 6);
-  const pairs = selected.flatMap((emoji, index) => {
+  const pairs = selected.flatMap((entry, index) => {
     const pairId = `pair_${index}`;
     return [
-      { id: `${pairId}_a`, emoji, pairId, matched: false },
-      { id: `${pairId}_b`, emoji, pairId, matched: false },
+      { id: `${pairId}_a`, emoji: entry.emoji, label: entry.label, pairId, matched: false },
+      { id: `${pairId}_b`, emoji: entry.emoji, label: entry.label, pairId, matched: false },
     ] as CardItem[];
   });
   return shuffle(pairs);
@@ -78,23 +89,28 @@ function FlipCard({
 
   const animatedStyle = useAnimatedStyle(() => {
     const scale = 1 + matchedPulse.value * 0.1;
+    const t = progress.value;
+    const squeeze = t < 0.5 ? 1 - t * 0.16 : 0.92 + (t - 0.5) * 0.16;
     return {
       transform: [
-        { perspective: 700 },
-        { rotateY: `${interpolate(progress.value, [0, 1], [0, 180])}deg` },
-        { scale },
+        { scale: squeeze * scale },
       ],
     };
   });
 
-  const frontStyle = useAnimatedStyle(() => ({
-    opacity: 1 - progress.value,
-  }));
+  const frontStyle = useAnimatedStyle(() => {
+    const t = progress.value;
+    return {
+      opacity: t < 0.5 ? 1 - t * 2 : 0,
+    };
+  });
 
-  const backStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ rotateY: '180deg' }],
-  }));
+  const backStyle = useAnimatedStyle(() => {
+    const t = progress.value;
+    return {
+      opacity: t < 0.5 ? 0 : (t - 0.5) * 2,
+    };
+  });
 
   return (
     <Pressable onPress={onPress} disabled={isDisabled} style={styles.cardPress}>
@@ -123,7 +139,8 @@ function FlipCard({
             backStyle,
           ]}
         >
-          <Text variant="hero">{item.emoji}</Text>
+          <RNText style={styles.emojiText}>{item.emoji}</RNText>
+          <RNText style={styles.emojiLabel}>{item.label}</RNText>
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -447,10 +464,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 18,
     borderWidth: 1.5,
-    backfaceVisibility: 'hidden',
   },
   cardFront: {},
   cardBack: {},
+  emojiText: {
+    fontSize: 34,
+    lineHeight: 38,
+    textAlign: 'center',
+  },
+  emojiLabel: {
+    marginTop: 2,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.5,
+    fontWeight: '700',
+    color: '#231E15',
+    textAlign: 'center',
+  },
   cardDot: {
     width: 22,
     height: 22,
