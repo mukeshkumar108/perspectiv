@@ -310,7 +310,7 @@ export default function ReflectScreen() {
 
   return (
     <ScreenContainer
-      style={[styles.container, { backgroundColor: '#F7F6EB' }]}
+      style={[styles.container, { backgroundColor: theme.background }]}
       ambient={false}
     >
       <View style={styles.reflectFlowerWrap} pointerEvents="none">

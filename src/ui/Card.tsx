@@ -23,7 +23,7 @@ export function Card({
       style={[
         styles.base,
         {
-          backgroundColor: isSubtle ? 'transparent' : theme.backgroundSecondary,
+          backgroundColor: isSubtle ? 'transparent' : theme.surface,
           padding: spacing[padding],
         },
         style,

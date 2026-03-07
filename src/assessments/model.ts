@@ -73,6 +73,12 @@ export function getAssessmentPrompt(type: AssessmentType) {
   return 'Imagine a ladder from 0 to 10 where 10 is your best possible life and 0 is your worst possible life.';
 }
 
+export function getAssessmentPurpose(type: AssessmentType) {
+  if (type === 'phq9') return 'Tracks low mood and depression-related symptoms over time.';
+  if (type === 'gad7') return 'Tracks anxiety symptoms and worry load over time.';
+  return 'Gives a quick snapshot of overall life evaluation today.';
+}
+
 export function scoreBand(type: AssessmentType, score: number) {
   if (type === 'phq9') {
     if (score >= 20) return 'Severe';

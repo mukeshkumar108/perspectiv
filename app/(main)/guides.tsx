@@ -19,7 +19,7 @@ export default function GuidesScreen() {
 
 
   return (
-    <ScreenContainer style={[styles.container, { backgroundColor: '#F7F6EB' }]} ambient={false}>
+    <ScreenContainer style={[styles.container, { backgroundColor: theme.background }]} ambient={false}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={14}>
           <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />

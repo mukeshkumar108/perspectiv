@@ -58,7 +58,7 @@ export const typography = {
 export const colors = {
   light: {
     // Bold warm palette
-    background: '#F7F6EB',
+    background: '#F1F3F5',
     backgroundSecondary: '#D79637',
     surface: '#FFFFFF',
     text: '#231E15',

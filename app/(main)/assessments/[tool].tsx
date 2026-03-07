@@ -8,6 +8,7 @@ import { useTheme } from '@/src/ui/useTheme';
 import {
   getAssessmentMaxScore,
   getAssessmentPrompt,
+  getAssessmentPurpose,
   getAssessmentQuestions,
   getAssessmentTitle,
   PHQ_GAD_OPTIONS,
@@ -33,6 +34,7 @@ export default function AssessmentToolScreen() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [index, setIndex] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const score = answers.reduce((sum, value) => sum + value, 0);
   const isComplete = index >= questions.length;
@@ -93,7 +95,17 @@ export default function AssessmentToolScreen() {
           </Text>
         </Card>
 
-        {!isComplete ? (
+        {!started ? (
+          <Card style={styles.questionCard}>
+            <Text variant="bodyMedium">{getAssessmentPurpose(tool)}</Text>
+            <Text variant="small" color={theme.textSecondary}>
+              {tool === 'cantril'
+                ? 'One quick question. Pick the ladder step that best matches today.'
+                : `${questions.length} questions. Choose one option for each question.`}
+            </Text>
+            <Button title="Start assessment" onPress={() => setStarted(true)} />
+          </Card>
+        ) : !isComplete ? (
           <Animated.View
             key={current.id}
             entering={FadeInRight.duration(180)}
@@ -154,7 +166,11 @@ export default function AssessmentToolScreen() {
               </Text>
 
               <View style={styles.navActions}>
-                <Button title="Back" variant="secondary" onPress={goBack} disabled={index === 0} />
+                <Button
+                  title="Back"
+                  variant="secondary"
+                  onPress={index === 0 ? () => setStarted(false) : goBack}
+                />
                 <Button
                   title={index === questions.length - 1 ? 'Finish' : 'Next'}
                   onPress={goNext}

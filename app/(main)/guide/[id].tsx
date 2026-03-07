@@ -120,7 +120,7 @@ export default function GuideDetailScreen() {
 
   return (
     <ScreenContainer
-      style={[styles.container, { backgroundColor: '#F7F6EB' }]}
+      style={[styles.container, { backgroundColor: theme.background }]}
       ambient={false}
     >
       <View style={styles.characterDock} pointerEvents="none">

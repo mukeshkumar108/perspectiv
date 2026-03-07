@@ -84,7 +84,35 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="games/impulse-pop/play"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="games/memory-match"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="games/memory-match/play"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="games/stroop-bloom"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="games/stroop-bloom/play"
         options={{
           presentation: 'card',
           animation: 'slide_from_right',
