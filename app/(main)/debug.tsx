@@ -125,12 +125,17 @@ export default function DebugScreen() {
           <Button
             title="Open Skia Lab"
             variant="secondary"
-            onPress={() => router.push('/(main)/skia-lab' as any)}
+            onPress={() => router.push('/(main)/(tabs)/skia-lab' as any)}
           />
           <Button
             title="Open Character Lab"
             variant="secondary"
-            onPress={() => router.push('/(main)/character-lab' as any)}
+            onPress={() => router.push('/(main)/(tabs)/character-lab' as any)}
+          />
+          <Button
+            title="Open Games"
+            variant="secondary"
+            onPress={() => router.push('/(main)/(tabs)/games' as any)}
           />
           <Button title="Logout" variant="ghost" onPress={handleLogout} />
         </View>

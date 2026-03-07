@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Home, Clock, Plus, Captions, Wind } from 'lucide-react-native';
+import { Home, Clock, Plus, Captions, Wind, Sparkles } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/ui/useTheme';
 import { Text } from '@/src/ui';
@@ -65,6 +65,12 @@ export default function TabLayout() {
       router.push('/(main)/guides' as any);
     }, 140);
   };
+  const openGames = () => {
+    closeQuickMenu();
+    setTimeout(() => {
+      router.push('/(main)/(tabs)/games' as any);
+    }, 140);
+  };
 
   return (
     <View style={styles.container}>
@@ -103,16 +109,34 @@ export default function TabLayout() {
             ),
           }}
         />
-        <Tabs.Screen
-          name="history"
-          options={{
-            title: 'History',
-            tabBarIcon: ({ color, size }) => (
-              <Clock size={size} color={color} strokeWidth={1.5} />
-            ),
-          }}
-        />
-      </Tabs>
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, size }) => (
+            <Clock size={size} color={color} strokeWidth={1.5} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="games"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="skia-lab"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="character-lab"
+        options={{
+          href: null,
+        }}
+      />
+    </Tabs>
 
       <Animated.View style={[styles.fabWrap, { bottom: Math.max(24, insets.bottom + 20) }, fabStyle]}>
         <Pressable
@@ -137,6 +161,13 @@ export default function TabLayout() {
         pointerEvents={quickOpen ? 'auto' : 'none'}
         style={[styles.quickMenu, quickMenuStyle]}
       >
+        <Pressable
+          style={[styles.quickItem, { backgroundColor: theme.surface }]}
+          onPress={openGames}
+        >
+          <Sparkles size={16} color={theme.text} strokeWidth={2} />
+          <Text variant="small" color={theme.text}>Games</Text>
+        </Pressable>
         <Pressable
           style={[styles.quickItem, { backgroundColor: theme.surface }]}
           onPress={openGuides}

@@ -26,6 +26,10 @@ export default function AccountScreen() {
         <Text variant="body" color={theme.textSecondary}>
           Manage your session.
         </Text>
+        <View style={styles.links}>
+          <Button title="Profile" variant="secondary" onPress={() => router.push('/(main)/profile' as any)} />
+          <Button title="Assessments" variant="secondary" onPress={() => router.push('/(main)/assessments' as any)} />
+        </View>
       </View>
 
       <Button title="Sign out" variant="secondary" onPress={handleSignOut} />
@@ -46,5 +50,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     gap: spacing.sm,
+  },
+  links: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+    alignItems: 'flex-start',
   },
 });

@@ -94,12 +94,17 @@ export default function HistoryScreen() {
               </Text>
             </View>
             <View style={styles.headerActions}>
-              <Pressable onPress={() => router.push('/(main)/skia-lab' as any)} hitSlop={12}>
+              <Pressable onPress={() => router.push('/(main)/(tabs)/games' as any)} hitSlop={12}>
+                <Text variant="small" color={theme.textSecondary}>
+                  Games
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/(main)/(tabs)/skia-lab' as any)} hitSlop={12}>
                 <Text variant="small" color={theme.textSecondary}>
                   Skia Lab
                 </Text>
               </Pressable>
-              <Pressable onPress={() => router.push('/(main)/character-lab' as any)} hitSlop={12}>
+              <Pressable onPress={() => router.push('/(main)/(tabs)/character-lab' as any)} hitSlop={12}>
                 <Text variant="small" color={theme.textSecondary}>
                   Character Lab
                 </Text>
