@@ -115,7 +115,7 @@ async function request<T>(
       ...options,
       headers,
     });
-  } catch (error) {
+  } catch {
     const elapsedMs = Date.now() - startedAt;
     apiLogger.warn("response", {
       requestId,

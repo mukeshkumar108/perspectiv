@@ -122,6 +122,16 @@ export default function DebugScreen() {
             variant="secondary"
             onPress={() => handlePing('streaks')}
           />
+          <Button
+            title="Open Skia Lab"
+            variant="secondary"
+            onPress={() => router.push('/(main)/skia-lab' as any)}
+          />
+          <Button
+            title="Open Character Lab"
+            variant="secondary"
+            onPress={() => router.push('/(main)/character-lab' as any)}
+          />
           <Button title="Logout" variant="ghost" onPress={handleLogout} />
         </View>
 

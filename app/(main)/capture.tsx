@@ -12,7 +12,6 @@ import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text, spacing, TextInput, Button } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
@@ -25,7 +24,6 @@ import captureHeadlines from '@/src/content/captureHeadlines.json';
 export default function CaptureScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const authReady = useAuthReady();
   const captureMutation = useCaptureMoment();
   const inputRef = useRef<RNTextInput | null>(null);

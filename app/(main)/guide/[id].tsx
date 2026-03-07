@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { AVPlaybackStatus, Audio } from 'expo-av';
 import {
   ArrowLeft,
   Pause,
@@ -23,13 +24,6 @@ import { motion } from '@/src/ui/motion';
 import { Character } from '@/src/components';
 import { guidedSessions } from '@/src/content/guidedContent';
 
-type PlaybackStatus = {
-  isLoaded: boolean;
-  positionMillis: number;
-  durationMillis?: number;
-  isPlaying: boolean;
-};
-
 function formatMs(ms: number) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -45,7 +39,7 @@ export default function GuideDetailScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMs, setPositionMs] = useState(0);
   const [durationMs, setDurationMs] = useState((session?.durationMin ?? 5) * 60 * 1000);
-  const soundRef = useRef<any>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
   const progress = useSharedValue(0);
   const progressRatio = useMemo(() => {
     if (!durationMs || durationMs <= 0) return 0;
@@ -64,12 +58,7 @@ export default function GuideDetailScreen() {
     if (!session) return;
 
     const loadSound = async () => {
-      let AudioModule: any;
-      try {
-        AudioModule = require('expo-av').Audio;
-      } catch {
-        return;
-      }
+      const { Audio: AudioModule } = await import('expo-av');
       try {
         await AudioModule.setAudioModeAsync({
           playsInSilentModeIOS: true,
@@ -78,7 +67,7 @@ export default function GuideDetailScreen() {
         const { sound } = await AudioModule.Sound.createAsync(
           session.audioSource,
           { shouldPlay: false },
-          (status: PlaybackStatus) => {
+          (status: AVPlaybackStatus) => {
             if (!mounted || !status.isLoaded) return;
             setPositionMs(status.positionMillis);
             setDurationMs(status.durationMillis ?? (session.durationMin * 60 * 1000));

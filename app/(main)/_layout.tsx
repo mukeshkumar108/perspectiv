@@ -55,6 +55,20 @@ export default function MainLayout() {
           animation: 'slide_from_bottom',
         }}
       />
+      <Stack.Screen
+        name="skia-lab"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="character-lab"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
     </Stack>
   );
 }

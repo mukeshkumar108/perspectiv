@@ -352,7 +352,7 @@ export default function ReflectScreen() {
                 color={theme.textTertiary}
                 style={styles.reflectLabel}
               >
-                Today's reflection
+                Today&apos;s reflection
               </Text>
               <Text variant="title" style={styles.prompt}>
                 {todayData?.prompt?.text || "What's on your mind?"}

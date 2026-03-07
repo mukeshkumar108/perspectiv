@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { Alert, useColorScheme, View, Image } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as SplashScreen from 'expo-splash-screen';
-import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -20,9 +19,8 @@ import {
   InstrumentSans_500Medium,
 } from '@expo-google-fonts/instrument-sans';
 
-import { AuthProvider } from '@/src/auth';
+import { AuthProvider, useAuthReady } from '@/src/auth';
 import { setOnUnauthorized } from '@/src/api';
-import { useAuthReady } from '@/src/auth';
 import { useOutboxSync } from '@/src/storage';
 
 // Prevent splash screen from auto-hiding
@@ -116,7 +114,7 @@ export default function RootLayout() {
     splashTranslateY.value = withDelay(200, withTiming(-24, { duration: 600 }, () => {
       runOnJS(hideSplash)();
     }));
-  }, [fontsReady, minSplashElapsed]);
+  }, [fontsReady, minSplashElapsed, splashOpacity, splashTranslateY]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

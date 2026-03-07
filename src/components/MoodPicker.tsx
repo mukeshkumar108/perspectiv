@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import Svg, { Circle, Path, G } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -122,7 +122,6 @@ function MoodButton({
   iconSize: number;
   padding?: number;
 }) {
-  const theme = useTheme();
   const scale = useSharedValue(1);
   const baseScale = useSharedValue(1);
 

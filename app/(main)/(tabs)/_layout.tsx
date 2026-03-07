@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Tabs } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import Animated, {
   interpolate,
   useAnimatedStyle,

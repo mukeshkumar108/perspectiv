@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
+import * as Skia from '@shopify/react-native-skia';
 import { useTheme } from './useTheme';
 
 interface AmbientBackgroundProps {
@@ -12,13 +13,6 @@ function withAlpha(hex: string, alpha: number) {
     .toString(16)
     .padStart(2, '0');
   return `${hex}${channel}`;
-}
-
-let Skia: any = null;
-try {
-  Skia = require('@shopify/react-native-skia');
-} catch {
-  Skia = null;
 }
 
 function StaticAmbientBackground({ intensity }: { intensity: number }) {
@@ -63,27 +57,25 @@ function StaticAmbientBackground({ intensity }: { intensity: number }) {
 function AnimatedAmbientBackground({ intensity }: { intensity: number }) {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
+  const skiaAny = Skia as any;
   const {
     Canvas,
     Rect,
     LinearGradient,
     RadialGradient,
     vec,
-    useValue,
-    useComputedValue,
-    runTiming,
   } = Skia;
-  const progress = useValue(0);
+  const progress = skiaAny.useValue(0);
 
   useEffect(() => {
-    runTiming(progress, 1, { duration: 14000, loop: true, yoyo: true });
-  }, [progress]);
+    skiaAny.runTiming(progress, 1, { duration: 14000, loop: true, yoyo: true });
+  }, [progress, skiaAny]);
 
-  const glow1Center = useComputedValue(
+  const glow1Center = skiaAny.useComputedValue(
     () => vec(width * (0.2 + 0.6 * progress.current), height * 0.2),
     [progress, width, height]
   );
-  const glow2Center = useComputedValue(
+  const glow2Center = skiaAny.useComputedValue(
     () => vec(width * (0.8 - 0.5 * progress.current), height * 0.85),
     [progress, width, height]
   );
@@ -118,13 +110,11 @@ function AnimatedAmbientBackground({ intensity }: { intensity: number }) {
 }
 
 export function AmbientBackground({ intensity = 1 }: AmbientBackgroundProps) {
-  if (!Skia) {
-    return null;
-  }
+  const skiaAny = Skia as any;
   const hasAnimation =
-    typeof Skia.useValue === 'function' &&
-    typeof Skia.useComputedValue === 'function' &&
-    typeof Skia.runTiming === 'function';
+    typeof skiaAny.useValue === 'function' &&
+    typeof skiaAny.useComputedValue === 'function' &&
+    typeof skiaAny.runTiming === 'function';
 
   if (!hasAnimation) {
     return <StaticAmbientBackground intensity={intensity} />;

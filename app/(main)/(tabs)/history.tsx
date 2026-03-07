@@ -93,11 +93,23 @@ export default function HistoryScreen() {
                 A record of days.
               </Text>
             </View>
-            <Pressable onPress={() => router.push('/(main)/debug' as any)} hitSlop={12}>
-              <Text variant="small" color={theme.textSecondary}>
-                Debug
-              </Text>
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable onPress={() => router.push('/(main)/skia-lab' as any)} hitSlop={12}>
+                <Text variant="small" color={theme.textSecondary}>
+                  Skia Lab
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/(main)/character-lab' as any)} hitSlop={12}>
+                <Text variant="small" color={theme.textSecondary}>
+                  Character Lab
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/(main)/debug' as any)} hitSlop={12}>
+                <Text variant="small" color={theme.textSecondary}>
+                  Debug
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </Animated.View>
 
@@ -178,6 +190,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   subtitle: {
     marginTop: spacing.xs,

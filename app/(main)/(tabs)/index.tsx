@@ -3,6 +3,7 @@ import {
   View,
   StyleSheet,
   Pressable,
+  Image,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -15,7 +16,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Settings } from 'lucide-react-native';
-import { Image } from 'react-native';
 
 import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
@@ -83,7 +83,7 @@ export default function HomeScreen() {
     router.push('/(main)/reflect' as any);
   };
 
-  const runCharacterIntro = () => {
+  const runCharacterIntro = useCallback(() => {
     if (hasPlayedHomeCharacterIntro) {
       introTranslateY.value = 8;
       return;
@@ -100,7 +100,7 @@ export default function HomeScreen() {
         easing: Easing.out(Easing.exp),
       })
     );
-  };
+  }, [introTranslateY]);
 
   useFocusEffect(
     useCallback(
@@ -108,7 +108,7 @@ export default function HomeScreen() {
         runCharacterIntro();
         return undefined;
       },
-      []
+      [runCharacterIntro]
     )
   );
 
