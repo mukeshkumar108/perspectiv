@@ -33,17 +33,17 @@ export interface ScoreState {
 }
 
 export const COLOR_MAP: Record<BubbleColorKey, string> = {
-  gold: '#FFDC61',
-  coral: '#FF7DAF',
-  mint: '#77D7A7',
-  sky: '#7EC8FF',
+  gold: '#FFD11A',
+  coral: '#FF3D7A',
+  mint: '#00D08A',
+  sky: '#24B3FF',
 };
 
 export const TARGET_LABEL: Record<BubbleColorKey, string> = {
-  gold: 'Gold (Yellow)',
-  coral: 'Coral (Pink)',
-  mint: 'Mint (Green)',
-  sky: 'Sky (Blue)',
+  gold: 'Solar Gold',
+  coral: 'Candy Pink',
+  mint: 'Neon Mint',
+  sky: 'Electric Blue',
 };
 
 export const GAME_DURATIONS = [30, 60] as const;

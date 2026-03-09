@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Clock3, Flame, Trophy, X } from 'lucide-react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -10,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Card, ScreenContainer, Text, spacing } from '@/src/ui';
+import { Button, Card, ScreenContainer, SurfaceGradient, Text, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { addMemoryMatchSession } from '@/src/games/memoryMatch/storage';
 
@@ -150,7 +151,6 @@ function FlipCard({
 export default function MemoryMatchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ duration?: string; autostart?: string }>();
-  const theme = useTheme();
 
   const [phase, setPhase] = useState<'idle' | 'countdown' | 'playing' | 'results'>('idle');
   const [selectedDurationSec, setSelectedDurationSec] = useState<30 | 60>(30);
@@ -176,12 +176,6 @@ export default function MemoryMatchScreen() {
       durationMsRef.current = next * 1000;
     }
   }, [params.duration]);
-
-  useEffect(() => {
-    if (params.autostart === '1' && phase === 'idle') {
-      handleStart();
-    }
-  }, [params.autostart, phase]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -305,40 +299,41 @@ export default function MemoryMatchScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
-
       <View style={styles.content}>
-        <View style={styles.topBar}>
-          <View>
-            <Text variant="title">Memory Match</Text>
-            <Text variant="small" color={theme.textSecondary}>
-              Flip pairs fast. Keep your combo alive.
-            </Text>
+        <View style={styles.topHud}>
+          <View style={styles.hudInline}>
+            <View style={styles.hudItem}>
+              <Clock3 size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{mmss}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Trophy size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{score}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Flame size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>x{Math.max(1, combo)}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Text variant="caption" color="#675D86">Pairs</Text>
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{matches}/6</Text>
+            </View>
           </View>
-          <View style={styles.topMeta}>
-            <Text variant="small" color={theme.textSecondary}>Time</Text>
-            <Text variant="bodyMedium">{mmss}</Text>
-          </View>
+          <Pressable onPress={() => router.back()} style={styles.closeIconButton} hitSlop={12}>
+            <X size={20} color="#FFFFFF" strokeWidth={3} />
+          </Pressable>
         </View>
 
-        <Card style={styles.statsCard}>
-          <View style={styles.statCell}>
-            <Text variant="caption" color={theme.textTertiary}>Score</Text>
-            <Text variant="bodyMedium">{score}</Text>
-          </View>
-          <View style={styles.statCell}>
-            <Text variant="caption" color={theme.textTertiary}>Matches</Text>
-            <Text variant="bodyMedium">{matches}/6</Text>
-          </View>
-          <View style={styles.statCell}>
-            <Text variant="caption" color={theme.textTertiary}>Combo</Text>
-            <Text variant="bodyMedium">x{Math.max(1, combo)}</Text>
-          </View>
-        </Card>
-
-        <View style={[styles.gridWrap, { backgroundColor: theme.backgroundSecondary }]}>
+        <View style={styles.gridWrap}>
+          <SurfaceGradient
+            startColor="#070A1D"
+            endColor="#1D1142"
+            glows={[
+              { x: 0.12, y: 0.1, radius: 0.86, color: 'rgba(255,79,205,0.22)' },
+              { x: 0.84, y: 0.9, radius: 0.92, color: 'rgba(60,226,255,0.2)' },
+              { x: 0.8, y: 0.16, radius: 0.58, color: 'rgba(131,84,255,0.24)' },
+            ]}
+          />
           <View style={styles.grid}>
             {deck.map((card) => (
               <FlipCard
@@ -355,14 +350,14 @@ export default function MemoryMatchScreen() {
             <View style={styles.overlay}>
               {phase === 'countdown' ? (
                 <>
-                  <Text variant="hero">{countdown}</Text>
-                  <Text variant="body" color={theme.textSecondary}>Get ready</Text>
+                  <Text variant="hero" color="#FFFFFF">{countdown}</Text>
+                  <Text variant="body" color="#D6CFFF">Get ready</Text>
                 </>
               ) : phase === 'results' ? (
                 <Card style={styles.resultCard}>
-                  <Text variant="title">Round complete</Text>
-                  <Text variant="hero">{score}</Text>
-                  <Text variant="small" color={theme.textSecondary}>
+                  <Text variant="title" color="#1F1A2F">Round complete</Text>
+                  <Text variant="hero" color="#171322">{score}</Text>
+                  <Text variant="small" color="#5F557F">
                     {matches}/6 pairs • {moves} moves
                   </Text>
                   <View style={styles.resultActions}>
@@ -372,22 +367,22 @@ export default function MemoryMatchScreen() {
                 </Card>
               ) : (
                 <Card style={styles.startCard}>
-                  <Text variant="small" color={theme.textSecondary}>
+                  <Text variant="small" color="#5F557F">
                     Reveal two cards at a time and match pairs before time runs out.
                   </Text>
-                  <Text variant="bodyMedium">Choose round length</Text>
+                  <Text variant="bodyMedium" color="#1F1A2F">Choose round length</Text>
                   <View style={styles.modeRow}>
                     <Pressable
                       onPress={() => setSelectedDurationSec(30)}
                       style={[
                         styles.modePill,
                         {
-                          borderColor: selectedDurationSec === 30 ? theme.text : theme.border,
-                          backgroundColor: selectedDurationSec === 30 ? theme.text : theme.backgroundSecondary,
+                          borderColor: selectedDurationSec === 30 ? '#1F1A2F' : '#D4CCE9',
+                          backgroundColor: selectedDurationSec === 30 ? '#1F1A2F' : '#FFFFFF',
                         },
                       ]}
                     >
-                      <Text variant="bodyMedium" color={selectedDurationSec === 30 ? theme.surface : theme.text}>
+                      <Text variant="bodyMedium" color={selectedDurationSec === 30 ? '#FFFFFF' : '#5F557F'}>
                         30s
                       </Text>
                     </Pressable>
@@ -396,12 +391,12 @@ export default function MemoryMatchScreen() {
                       style={[
                         styles.modePill,
                         {
-                          borderColor: selectedDurationSec === 60 ? theme.text : theme.border,
-                          backgroundColor: selectedDurationSec === 60 ? theme.text : theme.backgroundSecondary,
+                          borderColor: selectedDurationSec === 60 ? '#1F1A2F' : '#D4CCE9',
+                          backgroundColor: selectedDurationSec === 60 ? '#1F1A2F' : '#FFFFFF',
                         },
                       ]}
                     >
-                      <Text variant="bodyMedium" color={selectedDurationSec === 60 ? theme.surface : theme.text}>
+                      <Text variant="bodyMedium" color={selectedDurationSec === 60 ? '#FFFFFF' : '#5F557F'}>
                         60s
                       </Text>
                     </Pressable>
@@ -418,34 +413,48 @@ export default function MemoryMatchScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-  },
   content: {
     flex: 1,
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  topBar: {
+  topHud: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  topMeta: {
-    alignItems: 'flex-end',
-  },
-  statsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  statCell: {
     alignItems: 'center',
-    minWidth: 84,
-    gap: 2,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  hudInline: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    flex: 1,
+    alignItems: 'center',
+  },
+  hudItem: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D6CFEE',
+    backgroundColor: '#F6F4FD',
+    paddingHorizontal: spacing.sm,
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hudValue: {
+    fontWeight: '700',
+  },
+  closeIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    backgroundColor: '#16131F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.xs,
   },
   gridWrap: {
     flex: 1,
@@ -453,6 +462,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     padding: spacing.sm,
+    borderWidth: 2,
+    borderColor: 'rgba(178,151,255,0.5)',
   },
   grid: {
     flexDirection: 'row',
@@ -500,13 +511,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,
-    backgroundColor: 'rgba(25,21,18,0.16)',
+    backgroundColor: 'rgba(17,13,34,0.22)',
     padding: spacing.md,
   },
   startCard: {
     width: '100%',
     maxWidth: 360,
     gap: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5DEFA',
   },
   modeRow: {
     flexDirection: 'row',
@@ -525,6 +539,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     gap: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5DEFA',
   },
   resultActions: {
     flexDirection: 'row',

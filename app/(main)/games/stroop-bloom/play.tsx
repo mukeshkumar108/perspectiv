@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Clock3, Flame, ListChecks, Trophy, X } from 'lucide-react-native';
+import * as Skia from '@shopify/react-native-skia';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -9,25 +11,31 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-import { Button, Card, ScreenContainer, Text, spacing } from '@/src/ui';
-import { useTheme } from '@/src/ui/useTheme';
+import { Button, Card, ScreenContainer, SurfaceGradient, Text, spacing } from '@/src/ui';
 import { addStroopBloomSession } from '@/src/games/stroopBloom/storage';
 
 type ColorKey = 'gold' | 'coral' | 'mint' | 'sky';
 
 const COLORS: Record<ColorKey, { label: string; hex: string }> = {
-  gold: { label: 'YELLOW', hex: '#FFDC61' },
-  coral: { label: 'PINK', hex: '#FF7DAF' },
-  mint: { label: 'GREEN', hex: '#77D7A7' },
-  sky: { label: 'BLUE', hex: '#7EC8FF' },
+  gold: { label: 'YELLOW', hex: '#FFD11A' },
+  coral: { label: 'PINK', hex: '#FF3D7A' },
+  mint: { label: 'GREEN', hex: '#00D08A' },
+  sky: { label: 'BLUE', hex: '#24B3FF' },
 };
 
 const COLOR_KEYS = Object.keys(COLORS) as ColorKey[];
+const NEON: Record<ColorKey, { glow: string; rim: string; deep: string; light: string }> = {
+  gold: { glow: 'rgba(255,220,64,0.34)', rim: 'rgba(255,203,76,0.7)', deep: '#D89205', light: '#FFD75A' },
+  coral: { glow: 'rgba(255,77,167,0.34)', rim: 'rgba(255,108,183,0.72)', deep: '#BE1D59', light: '#FF5E98' },
+  mint: { glow: 'rgba(36,255,185,0.32)', rim: 'rgba(64,226,170,0.7)', deep: '#069B6C', light: '#24DEA9' },
+  sky: { glow: 'rgba(68,205,255,0.34)', rim: 'rgba(92,193,242,0.72)', deep: '#0A7DC8', light: '#45BBF6' },
+};
 
 type Trial = {
   id: string;
   bubbleColor: ColorKey;
   wordColor: ColorKey;
+  distractorColor: ColorKey;
   options: [ColorKey, ColorKey];
   congruent: boolean;
   deadlineMs: number;
@@ -51,50 +59,92 @@ function median(values: number[]) {
   return sorted[mid];
 }
 
-function makeTrial(index: number): Trial {
-  const congruent = index < 4 ? true : Math.random() < 0.35;
+function makeTrial(
+  index: number,
+  context: { incongruentSeen: number; bubbleDistractorSeen: number },
+): Trial {
+  const incongruenceChance = index < 3 ? 0 : Math.min(0.72, 0.28 + (index - 3) * 0.035);
+  const congruent = Math.random() >= incongruenceChance;
   const bubbleColor = pickRandom(COLOR_KEYS);
   const wordColor = congruent
     ? bubbleColor
     : pickRandom(COLOR_KEYS.filter((key) => key !== bubbleColor));
-  const wrong = pickRandom(COLOR_KEYS.filter((key) => key !== wordColor));
+  const wrongPool = COLOR_KEYS.filter((key) => key !== wordColor);
+  const nonBubbleWrongPool = wrongPool.filter((key) => key !== bubbleColor);
+  let wrong: ColorKey;
+
+  if (congruent) {
+    wrong = pickRandom(wrongPool);
+  } else {
+    const nextIncongruentSeen = context.incongruentSeen + 1;
+    const targetBubbleDistractors = Math.round(nextIncongruentSeen * 0.7);
+    const needsBubbleToCatchUp = context.bubbleDistractorSeen < targetBubbleDistractors;
+    const canUseBubbleDistractor = bubbleColor !== wordColor;
+    const fallbackWrong = nonBubbleWrongPool.length > 0 ? pickRandom(nonBubbleWrongPool) : pickRandom(wrongPool);
+
+    if (canUseBubbleDistractor && (needsBubbleToCatchUp || Math.random() < 0.7)) {
+      wrong = bubbleColor;
+    } else {
+      wrong = fallbackWrong;
+    }
+  }
+
   const options = Math.random() > 0.5 ? [wordColor, wrong] : [wrong, wordColor];
-  const deadlineMs = Math.max(900, 2400 - Math.min(1200, index * 70));
+  const deadlineMs = Math.max(900, 2300 - Math.min(1400, index * 75));
 
   return {
     id: `trial_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     bubbleColor,
     wordColor,
+    distractorColor: wrong,
     options: options as [ColorKey, ColorKey],
     congruent,
     deadlineMs,
   };
 }
 
+function NeonMainBubble({ color }: { color: ColorKey }) {
+  const { Canvas, Circle, Group, BlurMask, RadialGradient, vec } = Skia;
+  const tint = NEON[color];
+  return (
+    <Canvas style={styles.mainBubbleCanvas}>
+      <Group>
+        <Circle cx={180} cy={180} r={112} color={tint.glow}>
+          <BlurMask blur={52} style="normal" />
+        </Circle>
+        <Circle cx={180} cy={180} r={90} color={tint.glow}>
+          <BlurMask blur={28} style="normal" />
+        </Circle>
+      </Group>
+
+      <Circle cx={180} cy={180} r={92}>
+        <RadialGradient
+          c={vec(160, 158)}
+          r={100}
+          colors={[tint.light, COLORS[color].hex, tint.deep]}
+        />
+      </Circle>
+      <Circle cx={180} cy={180} r={88} color={tint.rim} style="stroke" strokeWidth={1.2}>
+        <BlurMask blur={0.8} style="normal" />
+      </Circle>
+    </Canvas>
+  );
+}
+
 export default function StroopBloomScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ duration?: string; autostart?: string }>();
-  const theme = useTheme();
 
   const [phase, setPhase] = useState<'idle' | 'countdown' | 'playing' | 'results'>('idle');
   const [selectedDurationSec, setSelectedDurationSec] = useState<30 | 60>(30);
   const [countdown, setCountdown] = useState(3);
   const [timeLeftMs, setTimeLeftMs] = useState(selectedDurationSec * 1000);
   const [trialIndex, setTrialIndex] = useState(0);
-  const [trial, setTrial] = useState<Trial>(() => makeTrial(0));
+  const [trial, setTrial] = useState<Trial>(() => makeTrial(0, { incongruentSeen: 0, bubbleDistractorSeen: 0 }));
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [results, setResults] = useState<TrialResult[]>([]);
-  const [noiseSeed] = useState(() =>
-    Array.from({ length: 18 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: 12 + Math.random() * 28,
-      alpha: 0.12 + Math.random() * 0.18,
-    }))
-  );
   const [saved, setSaved] = useState(false);
 
   const startedAtRef = useRef(0);
@@ -103,6 +153,8 @@ export default function StroopBloomScreen() {
   const trialDeadlineRef = useRef(0);
   const trialRef = useRef<Trial>(trial);
   const trialIndexRef = useRef(0);
+  const incongruentSeenRef = useRef(0);
+  const bubbleDistractorSeenRef = useRef(0);
   const growProgress = useSharedValue(0);
 
   useEffect(() => {
@@ -113,12 +165,6 @@ export default function StroopBloomScreen() {
       durationMsRef.current = next * 1000;
     }
   }, [params.duration]);
-
-  useEffect(() => {
-    if (params.autostart === '1' && phase === 'idle') {
-      startSession();
-    }
-  }, [params.autostart, phase]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -140,7 +186,18 @@ export default function StroopBloomScreen() {
   }, [phase]);
 
   const startTrial = (nextIndex: number) => {
-    const nextTrial = makeTrial(nextIndex);
+    const nextTrial = makeTrial(nextIndex, {
+      incongruentSeen: incongruentSeenRef.current,
+      bubbleDistractorSeen: bubbleDistractorSeenRef.current,
+    });
+
+    if (!nextTrial.congruent) {
+      incongruentSeenRef.current += 1;
+      if (nextTrial.distractorColor === nextTrial.bubbleColor) {
+        bubbleDistractorSeenRef.current += 1;
+      }
+    }
+
     trialRef.current = nextTrial;
     trialIndexRef.current = nextIndex;
     setTrial(nextTrial);
@@ -154,6 +211,8 @@ export default function StroopBloomScreen() {
 
   useEffect(() => {
     if (phase !== 'playing') return;
+    incongruentSeenRef.current = 0;
+    bubbleDistractorSeenRef.current = 0;
     startTrial(0);
     const id = setInterval(() => {
       const now = Date.now();
@@ -182,7 +241,7 @@ export default function StroopBloomScreen() {
   }, [phase]);
 
   const bubbleGrowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + growProgress.value * 0.34 }],
+    transform: [{ scale: 2.22 + growProgress.value * 0.48 }],
   }));
 
   const handleChoice = (choice: ColorKey) => {
@@ -267,81 +326,70 @@ export default function StroopBloomScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
-
       <View style={styles.content}>
-        <View style={styles.topBar}>
-          <View>
-            <Text variant="title">Stroop Bloom</Text>
-            <Text variant="small" color={theme.textSecondary}>
-              Tap the color named by the word, not the bubble.
-            </Text>
+        <View style={styles.topHud}>
+          <View style={styles.hudInline}>
+            <View style={styles.hudItem}>
+              <Clock3 size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{mmss}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Trophy size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{score}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Flame size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{streak}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <ListChecks size={14} color="#5E547D" strokeWidth={2.3} />
+              <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{stats.trials}</Text>
+            </View>
           </View>
-          <View style={styles.topMeta}>
-            <Text variant="small" color={theme.textSecondary}>Time</Text>
-            <Text variant="bodyMedium">{mmss}</Text>
-          </View>
+          <Pressable onPress={() => router.back()} style={styles.closeIconButton} hitSlop={12}>
+            <X size={20} color="#FFFFFF" strokeWidth={3} />
+          </Pressable>
         </View>
 
-        <Card style={styles.statsCard}>
-          <View style={styles.statCell}>
-            <Text variant="caption" color={theme.textTertiary}>Score</Text>
-            <Text variant="bodyMedium">{score}</Text>
-          </View>
-          <View style={styles.statCell}>
-            <Text variant="caption" color={theme.textTertiary}>Streak</Text>
-            <Text variant="bodyMedium">{streak}</Text>
-          </View>
-          <View style={styles.statCell}>
-            <Text variant="caption" color={theme.textTertiary}>Trials</Text>
-            <Text variant="bodyMedium">{stats.trials}</Text>
-          </View>
-        </Card>
-
-        <View style={[styles.arena, { backgroundColor: theme.backgroundSecondary }]}>
-          {noiseSeed.map((dot) => (
-            <View
-              key={dot.id}
-              style={[
-                styles.noiseDot,
-                {
-                  left: `${dot.x}%`,
-                  top: `${dot.y}%`,
-                  width: dot.size,
-                  height: dot.size,
-                  opacity: dot.alpha,
-                },
-              ]}
-            />
-          ))}
+        <View style={styles.arena}>
+          <SurfaceGradient
+            startColor="#070A1D"
+            endColor="#1D1142"
+            glows={[
+              { x: 0.14, y: 0.12, radius: 0.9, color: 'rgba(255,79,205,0.22)' },
+              { x: 0.86, y: 0.9, radius: 0.92, color: 'rgba(60,226,255,0.2)' },
+              { x: 0.82, y: 0.14, radius: 0.62, color: 'rgba(131,84,255,0.28)' },
+            ]}
+          />
 
           <View style={styles.centerWrap}>
             <Animated.View
               style={[
-                styles.mainBubble,
+                styles.mainBubbleMotion,
                 bubbleGrowStyle,
-                { backgroundColor: COLORS[trial.bubbleColor].hex, borderColor: 'rgba(255,255,255,0.58)' },
               ]}
             >
-              <Text variant="title" color="#FFFFFF">
+              <NeonMainBubble color={trial.bubbleColor} />
+            </Animated.View>
+            <View pointerEvents="none" style={styles.wordWrap}>
+              <Text variant="title" color="#FFFFFF" style={styles.wordLabel}>
                 {COLORS[trial.wordColor].label}
               </Text>
-            </Animated.View>
+            </View>
           </View>
 
           <View style={styles.choiceRow}>
             {trial.options.map((option) => (
               <Pressable
                 key={option}
-                style={[
-                  styles.choiceButton,
-                  { backgroundColor: COLORS[option].hex, borderColor: 'rgba(255,255,255,0.8)' },
-                ]}
+                style={styles.choiceButton}
                 onPress={() => handleChoice(option)}
                 disabled={phase !== 'playing'}
-              />
+              >
+                <View style={[styles.choiceControl, { backgroundColor: COLORS[option].hex }]}>
+                  <View style={styles.choiceControlRim} />
+                </View>
+              </Pressable>
             ))}
           </View>
 
@@ -349,18 +397,18 @@ export default function StroopBloomScreen() {
             <View style={styles.overlay}>
               {phase === 'countdown' ? (
                 <>
-                  <Text variant="hero">{countdown}</Text>
-                  <Text variant="body" color={theme.textSecondary}>Get ready</Text>
+                  <Text variant="hero" color="#FFFFFF">{countdown}</Text>
+                  <Text variant="body" color="#D6CFFF">Get ready</Text>
                 </>
               ) : phase === 'results' ? (
                 <Card style={styles.resultCard}>
-                  <Text variant="title">Round complete</Text>
-                  <Text variant="hero">{score}</Text>
-                  <Text variant="small" color={theme.textSecondary}>Accuracy {stats.accuracy}%</Text>
-                  <Text variant="small" color={theme.textSecondary}>
+                  <Text variant="title" color="#1F1A2F">Round complete</Text>
+                  <Text variant="hero" color="#171322">{score}</Text>
+                  <Text variant="small" color="#5F557F">Accuracy {stats.accuracy}%</Text>
+                  <Text variant="small" color="#5F557F">
                     Incongruent acc {stats.incongruentAccuracy}% • Median {stats.reactionMedian} ms
                   </Text>
-                  <Text variant="small" color={theme.textSecondary}>
+                  <Text variant="small" color="#5F557F">
                     Stroop cost {stats.stroopCost} ms • Best streak {bestStreak}
                   </Text>
                   <View style={styles.resultActions}>
@@ -370,22 +418,22 @@ export default function StroopBloomScreen() {
                 </Card>
               ) : (
                 <Card style={styles.startCard}>
-                  <Text variant="small" color={theme.textSecondary}>
+                  <Text variant="small" color="#5F557F">
                     Read the word in the center bubble and tap its meaning color below. Ignore the bubble color.
                   </Text>
-                  <Text variant="bodyMedium">Choose round length</Text>
+                  <Text variant="bodyMedium" color="#1F1A2F">Choose round length</Text>
                   <View style={styles.modeRow}>
                     <Pressable
                       onPress={() => setSelectedDurationSec(30)}
                       style={[
                         styles.modePill,
                         {
-                          borderColor: selectedDurationSec === 30 ? theme.text : theme.border,
-                          backgroundColor: selectedDurationSec === 30 ? theme.text : theme.backgroundSecondary,
+                          borderColor: selectedDurationSec === 30 ? '#1F1A2F' : '#D4CCE9',
+                          backgroundColor: selectedDurationSec === 30 ? '#1F1A2F' : '#FFFFFF',
                         },
                       ]}
                     >
-                      <Text variant="bodyMedium" color={selectedDurationSec === 30 ? theme.surface : theme.text}>
+                      <Text variant="bodyMedium" color={selectedDurationSec === 30 ? '#FFFFFF' : '#5F557F'}>
                         30s
                       </Text>
                     </Pressable>
@@ -394,12 +442,12 @@ export default function StroopBloomScreen() {
                       style={[
                         styles.modePill,
                         {
-                          borderColor: selectedDurationSec === 60 ? theme.text : theme.border,
-                          backgroundColor: selectedDurationSec === 60 ? theme.text : theme.backgroundSecondary,
+                          borderColor: selectedDurationSec === 60 ? '#1F1A2F' : '#D4CCE9',
+                          backgroundColor: selectedDurationSec === 60 ? '#1F1A2F' : '#FFFFFF',
                         },
                       ]}
                     >
-                      <Text variant="bodyMedium" color={selectedDurationSec === 60 ? theme.surface : theme.text}>
+                      <Text variant="bodyMedium" color={selectedDurationSec === 60 ? '#FFFFFF' : '#5F557F'}>
                         60s
                       </Text>
                     </Pressable>
@@ -416,39 +464,56 @@ export default function StroopBloomScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-  },
   content: {
     flex: 1,
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  topBar: {
+  topHud: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  topMeta: {
-    alignItems: 'flex-end',
-  },
-  statsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statCell: {
     alignItems: 'center',
-    minWidth: 84,
-    gap: 2,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  hudInline: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    flex: 1,
+    alignItems: 'center',
+  },
+  hudItem: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D6CFEE',
+    backgroundColor: '#F6F4FD',
+    paddingHorizontal: spacing.sm,
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hudValue: {
+    fontWeight: '700',
+  },
+  closeIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    backgroundColor: '#16131F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.xs,
   },
   arena: {
     flex: 1,
     borderRadius: 28,
     overflow: 'hidden',
     padding: spacing.md,
+    borderWidth: 2,
+    borderColor: 'rgba(178,151,255,0.5)',
   },
   centerWrap: {
     flex: 1,
@@ -456,45 +521,80 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 3,
   },
-  mainBubble: {
-    width: 188,
-    height: 188,
+  mainBubbleMotion: {
+    width: 260,
+    height: 260,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+  },
+  mainBubbleCanvas: {
+    width: 360,
+    height: 360,
+    position: 'absolute',
+    left: -50,
+    top: -50,
+  },
+  wordWrap: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wordLabel: {
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   choiceRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: spacing.xl,
-    paddingBottom: spacing.sm,
+    gap: spacing.lg,
+    marginTop: -10,
+    paddingBottom: spacing.xl,
     zIndex: 3,
   },
   choiceButton: {
-    width: 72,
-    height: 72,
+    width: 92,
+    height: 92,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  choiceControl: {
+    width: 74,
+    height: 74,
+    borderRadius: 999,
+    borderWidth: 3,
+    borderColor: 'rgba(27,22,48,0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  choiceControlRim: {
+    width: '86%',
+    height: '86%',
     borderRadius: 999,
     borderWidth: 2,
-  },
-  noiseDot: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: '#888888',
-    zIndex: 1,
+    borderColor: 'rgba(255,255,255,0.72)',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
-    backgroundColor: 'rgba(25,21,18,0.18)',
+    backgroundColor: 'rgba(17,13,34,0.22)',
     padding: spacing.md,
   },
   startCard: {
     width: '100%',
     maxWidth: 360,
     gap: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5DEFA',
   },
   modeRow: {
     flexDirection: 'row',
@@ -513,6 +613,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     gap: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5DEFA',
   },
   resultActions: {
     flexDirection: 'row',

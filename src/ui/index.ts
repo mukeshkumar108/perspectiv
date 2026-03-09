@@ -6,3 +6,4 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { ScreenContainer } from './ScreenContainer';
 export { TextInput } from './TextInput';
+export { SurfaceGradient } from './SurfaceGradient';

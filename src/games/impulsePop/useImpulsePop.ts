@@ -18,6 +18,10 @@ import {
 
 const COLORS = Object.keys(COLOR_MAP) as BubbleColorKey[];
 
+function randomTargetColor(): BubbleColorKey {
+  return COLORS[Math.floor(Math.random() * COLORS.length)] ?? 'gold';
+}
+
 const defaultScoreState: ScoreState = {
   score: 0,
   streak: 0,
@@ -40,7 +44,7 @@ export function useImpulsePop({ width, height, topInset = 0 }: UseImpulsePopArgs
   const [selectedDurationSec, setSelectedDurationSec] = useState<(typeof GAME_DURATIONS)[number]>(30);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [timeLeftMs, setTimeLeftMs] = useState(selectedDurationSec * 1000);
-  const [targetColor, setTargetColor] = useState<BubbleColorKey>('gold');
+  const [targetColor, setTargetColor] = useState<BubbleColorKey>(() => randomTargetColor());
   const [bubbles, setBubbles] = useState<BubbleEntity[]>([]);
   const [bursts, setBursts] = useState<BurstEntity[]>([]);
   const [score, setScore] = useState<ScoreState>(defaultScoreState);
@@ -54,18 +58,44 @@ export function useImpulsePop({ width, height, topInset = 0 }: UseImpulsePopArgs
   const safeHeight = Math.max(height, 420);
   const safeTopInset = Math.max(0, topInset);
 
-  const pickTargetColor = useCallback(() => {
-    return COLORS[Math.floor(Math.random() * COLORS.length)] ?? 'gold';
-  }, []);
-
   const buildBubble = useCallback(
-    (now: number, forcedTarget?: boolean): BubbleEntity => {
+    (now: number, existing: BubbleEntity[], forcedTarget?: boolean): BubbleEntity => {
       const size = Math.round(randomInRange(BUBBLE_RULES.sizeMin, BUBBLE_RULES.sizeMax));
       const margin = size + 8;
-      const x = randomInRange(margin, Math.max(margin + 1, safeWidth - margin));
       const yMin = margin + safeTopInset;
       const yMax = Math.max(yMin + 1, safeHeight - margin);
-      const y = randomInRange(yMin, yMax);
+      const minX = margin;
+      const maxX = Math.max(margin + 1, safeWidth - margin);
+
+      let x = randomInRange(minX, maxX);
+      let y = randomInRange(yMin, yMax);
+      let bestCandidate = { x, y, clearance: -1 };
+
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const candidateX = randomInRange(minX, maxX);
+        const candidateY = randomInRange(yMin, yMax);
+
+        const nearestDistance = existing.reduce((nearest, bubble) => {
+          const dx = bubble.x - candidateX;
+          const dy = bubble.y - candidateY;
+          const centerDistance = Math.hypot(dx, dy);
+          return Math.min(nearest, centerDistance - (bubble.size + size) * 0.56);
+        }, Number.POSITIVE_INFINITY);
+
+        if (nearestDistance > bestCandidate.clearance) {
+          bestCandidate = { x: candidateX, y: candidateY, clearance: nearestDistance };
+        }
+        if (nearestDistance > 0) {
+          x = candidateX;
+          y = candidateY;
+          break;
+        }
+      }
+      if (bestCandidate.clearance > -1) {
+        x = bestCandidate.x;
+        y = bestCandidate.y;
+      }
+
       const isTarget =
         forcedTarget === true ? true : Math.random() < BUBBLE_RULES.targetChance;
       const color = isTarget
@@ -98,11 +128,9 @@ export function useImpulsePop({ width, height, topInset = 0 }: UseImpulsePopArgs
 
   const startSession = useCallback(() => {
     resetState();
-    const nextTarget = pickTargetColor();
-    setTargetColor(nextTarget);
     gameDurationMsRef.current = selectedDurationSec * 1000;
     setPhase('countdown');
-  }, [pickTargetColor, resetState, selectedDurationSec]);
+  }, [resetState, selectedDurationSec]);
 
   const endSession = useCallback(() => {
     setRoundEndedAt(Date.now());
@@ -174,7 +202,7 @@ export function useImpulsePop({ width, height, topInset = 0 }: UseImpulsePopArgs
         if (now >= nextSpawnAtRef.current && next.length < BUBBLE_RULES.maxOnScreen) {
           const hasTarget = next.some((b) => b.isTarget);
           const forceTarget = !hasTarget && Math.random() > 0.45;
-          next = [...next, buildBubble(now, forceTarget ? true : undefined)];
+          next = [...next, buildBubble(now, next, forceTarget ? true : undefined)];
           nextSpawnAtRef.current = now + randomInRange(spawnInterval * 0.85, spawnInterval * 1.15);
         }
 
@@ -244,6 +272,7 @@ export function useImpulsePop({ width, height, topInset = 0 }: UseImpulsePopArgs
   );
 
   const playAgain = useCallback(() => {
+    setTargetColor(randomTargetColor());
     setPhase('idle');
     resetState();
   }, [resetState]);
