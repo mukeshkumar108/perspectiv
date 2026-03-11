@@ -22,7 +22,6 @@ import { ApiError, type VoiceFlow, type VoiceReflectionTrack } from '@/src/api';
 import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
-  getStartAssistantText,
   getEndErrorAction,
   getTalkActionState,
   shouldRetryFinalize,
@@ -467,14 +466,9 @@ export default function VoiceSessionScreen() {
         selectedFlowOption.flow,
         result.assistant,
       );
-      const startAssistantText = getStartAssistantText(
-        selectedFlowOption.flow,
-        result.assistant,
-        selectedFlowOption.reflectionTrack,
-      );
       setIsHandshakePending(shouldWaitForHandshake);
       await presentAssistantMessage({
-        text: startAssistantText,
+        text: result.assistant.text,
         audioUrl: result.assistant.audioUrl,
         ttsAvailable: result.assistant.ttsAvailable,
         awaitPlaybackCompletion: shouldWaitForHandshake,

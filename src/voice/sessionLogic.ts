@@ -1,20 +1,7 @@
 import { ApiError } from '../api';
-import type { VoiceFlow, VoiceReflectionTrack } from '../api';
+import type { VoiceFlow } from '../api';
 
 export const FINALIZE_RETRY_DELAYS_MS = [250, 500, 1000] as const;
-export const FIRST_REFLECTION_DAY0_HANDSHAKE_TEXT = [
-  'Welcome to your first real session.',
-  'I am sooo excited you are here.',
-  "Forget everything, forget the app, forget what you think this is supposed to be — just tell me.",
-  'How was today?',
-].join('\n');
-export const FIRST_REFLECTION_CORE_HANDSHAKE_TEXT = [
-  'You showed up again. I love that about you!',
-  'So go on.',
-  'Tell me about today.',
-  '',
-  'Good, bad, or somewhere in the middle?',
-].join('\n');
 
 export function getCompleteActionState(readyToEnd: boolean) {
   return {
@@ -30,22 +17,6 @@ export function shouldWaitForHandshakePlayback(
   const requiresHandshakeGate =
     flow === 'onboarding' || flow === 'first_reflection';
   return requiresHandshakeGate && Boolean(assistant.audioUrl);
-}
-
-export function getStartAssistantText(
-  flow: VoiceFlow,
-  assistant: { text: string; audioUrl: string | null },
-  reflectionTrack?: VoiceReflectionTrack,
-) {
-  if (flow === 'first_reflection' && assistant.audioUrl) {
-    if (reflectionTrack === 'day0') {
-      return FIRST_REFLECTION_DAY0_HANDSHAKE_TEXT;
-    }
-    if (reflectionTrack === 'core') {
-      return FIRST_REFLECTION_CORE_HANDSHAKE_TEXT;
-    }
-  }
-  return assistant.text;
 }
 
 export function getTalkActionState(params: {

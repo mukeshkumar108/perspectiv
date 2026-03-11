@@ -2,9 +2,6 @@ import { ApiError } from '../src/api';
 import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
-  FIRST_REFLECTION_CORE_HANDSHAKE_TEXT,
-  FIRST_REFLECTION_DAY0_HANDSHAKE_TEXT,
-  getStartAssistantText,
   getCompleteActionState,
   getEndErrorAction,
   getTalkActionState,
@@ -75,36 +72,6 @@ describe('voice-session logic', () => {
         ttsAvailable: true,
       }),
     ).toBe(true);
-  });
-
-  it('uses fixed day0 first_reflection text when handshake audio exists', () => {
-    expect(
-      getStartAssistantText('first_reflection', {
-        text: 'backend text',
-        audioUrl: 'https://cdn.example.com/day0.mp3',
-      }, 'day0'),
-    ).toBe(FIRST_REFLECTION_DAY0_HANDSHAKE_TEXT);
-
-    expect(
-      getStartAssistantText('first_reflection', {
-        text: 'backend text',
-        audioUrl: null,
-      }, 'day0'),
-    ).toBe('backend text');
-
-    expect(
-      getStartAssistantText('onboarding', {
-        text: 'onboarding hello',
-        audioUrl: 'https://cdn.example.com/onboarding.mp3',
-      }),
-    ).toBe('onboarding hello');
-
-    expect(
-      getStartAssistantText('first_reflection', {
-        text: 'core intro from backend',
-        audioUrl: 'https://cdn.example.com/core.mp3',
-      }, 'core'),
-    ).toBe(FIRST_REFLECTION_CORE_HANDSHAKE_TEXT);
   });
 
   it('keeps talk disabled while handshake is pending and enables after', () => {
