@@ -420,6 +420,125 @@ describe('API Client', () => {
       expect(turn.session.readyToEnd).toBe(false);
     });
 
+    it('should send reflectionTrack=core on start and support staged->finalize for core track', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 201,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_core_1',
+                flow: 'first_reflection',
+                state: 'active',
+                dateLocal: '2026-03-11',
+                readyToEnd: false,
+                nextTurnIndex: 1,
+              },
+              assistant: {
+                text: 'Core reflection intro.',
+                audioUrl: 'https://cdn.example.com/core-intro.mp3',
+                audioMimeType: 'audio/mpeg',
+                audioExpiresAt: '2026-03-11T10:00:00.000Z',
+                ttsAvailable: true,
+              },
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_core_1',
+                state: 'active',
+                readyToEnd: false,
+                nextTurnIndex: 2,
+              },
+              turn: {
+                id: 'vturn_core_1',
+                index: 1,
+                clientTurnId: '45454545-4545-4454-8454-454545454545',
+                userTranscript: { text: 'Core staged transcript' },
+                assistantPending: true,
+              },
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_core_1',
+                state: 'active',
+                readyToEnd: true,
+                nextTurnIndex: 3,
+              },
+              turn: {
+                id: 'vturn_core_1',
+                index: 1,
+                clientTurnId: '45454545-4545-4454-8454-454545454545',
+                userTranscript: { text: 'Core staged transcript' },
+                assistant: {
+                  text: 'Core finalized reply.',
+                  audioUrl: 'https://cdn.example.com/core-final.mp3',
+                  audioMimeType: 'audio/mpeg',
+                  audioExpiresAt: '2026-03-11T10:05:00.000Z',
+                  ttsAvailable: true,
+                },
+                safety: {
+                  flagged: false,
+                  reason: 'none',
+                  safeResponse: null,
+                },
+              },
+            }),
+        });
+
+      const start = await api.startVoiceSession({
+        flow: 'first_reflection',
+        reflectionTrack: 'core',
+        clientSessionId: '13131313-1313-4131-8131-131313131313',
+        dateLocal: '2026-03-11',
+      });
+      expect(start.session.id).toBe('vsn_core_1');
+
+      const startBody = JSON.parse(
+        mockFetch.mock.calls[0][1].body as string,
+      ) as Record<string, unknown>;
+      expect(startBody.flow).toBe('first_reflection');
+      expect(startBody.reflectionTrack).toBe('core');
+
+      const clientTurnId = '45454545-4545-4454-8454-454545454545';
+      const staged = await api.submitVoiceTurn({
+        sessionId: start.session.id,
+        clientTurnId,
+        responseMode: 'staged',
+        audioUri: 'file:///tmp/core-staged.m4a',
+        audioMimeType: 'audio/x-m4a',
+      });
+      expect(staged.turn.assistantPending).toBe(true);
+      expect(staged.turn.userTranscript.text).toBe('Core staged transcript');
+
+      const finalized = await api.submitVoiceTurn({
+        sessionId: start.session.id,
+        clientTurnId,
+        responseMode: 'finalize',
+      });
+      expect(finalized.turn.assistant?.text).toBe('Core finalized reply.');
+
+      const stagedBody = mockFetch.mock.calls[1][1].body as FormData;
+      expect(stagedBody.get('responseMode')).toBe('staged');
+      expect(stagedBody.get('clientTurnId')).toBe(clientTurnId);
+      expect(stagedBody.get('audio')).toBeTruthy();
+
+      const finalizeBody = mockFetch.mock.calls[2][1].body as FormData;
+      expect(finalizeBody.get('responseMode')).toBe('finalize');
+      expect(finalizeBody.get('clientTurnId')).toBe(clientTurnId);
+      expect(finalizeBody.get('audio')).toBeNull();
+    });
+
     it('should support staged turn response with assistantPending', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

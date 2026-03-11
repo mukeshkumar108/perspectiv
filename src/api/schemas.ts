@@ -113,6 +113,8 @@ export type MomentsListResponse = z.infer<typeof MomentsListResponseSchema>;
 // Voice session
 export const VoiceFlowSchema = z.enum(['onboarding', 'first_reflection']);
 export type VoiceFlow = z.infer<typeof VoiceFlowSchema>;
+export const VoiceReflectionTrackSchema = z.enum(['day0', 'core']);
+export type VoiceReflectionTrack = z.infer<typeof VoiceReflectionTrackSchema>;
 
 export const VoiceSessionStateSchema = z.enum([
   'active',
@@ -145,9 +147,18 @@ export const VoiceSessionEnvelopeSchema = z.object({
 export const VoiceStartRequestSchema = z.object({
   flow: VoiceFlowSchema,
   clientSessionId: z.string().min(8),
+  reflectionTrack: VoiceReflectionTrackSchema.optional(),
   dateLocal: z.string().optional(),
   locale: z.string().optional(),
   ttsVoiceId: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.flow === 'onboarding' && data.reflectionTrack) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'reflectionTrack is only valid for first_reflection flow',
+      path: ['reflectionTrack'],
+    });
+  }
 });
 
 export type VoiceStartRequest = z.infer<typeof VoiceStartRequestSchema>;

@@ -18,7 +18,7 @@ import {
   useStartVoiceSession,
   useSubmitVoiceTurn,
 } from '@/src/hooks';
-import { ApiError, type VoiceFlow } from '@/src/api';
+import { ApiError, type VoiceFlow, type VoiceReflectionTrack } from '@/src/api';
 import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
@@ -34,6 +34,37 @@ type Message = {
   role: 'assistant' | 'user' | 'system' | 'typing';
   text: string;
 };
+
+type FlowOption = {
+  id: 'onboarding' | 'first_reflection_day0' | 'first_reflection_core';
+  title: string;
+  subtitle: string;
+  flow: VoiceFlow;
+  reflectionTrack?: VoiceReflectionTrack;
+};
+
+const FLOW_OPTIONS: FlowOption[] = [
+  {
+    id: 'onboarding',
+    title: 'Onboarding',
+    subtitle: 'Collect profile details and setup preferences.',
+    flow: 'onboarding',
+  },
+  {
+    id: 'first_reflection_day0',
+    title: 'First Reflection Day0',
+    subtitle: 'Run the Day0 first-reflection intro and prompt.',
+    flow: 'first_reflection',
+    reflectionTrack: 'day0',
+  },
+  {
+    id: 'first_reflection_core',
+    title: 'Reflection Core',
+    subtitle: 'Run the default core reflection handshake and prompt.',
+    flow: 'first_reflection',
+    reflectionTrack: 'core',
+  },
+];
 
 const VOICE_STAGED_TURNS_ENABLED = (() => {
   const value = (process.env.EXPO_PUBLIC_VOICE_STAGED_TURNS_ENABLED || '1')
@@ -83,7 +114,7 @@ export default function VoiceSessionScreen() {
   const scrollRef = useRef<ScrollView | null>(null);
   const startedAtMsRef = useRef<number | null>(null);
 
-  const [selectedFlow, setSelectedFlow] = useState<VoiceFlow | null>(null);
+  const [selectedFlowOptionId, setSelectedFlowOptionId] = useState<FlowOption['id'] | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isHandshakePending, setIsHandshakePending] = useState(false);
@@ -95,6 +126,10 @@ export default function VoiceSessionScreen() {
     message: string;
     resources: Array<{ label: string; value: string }>;
   } | null>(null);
+  const selectedFlowOption = useMemo(
+    () => FLOW_OPTIONS.find((option) => option.id === selectedFlowOptionId) ?? null,
+    [selectedFlowOptionId],
+  );
 
   const isBusy =
     startMutation.isPending || turnMutation.isPending || endMutation.isPending;
@@ -125,9 +160,9 @@ export default function VoiceSessionScreen() {
     if (sessionId) {
       return { label: 'Press to talk when ready', spinner: false };
     }
-    if (selectedFlow) {
+    if (selectedFlowOption) {
       return {
-        label: selectedFlow === 'onboarding' ? 'Onboarding selected' : 'First reflection selected',
+        label: `${selectedFlowOption.title} selected`,
         spinner: false,
       };
     }
@@ -137,7 +172,7 @@ export default function VoiceSessionScreen() {
     isAssistantThinking,
     isHandshakePending,
     isRecording,
-    selectedFlow,
+    selectedFlowOption,
     sessionId,
     startMutation.isPending,
     turnMutation.isPending,
@@ -407,7 +442,7 @@ export default function VoiceSessionScreen() {
   }, [appendMessage]);
 
   const handleStartSession = async () => {
-    if (!selectedFlow) return;
+    if (!selectedFlowOption) return;
     setSafeResponse(null);
     setEndHint(null);
     setIsHandshakePending(false);
@@ -417,21 +452,25 @@ export default function VoiceSessionScreen() {
 
     try {
       const result = await startMutation.mutateAsync({
-        flow: selectedFlow,
+        flow: selectedFlowOption.flow,
         clientSessionId: createUuid(),
         dateLocal:
-          selectedFlow === 'first_reflection' ? getLocalDateKey() : undefined,
+          selectedFlowOption.flow === 'first_reflection'
+            ? getLocalDateKey()
+            : undefined,
+        reflectionTrack: selectedFlowOption.reflectionTrack,
         locale: 'en-US',
       });
       setSessionId(result.session.id);
       setEndHint(null);
       const shouldWaitForHandshake = shouldWaitForHandshakePlayback(
-        selectedFlow,
+        selectedFlowOption.flow,
         result.assistant,
       );
       const startAssistantText = getStartAssistantText(
-        selectedFlow,
+        selectedFlowOption.flow,
         result.assistant,
+        selectedFlowOption.reflectionTrack,
       );
       setIsHandshakePending(shouldWaitForHandshake);
       await presentAssistantMessage({
@@ -638,29 +677,45 @@ export default function VoiceSessionScreen() {
         </Card>
       )}
 
-      {!sessionId && !selectedFlow && (
+      {!sessionId && (
         <View style={styles.flowPicker}>
-          <Button
-            title="Onboarding voice"
-            onPress={() => {
-              setSelectedFlow('onboarding');
-              setMessages([]);
-              setSafeResponse(null);
-              setEndHint(null);
-            }}
-            disabled={isBusy}
-          />
-          <Button
-            title="First reflection voice"
-            variant="secondary"
-            onPress={() => {
-              setSelectedFlow('first_reflection');
-              setMessages([]);
-              setSafeResponse(null);
-              setEndHint(null);
-            }}
-            disabled={isBusy}
-          />
+          {FLOW_OPTIONS.map((option) => {
+            const isSelected = selectedFlowOptionId === option.id;
+            return (
+              <Card
+                key={option.id}
+                style={[
+                  styles.flowOptionCard,
+                  {
+                    borderColor: isSelected ? theme.text : theme.border,
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <Text variant="bodyMedium">{option.title}</Text>
+                <Text
+                  variant="small"
+                  color={theme.textSecondary}
+                  style={styles.flowOptionSubtitle}
+                >
+                  {option.subtitle}
+                </Text>
+                <View style={styles.flowOptionAction}>
+                  <Button
+                    title={isSelected ? 'Selected' : 'Select'}
+                    variant={isSelected ? 'secondary' : 'ghost'}
+                    onPress={() => {
+                      setSelectedFlowOptionId(option.id);
+                      setMessages([]);
+                      setSafeResponse(null);
+                      setEndHint(null);
+                    }}
+                    disabled={isBusy}
+                  />
+                </View>
+              </Card>
+            );
+          })}
         </View>
       )}
 
@@ -747,22 +802,24 @@ export default function VoiceSessionScreen() {
             {footerStatus.label}
           </Text>
         </View>
-        {!sessionId && selectedFlow && (
+        {!sessionId && (
           <View style={styles.controls}>
             <Button
               title="Start session"
               onPress={handleStartSession}
-              disabled={isBusy}
+              disabled={isBusy || !selectedFlowOption}
             />
-            <Button
-              title="Change flow"
-              variant="ghost"
-              onPress={() => {
-                setSelectedFlow(null);
-                setEndHint(null);
-              }}
-              disabled={isBusy}
-            />
+            {selectedFlowOption && (
+              <Button
+                title="Clear selection"
+                variant="ghost"
+                onPress={() => {
+                  setSelectedFlowOptionId(null);
+                  setEndHint(null);
+                }}
+                disabled={isBusy}
+              />
+            )}
           </View>
         )}
         {sessionId && (
@@ -814,6 +871,16 @@ const styles = StyleSheet.create({
   flowPicker: {
     gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  flowOptionCard: {
+    gap: spacing.xs,
+  },
+  flowOptionSubtitle: {
+    marginTop: spacing.xs,
+  },
+  flowOptionAction: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
   },
   messages: {
     flex: 1,
