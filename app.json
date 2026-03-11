@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mk1080.perspectiv"
+      "bundleIdentifier": "com.mk1080.perspectiv",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Perspectiv uses your microphone for voice reflection sessions."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +24,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.mk1080.perspectiv"
+      "package": "com.mk1080.perspectiv",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",

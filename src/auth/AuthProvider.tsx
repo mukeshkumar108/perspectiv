@@ -14,11 +14,22 @@ import { queryClient } from '../state';
 import { setTokenClearer, setTokenGetter } from '../api';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-const CLERK_JWT_TEMPLATE = process.env.EXPO_PUBLIC_CLERK_JWT_TEMPLATE;
+const DEFAULT_CLERK_JWT_TEMPLATE = 'b-attic-api';
+const CLERK_JWT_TEMPLATE = (
+  process.env.EXPO_PUBLIC_CLERK_JWT_TEMPLATE || DEFAULT_CLERK_JWT_TEMPLATE
+).trim();
 
 if (!CLERK_PUBLISHABLE_KEY) {
   console.warn(
     'Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Auth will not work properly.'
+  );
+}
+if (
+  process.env.EXPO_PUBLIC_CLERK_JWT_TEMPLATE &&
+  process.env.EXPO_PUBLIC_CLERK_JWT_TEMPLATE !== DEFAULT_CLERK_JWT_TEMPLATE
+) {
+  console.warn(
+    `EXPO_PUBLIC_CLERK_JWT_TEMPLATE is "${process.env.EXPO_PUBLIC_CLERK_JWT_TEMPLATE}", expected "${DEFAULT_CLERK_JWT_TEMPLATE}" for b_attic voice APIs.`
   );
 }
 
@@ -48,12 +59,14 @@ function TokenSetup({ children }: PropsWithChildren) {
   const didLogTokenRef = useRef(false);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const getTokenWithTemplate = async () => {
+  const getTokenWithTemplate = async (forceRefresh = false) => {
+    const options = forceRefresh ? { skipCache: true } : undefined;
     if (CLERK_JWT_TEMPLATE) {
       try {
         const templated = await getTokenRef.current({
           template: CLERK_JWT_TEMPLATE,
-        });
+          ...(options || {}),
+        } as any);
         if (templated) {
           return templated;
         }
@@ -71,7 +84,7 @@ function TokenSetup({ children }: PropsWithChildren) {
         }
       }
     }
-    return getTokenRef.current();
+    return getTokenRef.current(options as any);
   };
 
   useEffect(() => {
@@ -79,12 +92,13 @@ function TokenSetup({ children }: PropsWithChildren) {
   }, [getToken]);
 
   useEffect(() => {
-    setTokenGetter(async () => {
+    setTokenGetter(async (requestOptions) => {
       try {
-        if (cachedTokenRef.current) {
+        const forceRefresh = Boolean(requestOptions?.forceRefresh);
+        if (cachedTokenRef.current && !forceRefresh) {
           return cachedTokenRef.current;
         }
-        const token = await getTokenWithTemplate();
+        const token = await getTokenWithTemplate(forceRefresh);
         if (token) {
           cachedTokenRef.current = token;
         }

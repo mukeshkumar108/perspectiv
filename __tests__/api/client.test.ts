@@ -229,4 +229,273 @@ describe('API Client', () => {
       expect(onUnauthorized).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('voice session flow', () => {
+    it('should use server session.id for end(discard) payload', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 201,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_server_123',
+                flow: 'onboarding',
+                state: 'active',
+                dateLocal: null,
+                readyToEnd: false,
+                nextTurnIndex: 1,
+              },
+              assistant: {
+                text: 'Welcome',
+                audioUrl: null,
+                audioMimeType: null,
+                audioExpiresAt: null,
+                ttsAvailable: false,
+              },
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_server_123',
+                state: 'active',
+                readyToEnd: true,
+                safetyFlagged: false,
+                nextTurnIndex: 2,
+              },
+              turn: {
+                id: 'vturn_1',
+                index: 1,
+                clientTurnId: 'turn-uuid-1',
+                userTranscript: { text: 'hello' },
+                assistant: {
+                  text: 'reply',
+                  audioUrl: null,
+                  audioMimeType: null,
+                  audioExpiresAt: null,
+                  ttsAvailable: false,
+                },
+                safety: {
+                  flagged: false,
+                  reason: 'none',
+                  safeResponse: null,
+                },
+              },
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_server_123',
+                flow: 'onboarding',
+                state: 'ended',
+              },
+              result: {
+                reflection: null,
+                onboarding: {
+                  completed: true,
+                  user: {
+                    id: 'u_1',
+                  },
+                },
+              },
+            }),
+        });
+
+      const start = await api.startVoiceSession({
+        flow: 'onboarding',
+        clientSessionId: '11111111-1111-4111-8111-111111111111',
+      });
+
+      expect(start.session.id).toBe('vsn_server_123');
+      expect(start.session.dateLocal).toBeNull();
+
+      await api.submitVoiceTurn({
+        sessionId: start.session.id,
+        clientTurnId: '22222222-2222-4222-8222-222222222222',
+        audioUri: 'file:///tmp/turn.m4a',
+        audioMimeType: 'audio/x-m4a',
+      });
+
+      await api.endVoiceSession({
+        sessionId: start.session.id,
+        clientEndId: '33333333-3333-4333-8333-333333333333',
+        reason: 'user_cancelled',
+        commit: false,
+      });
+
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        3,
+        'https://b-attic.vercel.app/api/bluum/voice/session/end',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            sessionId: 'vsn_server_123',
+            clientEndId: '33333333-3333-4333-8333-333333333333',
+            reason: 'user_cancelled',
+            commit: false,
+          }),
+        }),
+      );
+    });
+
+    it('should retry /end once with forced token refresh after HTML 404', async () => {
+      const getToken = jest
+        .fn()
+        .mockResolvedValueOnce('stale-token')
+        .mockResolvedValueOnce('fresh-token');
+      setTokenGetter(getToken);
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          headers: {
+            get: (key: string) =>
+              key.toLowerCase() === 'content-type' ? 'text/html' : null,
+          },
+          text: async () => '<!DOCTYPE html><html><body>Not found</body></html>',
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: {
+            get: () => 'application/json',
+          },
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_server_123',
+                flow: 'onboarding',
+                state: 'ended',
+              },
+              result: {
+                reflection: null,
+                onboarding: {
+                  completed: true,
+                  user: {
+                    id: 'u_1',
+                  },
+                },
+              },
+            }),
+        });
+
+      const result = await api.endVoiceSession({
+        sessionId: 'vsn_server_123',
+        clientEndId: '44444444-4444-4444-8444-444444444444',
+        reason: 'user_cancelled',
+        commit: false,
+      });
+
+      expect(result.session.state).toBe('ended');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(getToken).toHaveBeenCalledTimes(2);
+      expect(getToken.mock.calls[1][0]).toMatchObject({
+        forceRefresh: true,
+      });
+    });
+
+    it('should not globally backoff after /end HTML auth-routing failure', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          headers: {
+            get: (key: string) =>
+              key.toLowerCase() === 'content-type' ? 'text/html' : null,
+          },
+          text: async () => '<!DOCTYPE html><html><body>Not found</body></html>',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          headers: {
+            get: (key: string) =>
+              key.toLowerCase() === 'content-type' ? 'text/html' : null,
+          },
+          text: async () => '<!DOCTYPE html><html><body>Not found</body></html>',
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 201,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_new_1',
+                flow: 'onboarding',
+                state: 'active',
+                dateLocal: null,
+                readyToEnd: false,
+              },
+              assistant: {
+                text: 'hello',
+                audioUrl: null,
+                audioMimeType: null,
+                audioExpiresAt: null,
+                ttsAvailable: false,
+              },
+            }),
+        });
+
+      await expect(
+        api.endVoiceSession({
+          sessionId: 'vsn_server_404',
+          clientEndId: '55555555-5555-4555-8555-555555555555',
+          reason: 'user_cancelled',
+          commit: false,
+        })
+      ).rejects.toMatchObject({
+        code: 'AUTH_ROUTING_FAILURE',
+      });
+
+      await expect(
+        api.startVoiceSession({
+          flow: 'onboarding',
+          clientSessionId: '66666666-6666-4666-8666-666666666666',
+        })
+      ).resolves.toMatchObject({
+        session: {
+          id: 'vsn_new_1',
+        },
+      });
+    });
+
+    it('should surface onboarding_incomplete code from /end 422 response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        headers: {
+          get: () => 'application/json',
+        },
+        text: async () =>
+          JSON.stringify({
+            error: {
+              code: 'onboarding_incomplete',
+              message: 'Missing required onboarding slots',
+              retryable: false,
+            },
+          }),
+      });
+
+      await expect(
+        api.endVoiceSession({
+          sessionId: 'vsn_server_422',
+          clientEndId: '77777777-7777-4777-8777-777777777777',
+          reason: 'user_completed',
+          commit: true,
+        }),
+      ).rejects.toMatchObject({
+        status: 422,
+        code: 'onboarding_incomplete',
+      });
+    });
+  });
 });

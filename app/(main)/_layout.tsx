@@ -12,6 +12,13 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="voice-session"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="capture"
         options={{
           presentation: 'transparentModal',

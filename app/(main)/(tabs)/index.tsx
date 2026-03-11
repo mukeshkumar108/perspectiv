@@ -83,6 +83,10 @@ export default function HomeScreen() {
     router.push('/(main)/reflect' as any);
   };
 
+  const handleVoiceSession = () => {
+    router.push('/(main)/voice-session' as any);
+  };
+
   const runCharacterIntro = useCallback(() => {
     if (hasPlayedHomeCharacterIntro) {
       introTranslateY.value = 8;
@@ -171,6 +175,11 @@ export default function HomeScreen() {
           <Button
             title={hasReflectedToday ? 'Reflect again' : 'Reflect'}
             onPress={handleReflect}
+          />
+          <Button
+            title="Voice session"
+            variant="secondary"
+            onPress={handleVoiceSession}
           />
         </Animated.View>
         </View>

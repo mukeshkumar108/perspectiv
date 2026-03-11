@@ -109,3 +109,141 @@ export const MomentsListResponseSchema = z.object({
 });
 
 export type MomentsListResponse = z.infer<typeof MomentsListResponseSchema>;
+
+// Voice session
+export const VoiceFlowSchema = z.enum(['onboarding', 'first_reflection']);
+export type VoiceFlow = z.infer<typeof VoiceFlowSchema>;
+
+export const VoiceSessionStateSchema = z.enum([
+  'active',
+  'ended',
+  'expired',
+  'aborted',
+  'inactive',
+]);
+
+export const VoiceAssistantSchema = z.object({
+  text: z.string(),
+  audioUrl: z.string().nullable(),
+  audioMimeType: z.string().nullable(),
+  audioExpiresAt: z.string().nullable(),
+  ttsAvailable: z.boolean(),
+});
+
+export const VoiceSessionEnvelopeSchema = z.object({
+  id: z.string(),
+  flow: VoiceFlowSchema.optional(),
+  state: VoiceSessionStateSchema,
+  dateLocal: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  endedAt: z.string().nullable().optional(),
+  nextTurnIndex: z.number().optional(),
+  readyToEnd: z.boolean().optional(),
+  safetyFlagged: z.boolean().optional(),
+});
+
+export const VoiceStartRequestSchema = z.object({
+  flow: VoiceFlowSchema,
+  clientSessionId: z.string().min(8),
+  dateLocal: z.string().optional(),
+  locale: z.string().optional(),
+  ttsVoiceId: z.string().optional(),
+});
+
+export type VoiceStartRequest = z.infer<typeof VoiceStartRequestSchema>;
+
+export const VoiceStartResponseSchema = z.object({
+  session: VoiceSessionEnvelopeSchema,
+  assistant: VoiceAssistantSchema,
+});
+
+export type VoiceStartResponse = z.infer<typeof VoiceStartResponseSchema>;
+
+export const VoiceTurnRequestSchema = z.object({
+  sessionId: z.string(),
+  clientTurnId: z.string().min(8),
+  audioUri: z.string().min(1),
+  audioMimeType: z.string().min(1),
+  audioDurationMs: z.number().positive().optional(),
+  locale: z.string().optional(),
+  deviceTs: z.string().optional(),
+});
+
+export type VoiceTurnRequest = z.infer<typeof VoiceTurnRequestSchema>;
+
+export const VoiceSafeResourceSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
+export const VoiceSafeResponseSchema = z.object({
+  message: z.string(),
+  resources: z.array(VoiceSafeResourceSchema),
+});
+
+export const VoiceTurnResponseSchema = z.object({
+  session: VoiceSessionEnvelopeSchema,
+  turn: z.object({
+    id: z.string(),
+    index: z.number(),
+    clientTurnId: z.string(),
+    userTranscript: z.object({
+      text: z.string(),
+    }),
+    assistant: VoiceAssistantSchema,
+    safety: z.object({
+      flagged: z.boolean(),
+      reason: z.string().nullable().optional(),
+      safeResponse: VoiceSafeResponseSchema.nullable(),
+    }),
+  }),
+});
+
+export type VoiceTurnResponse = z.infer<typeof VoiceTurnResponseSchema>;
+
+export const VoiceEndRequestSchema = z.object({
+  sessionId: z.string(),
+  clientEndId: z.string().min(8),
+  reason: z
+    .enum(['user_completed', 'user_cancelled', 'timeout', 'safety_stop'])
+    .optional(),
+  commit: z.boolean().optional(),
+});
+
+export type VoiceEndRequest = z.infer<typeof VoiceEndRequestSchema>;
+
+export const VoiceEndResponseSchema = z.object({
+  session: VoiceSessionEnvelopeSchema,
+  result: z.object({
+    reflection: z
+      .object({
+        saved: z.boolean().optional(),
+        safetyFlagged: z.boolean().optional(),
+        successMessage: z.string().nullable().optional(),
+        coach: z
+          .object({
+            type: z.string(),
+            text: z.string(),
+          })
+          .nullable()
+          .optional(),
+        safeResponse: VoiceSafeResponseSchema.optional(),
+      })
+      .nullable(),
+    onboarding: z
+      .object({
+        completed: z.boolean(),
+        user: z.object({
+          id: z.string(),
+          displayName: z.string().nullable().optional(),
+          timezone: z.string().nullable().optional(),
+          onboardingCompleted: z.boolean().optional(),
+          reflectionReminderEnabled: z.boolean().optional(),
+          reflectionReminderTimeLocal: z.string().nullable().optional(),
+        }),
+      })
+      .nullable(),
+  }),
+});
+
+export type VoiceEndResponse = z.infer<typeof VoiceEndResponseSchema>;

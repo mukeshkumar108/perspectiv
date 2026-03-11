@@ -1,0 +1,88 @@
+import { ApiError } from '../api';
+
+export function getCompleteActionState(readyToEnd: boolean) {
+  return {
+    title: readyToEnd ? 'Finish session' : 'Continue',
+    disabled: !readyToEnd,
+  };
+}
+
+export function buildVoiceEndPayload(
+  sessionId: string,
+  clientEndId: string,
+  commit: boolean,
+) {
+  return {
+    sessionId,
+    clientEndId,
+    reason: commit ? 'user_completed' : 'user_cancelled',
+    commit,
+  } as const;
+}
+
+export function getEndErrorAction(error: unknown): {
+  kind: 'stay' | 'alert';
+  title: string;
+  message: string;
+  code?: string;
+} {
+  if (error instanceof ApiError) {
+    const details =
+      error.details && typeof error.details === 'object'
+        ? (error.details as Record<string, unknown>)
+        : null;
+    const nested =
+      details?.error && typeof details.error === 'object'
+        ? (details.error as Record<string, unknown>)
+        : null;
+    const code =
+      typeof nested?.code === 'string'
+        ? nested.code
+        : typeof details?.code === 'string'
+          ? details.code
+          : error.code;
+    const backendMessage =
+      typeof nested?.message === 'string'
+        ? nested.message
+        : typeof details?.message === 'string'
+          ? details.message
+          : error.message;
+
+    if (code === 'onboarding_incomplete') {
+      return {
+        kind: 'stay',
+        title: 'Not ready yet',
+        message: 'A couple details are still missing. Continue or discard.',
+        code,
+      };
+    }
+    if (code === 'session_not_found') {
+      return {
+        kind: 'alert',
+        title: 'Session missing',
+        message: 'Session was not found. Please start again.',
+        code,
+      };
+    }
+    if (code === 'idempotency_conflict') {
+      return {
+        kind: 'alert',
+        title: 'Request conflict',
+        message: 'Session end request conflicted. Try again once.',
+        code,
+      };
+    }
+    return {
+      kind: 'alert',
+      title: 'End failed',
+      message: backendMessage || 'Could not end session.',
+      code,
+    };
+  }
+
+  return {
+    kind: 'alert',
+    title: 'End failed',
+    message: 'Could not end session.',
+  };
+}
