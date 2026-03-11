@@ -22,6 +22,7 @@ import { ApiError, type VoiceFlow } from '@/src/api';
 import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
+  getStartAssistantText,
   getCompleteActionState,
   getEndErrorAction,
   getTalkActionState,
@@ -438,9 +439,13 @@ export default function VoiceSessionScreen() {
         selectedFlow,
         result.assistant,
       );
+      const startAssistantText = getStartAssistantText(
+        selectedFlow,
+        result.assistant,
+      );
       setIsHandshakePending(shouldWaitForHandshake);
       await presentAssistantMessage({
-        text: result.assistant.text,
+        text: startAssistantText,
         audioUrl: result.assistant.audioUrl,
         ttsAvailable: result.assistant.ttsAvailable,
         awaitPlaybackCompletion: shouldWaitForHandshake,

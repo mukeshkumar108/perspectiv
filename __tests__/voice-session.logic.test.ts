@@ -2,6 +2,8 @@ import { ApiError } from '../src/api';
 import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
+  FIRST_REFLECTION_DAY0_HANDSHAKE_TEXT,
+  getStartAssistantText,
   getCompleteActionState,
   getEndErrorAction,
   getTalkActionState,
@@ -53,7 +55,7 @@ describe('voice-session logic', () => {
     expect(action.code).toBe('onboarding_incomplete');
   });
 
-  it('marks onboarding start with audio as handshake-gated', () => {
+  it('marks onboarding and first_reflection start with audio as handshake-gated', () => {
     expect(
       shouldWaitForHandshakePlayback('onboarding', {
         audioUrl: 'https://cdn.example.com/hello.mp3',
@@ -71,7 +73,30 @@ describe('voice-session logic', () => {
         audioUrl: 'https://cdn.example.com/refl.mp3',
         ttsAvailable: true,
       }),
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('uses fixed day0 first_reflection text when handshake audio exists', () => {
+    expect(
+      getStartAssistantText('first_reflection', {
+        text: 'backend text',
+        audioUrl: 'https://cdn.example.com/day0.mp3',
+      }),
+    ).toBe(FIRST_REFLECTION_DAY0_HANDSHAKE_TEXT);
+
+    expect(
+      getStartAssistantText('first_reflection', {
+        text: 'backend text',
+        audioUrl: null,
+      }),
+    ).toBe('backend text');
+
+    expect(
+      getStartAssistantText('onboarding', {
+        text: 'onboarding hello',
+        audioUrl: 'https://cdn.example.com/onboarding.mp3',
+      }),
+    ).toBe('onboarding hello');
   });
 
   it('keeps talk disabled while handshake is pending and enables after', () => {
