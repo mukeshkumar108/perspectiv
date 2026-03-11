@@ -23,7 +23,6 @@ import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
   getStartAssistantText,
-  getCompleteActionState,
   getEndErrorAction,
   getTalkActionState,
   shouldRetryFinalize,
@@ -90,7 +89,6 @@ export default function VoiceSessionScreen() {
   const [isHandshakePending, setIsHandshakePending] = useState(false);
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const [isAssistantThinking, setIsAssistantThinking] = useState(false);
-  const [readyToEnd, setReadyToEnd] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [endHint, setEndHint] = useState<string | null>(null);
   const [safeResponse, setSafeResponse] = useState<{
@@ -100,7 +98,6 @@ export default function VoiceSessionScreen() {
 
   const isBusy =
     startMutation.isPending || turnMutation.isPending || endMutation.isPending;
-  const completeAction = getCompleteActionState(readyToEnd);
   const talkAction = getTalkActionState({
     sessionId,
     isBusy,
@@ -125,9 +122,6 @@ export default function VoiceSessionScreen() {
     if (isRecording) {
       return { label: 'Recording...', spinner: false };
     }
-    if (sessionId && readyToEnd) {
-      return { label: 'Ready to complete', spinner: false };
-    }
     if (sessionId) {
       return { label: 'Press to talk when ready', spinner: false };
     }
@@ -143,7 +137,6 @@ export default function VoiceSessionScreen() {
     isAssistantThinking,
     isHandshakePending,
     isRecording,
-    readyToEnd,
     selectedFlow,
     sessionId,
     startMutation.isPending,
@@ -355,7 +348,7 @@ export default function VoiceSessionScreen() {
 
   const applyAssistantTurn = useCallback(
     async (response: {
-      session: { readyToEnd?: boolean };
+      session: Record<string, unknown>;
       turn: {
         assistant?: {
           text: string;
@@ -370,7 +363,6 @@ export default function VoiceSessionScreen() {
         };
       };
     }) => {
-      setReadyToEnd(Boolean(response.session.readyToEnd));
       setEndHint(null);
       setSafeResponse(response.turn.safety?.safeResponse ?? null);
 
@@ -403,7 +395,6 @@ export default function VoiceSessionScreen() {
       if (error.code === 'session_expired') {
         Alert.alert('Session expired', 'Starting a fresh voice session is required.');
         setSessionId(null);
-        setReadyToEnd(false);
         setIsHandshakePending(false);
         setIsAssistantSpeaking(false);
         setIsAssistantThinking(false);
@@ -433,7 +424,6 @@ export default function VoiceSessionScreen() {
         locale: 'en-US',
       });
       setSessionId(result.session.id);
-      setReadyToEnd(Boolean(result.session.readyToEnd));
       setEndHint(null);
       const shouldWaitForHandshake = shouldWaitForHandshakePlayback(
         selectedFlow,
@@ -552,7 +542,6 @@ export default function VoiceSessionScreen() {
       });
 
       appendMessage('user', stagedResponse.turn.userTranscript.text);
-      setReadyToEnd(Boolean(stagedResponse.session.readyToEnd));
       setEndHint(null);
 
       if (stagedResponse.turn.assistantPending === true) {
@@ -598,28 +587,18 @@ export default function VoiceSessionScreen() {
     }
   };
 
-  const endSession = async (commit: boolean) => {
+  const exitSession = async () => {
     if (!sessionId) {
       router.back();
-      return;
-    }
-    if (commit && !readyToEnd) {
-      setEndHint('A couple details are still missing. Continue or discard.');
       return;
     }
 
     try {
       const ended = await endMutation.mutateAsync(
-        buildVoiceEndPayload(sessionId, createUuid(), commit),
+        buildVoiceEndPayload(sessionId, createUuid(), false),
       );
-
-      if (commit && selectedFlow === 'first_reflection') {
-        const message =
-          ended.result.reflection?.successMessage ||
-          'Voice reflection saved.';
-        Alert.alert('Done', message);
-      } else if (commit && selectedFlow === 'onboarding') {
-        Alert.alert('Onboarding complete', 'Voice onboarding has been saved.');
+      if (!ended.session?.id) {
+        Alert.alert('Session ended', 'Your voice session has been closed.');
       }
 
       router.replace('/(main)/(tabs)' as any);
@@ -802,15 +781,9 @@ export default function VoiceSessionScreen() {
             />
             <View style={styles.secondaryControls}>
               <Button
-                title={completeAction.title}
-                variant="secondary"
-                onPress={() => endSession(true)}
-                disabled={isBusy || completeAction.disabled}
-              />
-              <Button
-                title="Discard"
+                title="Exit"
                 variant="ghost"
-                onPress={() => endSession(false)}
+                onPress={exitSession}
                 disabled={isBusy}
               />
             </View>
