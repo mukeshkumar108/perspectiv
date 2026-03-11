@@ -486,16 +486,20 @@ export const api = {
    */
   submitVoiceTurn(data: VoiceTurnRequest): Promise<VoiceTurnResponse> {
     VoiceTurnRequestSchema.parse(data);
+    const responseMode = data.responseMode ?? "final";
     const form = new FormData();
     form.append("sessionId", data.sessionId);
     form.append("clientTurnId", data.clientTurnId);
-    form.append("audio", {
-      uri: data.audioUri,
-      name: "voice-turn.m4a",
-      type: data.audioMimeType,
-    } as any);
-    if (typeof data.audioDurationMs === "number") {
-      form.append("audioDurationMs", String(Math.round(data.audioDurationMs)));
+    form.append("responseMode", responseMode);
+    if (responseMode !== "finalize") {
+      form.append("audio", {
+        uri: data.audioUri!,
+        name: "voice-turn.m4a",
+        type: data.audioMimeType!,
+      } as any);
+      if (typeof data.audioDurationMs === "number") {
+        form.append("audioDurationMs", String(Math.round(data.audioDurationMs)));
+      }
     }
     if (data.locale) form.append("locale", data.locale);
     if (data.deviceTs) form.append("deviceTs", data.deviceTs);

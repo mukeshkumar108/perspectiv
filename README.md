@@ -130,6 +130,16 @@ Backend: `https://b-attic.vercel.app`
 | POST   | /api/bluum/reflection  | Submit a reflection      |
 | GET    | /api/bluum/streaks     | Get user streak stats    |
 | GET    | /api/bluum/me          | Get user profile (optional) |
+| POST   | /api/bluum/voice/session/start | Start onboarding or reflection voice session |
+| POST   | /api/bluum/voice/session/turn | Submit one voice clip (supports `responseMode=final|staged|finalize`) |
+| POST   | /api/bluum/voice/session/end | End/discard or commit voice session |
+
+### Voice Turn Modes
+
+- `final` (default): one request returns transcript + assistant response.
+- `staged`: request with audio returns transcript quickly (`assistantPending=true`).
+- `finalize`: follow-up request with the same `sessionId` + `clientTurnId` and no audio, returns final assistant payload.
+- The app retries `finalize` when backend returns `turn_finalize_in_progress`.
 
 ### Response Validation
 

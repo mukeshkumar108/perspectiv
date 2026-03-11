@@ -1,8 +1,12 @@
 import { ApiError } from '../src/api';
 import {
   buildVoiceEndPayload,
+  FINALIZE_RETRY_DELAYS_MS,
   getCompleteActionState,
   getEndErrorAction,
+  getTalkActionState,
+  shouldRetryFinalize,
+  shouldWaitForHandshakePlayback,
 } from '../src/voice/sessionLogic';
 
 describe('voice-session logic', () => {
@@ -47,5 +51,85 @@ describe('voice-session logic', () => {
     const action = getEndErrorAction(err);
     expect(action.kind).toBe('stay');
     expect(action.code).toBe('onboarding_incomplete');
+  });
+
+  it('marks onboarding start with audio as handshake-gated', () => {
+    expect(
+      shouldWaitForHandshakePlayback('onboarding', {
+        audioUrl: 'https://cdn.example.com/hello.mp3',
+        ttsAvailable: true,
+      }),
+    ).toBe(true);
+    expect(
+      shouldWaitForHandshakePlayback('onboarding', {
+        audioUrl: null,
+        ttsAvailable: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldWaitForHandshakePlayback('first_reflection', {
+        audioUrl: 'https://cdn.example.com/refl.mp3',
+        ttsAvailable: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('keeps talk disabled while handshake is pending and enables after', () => {
+    expect(
+      getTalkActionState({
+        sessionId: 'vsn_1',
+        isBusy: false,
+        isRecording: false,
+        isHandshakePending: true,
+        isAssistantSpeaking: false,
+      }),
+    ).toEqual({
+      title: 'Press to talk',
+      disabled: true,
+    });
+
+    expect(
+      getTalkActionState({
+        sessionId: 'vsn_1',
+        isBusy: false,
+        isRecording: false,
+        isHandshakePending: false,
+        isAssistantSpeaking: false,
+      }),
+    ).toEqual({
+      title: 'Press to talk',
+      disabled: false,
+    });
+  });
+
+  it('disables talk while assistant is speaking', () => {
+    expect(
+      getTalkActionState({
+        sessionId: 'vsn_1',
+        isBusy: false,
+        isRecording: false,
+        isHandshakePending: false,
+        isAssistantSpeaking: true,
+      }),
+    ).toEqual({
+      title: 'Press to talk',
+      disabled: true,
+    });
+  });
+
+  it('retries finalize only for in-progress code within retry window', () => {
+    const retryable = new ApiError(
+      409,
+      'Finalize in progress',
+      'turn_finalize_in_progress',
+    );
+    expect(shouldRetryFinalize(retryable, 0)).toBe(true);
+    expect(shouldRetryFinalize(retryable, 1)).toBe(true);
+    expect(shouldRetryFinalize(retryable, FINALIZE_RETRY_DELAYS_MS.length)).toBe(
+      false,
+    );
+    expect(
+      shouldRetryFinalize(new ApiError(409, 'Other', 'turn_not_found'), 0),
+    ).toBe(false);
   });
 });

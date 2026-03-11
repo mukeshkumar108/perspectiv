@@ -1,10 +1,52 @@
 import { ApiError } from '../api';
+import type { VoiceFlow } from '../api';
+
+export const FINALIZE_RETRY_DELAYS_MS = [250, 500, 1000] as const;
 
 export function getCompleteActionState(readyToEnd: boolean) {
   return {
     title: readyToEnd ? 'Finish session' : 'Continue',
     disabled: !readyToEnd,
   };
+}
+
+export function shouldWaitForHandshakePlayback(
+  flow: VoiceFlow,
+  assistant: { audioUrl: string | null; ttsAvailable: boolean },
+) {
+  return flow === 'onboarding' && Boolean(assistant.audioUrl);
+}
+
+export function getTalkActionState(params: {
+  sessionId: string | null;
+  isBusy: boolean;
+  isRecording: boolean;
+  isHandshakePending: boolean;
+  isAssistantSpeaking: boolean;
+}) {
+  const {
+    sessionId,
+    isBusy,
+    isRecording,
+    isHandshakePending,
+    isAssistantSpeaking,
+  } = params;
+  const title = isRecording ? 'Stop and send' : 'Press to talk';
+  const disabled =
+    !sessionId || isBusy || isHandshakePending || isAssistantSpeaking;
+  return { title, disabled };
+}
+
+export function shouldRetryFinalize(
+  error: unknown,
+  attempt: number,
+  delays = FINALIZE_RETRY_DELAYS_MS,
+) {
+  return (
+    error instanceof ApiError &&
+    error.code === 'turn_finalize_in_progress' &&
+    attempt < delays.length
+  );
 }
 
 export function buildVoiceEndPayload(

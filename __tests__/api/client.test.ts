@@ -346,6 +346,162 @@ describe('API Client', () => {
       );
     });
 
+    it('should parse onboarding handshake start response and continue turn loop', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 201,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_handshake_1',
+                flow: 'onboarding',
+                state: 'active',
+                dateLocal: null,
+                readyToEnd: false,
+                nextTurnIndex: 1,
+              },
+              assistant: {
+                text: 'Welcome to onboarding.',
+                audioUrl: 'https://cdn.example.com/handshake.mp3',
+                audioMimeType: 'audio/mpeg',
+                audioExpiresAt: '2026-03-11T10:00:00.000Z',
+                ttsAvailable: true,
+              },
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          text: async () =>
+            JSON.stringify({
+              session: {
+                id: 'vsn_handshake_1',
+                state: 'active',
+                readyToEnd: false,
+                safetyFlagged: false,
+                nextTurnIndex: 2,
+              },
+              turn: {
+                id: 'vturn_h1',
+                index: 1,
+                clientTurnId: 'turn-h1',
+                userTranscript: { text: 'I am ready.' },
+                assistant: {
+                  text: 'Great, one more detail.',
+                  audioUrl: 'https://cdn.example.com/turn-h1.mp3',
+                  audioMimeType: 'audio/mpeg',
+                  audioExpiresAt: '2026-03-11T10:05:00.000Z',
+                  ttsAvailable: true,
+                },
+                safety: {
+                  flagged: false,
+                  reason: 'none',
+                  safeResponse: null,
+                },
+              },
+            }),
+        });
+
+      const start = await api.startVoiceSession({
+        flow: 'onboarding',
+        clientSessionId: '12121212-1212-4212-8212-121212121212',
+      });
+      expect(start.assistant.audioUrl).toBe('https://cdn.example.com/handshake.mp3');
+      expect(start.assistant.ttsAvailable).toBe(true);
+
+      const turn = await api.submitVoiceTurn({
+        sessionId: start.session.id,
+        clientTurnId: '34343434-3434-4343-8343-343434343434',
+        audioUri: 'file:///tmp/turn-h1.m4a',
+        audioMimeType: 'audio/x-m4a',
+      });
+      expect(turn.turn.assistant?.text).toBe('Great, one more detail.');
+      expect(turn.session.readyToEnd).toBe(false);
+    });
+
+    it('should support staged turn response with assistantPending', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () =>
+          JSON.stringify({
+            session: {
+              id: 'vsn_stage_1',
+              state: 'active',
+              readyToEnd: false,
+              nextTurnIndex: 3,
+            },
+            turn: {
+              id: 'vturn_stage_1',
+              index: 2,
+              clientTurnId: '99999999-9999-4999-8999-999999999999',
+              userTranscript: { text: 'staged transcript' },
+              assistantPending: true,
+            },
+          }),
+      });
+
+      const result = await api.submitVoiceTurn({
+        sessionId: 'vsn_stage_1',
+        clientTurnId: '99999999-9999-4999-8999-999999999999',
+        responseMode: 'staged',
+        audioUri: 'file:///tmp/staged.m4a',
+        audioMimeType: 'audio/x-m4a',
+      });
+
+      expect(result.turn.assistantPending).toBe(true);
+      expect(result.turn.assistant).toBeUndefined();
+      const body = mockFetch.mock.calls[0][1].body as FormData;
+      expect(body.get('responseMode')).toBe('staged');
+      expect(body.get('audio')).toBeTruthy();
+    });
+
+    it('should send finalize mode without audio file', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () =>
+          JSON.stringify({
+            session: {
+              id: 'vsn_stage_1',
+              state: 'active',
+              readyToEnd: true,
+              nextTurnIndex: 4,
+            },
+            turn: {
+              id: 'vturn_stage_1',
+              index: 2,
+              clientTurnId: 'abababab-abab-4bab-8bab-abababababab',
+              userTranscript: { text: 'staged transcript' },
+              assistant: {
+                text: 'finalized reply',
+                audioUrl: 'https://cdn.example.com/finalized.mp3',
+                audioMimeType: 'audio/mpeg',
+                audioExpiresAt: '2026-03-11T10:15:00.000Z',
+                ttsAvailable: true,
+              },
+              safety: {
+                flagged: false,
+                reason: 'none',
+                safeResponse: null,
+              },
+            },
+          }),
+      });
+
+      const result = await api.submitVoiceTurn({
+        sessionId: 'vsn_stage_1',
+        clientTurnId: 'abababab-abab-4bab-8bab-abababababab',
+        responseMode: 'finalize',
+      });
+
+      expect(result.turn.assistant?.text).toBe('finalized reply');
+      const body = mockFetch.mock.calls[0][1].body as FormData;
+      expect(body.get('responseMode')).toBe('finalize');
+      expect(body.get('audio')).toBeNull();
+    });
+
     it('should retry /end once with forced token refresh after HTML 404', async () => {
       const getToken = jest
         .fn()

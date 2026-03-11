@@ -162,11 +162,38 @@ export type VoiceStartResponse = z.infer<typeof VoiceStartResponseSchema>;
 export const VoiceTurnRequestSchema = z.object({
   sessionId: z.string(),
   clientTurnId: z.string().min(8),
-  audioUri: z.string().min(1),
-  audioMimeType: z.string().min(1),
+  responseMode: z.enum(['final', 'staged', 'finalize']).optional(),
+  audioUri: z.string().min(1).optional(),
+  audioMimeType: z.string().min(1).optional(),
   audioDurationMs: z.number().positive().optional(),
   locale: z.string().optional(),
   deviceTs: z.string().optional(),
+}).superRefine((data, ctx) => {
+  const mode = data.responseMode ?? 'final';
+  if (mode === 'finalize') {
+    if (data.audioUri || data.audioMimeType || data.audioDurationMs) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Finalize mode must not include audio',
+        path: ['audioUri'],
+      });
+    }
+    return;
+  }
+  if (!data.audioUri) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'audioUri is required for final/staged mode',
+      path: ['audioUri'],
+    });
+  }
+  if (!data.audioMimeType) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'audioMimeType is required for final/staged mode',
+      path: ['audioMimeType'],
+    });
+  }
 });
 
 export type VoiceTurnRequest = z.infer<typeof VoiceTurnRequestSchema>;
@@ -190,12 +217,13 @@ export const VoiceTurnResponseSchema = z.object({
     userTranscript: z.object({
       text: z.string(),
     }),
-    assistant: VoiceAssistantSchema,
+    assistantPending: z.boolean().optional(),
+    assistant: VoiceAssistantSchema.optional(),
     safety: z.object({
       flagged: z.boolean(),
       reason: z.string().nullable().optional(),
       safeResponse: VoiceSafeResponseSchema.nullable(),
-    }),
+    }).optional(),
   }),
 });
 
