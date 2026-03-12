@@ -110,6 +110,25 @@ export const MomentsListResponseSchema = z.object({
 
 export type MomentsListResponse = z.infer<typeof MomentsListResponseSchema>;
 
+// Lessons catalog
+export const LessonItemSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  description: z.string().default(''),
+  audioUrl: z.string(),
+  order: z.number().optional(),
+  tags: z.array(z.string()).optional(),
+  durationSec: z.number().optional(),
+});
+
+export type LessonItem = z.infer<typeof LessonItemSchema>;
+
+export const LessonsResponseSchema = z.object({
+  items: z.array(LessonItemSchema),
+});
+
+export type LessonsResponse = z.infer<typeof LessonsResponseSchema>;
+
 // Voice session
 export const VoiceFlowSchema = z.enum(['onboarding', 'first_reflection']);
 export type VoiceFlow = z.infer<typeof VoiceFlowSchema>;
@@ -124,12 +143,25 @@ export const VoiceSessionStateSchema = z.enum([
   'inactive',
 ]);
 
+export const VoiceInputModeSchema = z.enum(['voice', 'text', 'choice']);
+export type VoiceInputMode = z.infer<typeof VoiceInputModeSchema>;
+export const VoiceInputTypeSchema = z.enum(['audio', 'text', 'choice']);
+export type VoiceInputType = z.infer<typeof VoiceInputTypeSchema>;
+
+export const VoiceChoiceSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+});
+export type VoiceChoice = z.infer<typeof VoiceChoiceSchema>;
+
 export const VoiceAssistantSchema = z.object({
   text: z.string(),
   audioUrl: z.string().nullable(),
   audioMimeType: z.string().nullable(),
   audioExpiresAt: z.string().nullable(),
   ttsAvailable: z.boolean(),
+  inputMode: VoiceInputModeSchema.optional(),
+  choices: z.array(VoiceChoiceSchema).nullable().optional(),
 });
 
 export const VoiceSessionEnvelopeSchema = z.object({
@@ -177,32 +209,90 @@ export const VoiceTurnRequestSchema = z.object({
   audioUri: z.string().min(1).optional(),
   audioMimeType: z.string().min(1).optional(),
   audioDurationMs: z.number().positive().optional(),
+  textInput: z.string().trim().min(1).max(500).optional(),
+  choiceValue: z.string().trim().min(1).max(200).optional(),
   locale: z.string().optional(),
   deviceTs: z.string().optional(),
 }).superRefine((data, ctx) => {
   const mode = data.responseMode ?? 'final';
+  const hasTextInput = typeof data.textInput === 'string' && data.textInput.length > 0;
+  const hasChoiceValue =
+    typeof data.choiceValue === 'string' && data.choiceValue.length > 0;
+  const hasAudioInput =
+    Boolean(data.audioUri) ||
+    Boolean(data.audioMimeType) ||
+    typeof data.audioDurationMs === 'number';
+
   if (mode === 'finalize') {
-    if (data.audioUri || data.audioMimeType || data.audioDurationMs) {
+    if (hasAudioInput || hasTextInput || hasChoiceValue) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Finalize mode must not include audio',
+        message: 'Finalize mode must not include turn input',
         path: ['audioUri'],
       });
     }
     return;
   }
-  if (!data.audioUri) {
+
+  if (mode === 'staged') {
+    if (hasTextInput || hasChoiceValue) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Staged mode supports audio input only',
+        path: ['textInput'],
+      });
+    }
+    if (!data.audioUri) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'audioUri is required for staged mode',
+        path: ['audioUri'],
+      });
+    }
+    if (!data.audioMimeType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'audioMimeType is required for staged mode',
+        path: ['audioMimeType'],
+      });
+    }
+    return;
+  }
+
+  const providedInputs = Number(Boolean(data.audioUri)) + Number(hasTextInput) + Number(hasChoiceValue);
+  if (providedInputs === 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'audioUri is required for final/staged mode',
+      message: 'Provide one turn input: audioUri, textInput, or choiceValue',
       path: ['audioUri'],
     });
   }
-  if (!data.audioMimeType) {
+  if (providedInputs > 1) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'audioMimeType is required for final/staged mode',
+      message: 'Provide exactly one turn input: audioUri, textInput, or choiceValue',
+      path: ['textInput'],
+    });
+  }
+  if (data.audioUri && !data.audioMimeType) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'audioMimeType is required when audioUri is provided',
       path: ['audioMimeType'],
+    });
+  }
+  if (!data.audioUri && data.audioMimeType) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'audioUri is required when audioMimeType is provided',
+      path: ['audioUri'],
+    });
+  }
+  if (!data.audioUri && typeof data.audioDurationMs === 'number') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'audioDurationMs is only valid when audioUri is provided',
+      path: ['audioDurationMs'],
     });
   }
 });
@@ -225,6 +315,7 @@ export const VoiceTurnResponseSchema = z.object({
     id: z.string(),
     index: z.number(),
     clientTurnId: z.string(),
+    inputType: VoiceInputTypeSchema.optional(),
     userTranscript: z.object({
       text: z.string(),
     }),

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createLogger } from "../lib/logger";
 import {
   MeResponseSchema,
+  LessonsResponseSchema,
   MomentsListResponseSchema,
   MoodRequestSchema,
   MoodResponseSchema,
@@ -18,6 +19,7 @@ import {
   VoiceTurnRequestSchema,
   VoiceTurnResponseSchema,
   type MeResponse,
+  type LessonsResponse,
   type MomentsListResponse,
   type MoodRequest,
   type MoodResponse,
@@ -467,6 +469,13 @@ export const api = {
   },
 
   /**
+   * Get lessons catalog
+   */
+  getLessons(): Promise<LessonsResponse> {
+    return request("/api/bluum/lessons", { method: "GET" }, LessonsResponseSchema);
+  },
+
+  /**
    * Start voice session
    */
   startVoiceSession(data: VoiceStartRequest): Promise<VoiceStartResponse> {
@@ -491,7 +500,7 @@ export const api = {
     form.append("sessionId", data.sessionId);
     form.append("clientTurnId", data.clientTurnId);
     form.append("responseMode", responseMode);
-    if (responseMode !== "finalize") {
+    if (responseMode === "staged") {
       form.append("audio", {
         uri: data.audioUri!,
         name: "voice-turn.m4a",
@@ -499,6 +508,21 @@ export const api = {
       } as any);
       if (typeof data.audioDurationMs === "number") {
         form.append("audioDurationMs", String(Math.round(data.audioDurationMs)));
+      }
+    } else if (responseMode === "final") {
+      if (data.audioUri) {
+        form.append("audio", {
+          uri: data.audioUri,
+          name: "voice-turn.m4a",
+          type: data.audioMimeType!,
+        } as any);
+        if (typeof data.audioDurationMs === "number") {
+          form.append("audioDurationMs", String(Math.round(data.audioDurationMs)));
+        }
+      } else if (typeof data.textInput === "string") {
+        form.append("textInput", data.textInput);
+      } else if (typeof data.choiceValue === "string") {
+        form.append("choiceValue", data.choiceValue);
       }
     }
     if (data.locale) form.append("locale", data.locale);

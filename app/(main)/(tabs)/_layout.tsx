@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Home, Clock, Plus, Captions, Wind, Sparkles, Activity } from 'lucide-react-native';
+import { Home, Clock, Plus, Captions, Wind, Sparkles, Activity, Headphones } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/ui/useTheme';
 import { Text } from '@/src/ui';
@@ -63,6 +63,12 @@ export default function TabLayout() {
     closeQuickMenu();
     setTimeout(() => {
       router.push('/(main)/guides' as any);
+    }, 140);
+  };
+  const openLessons = () => {
+    closeQuickMenu();
+    setTimeout(() => {
+      router.push('/(main)/lessons' as any);
     }, 140);
   };
   const openGames = () => {
@@ -187,6 +193,13 @@ export default function TabLayout() {
         >
           <Wind size={16} color={theme.text} strokeWidth={2} />
           <Text variant="small" color={theme.text}>Guided sessions</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.quickItem, { backgroundColor: theme.surface }]}
+          onPress={openLessons}
+        >
+          <Headphones size={16} color={theme.text} strokeWidth={2} />
+          <Text variant="small" color={theme.text}>Lessons</Text>
         </Pressable>
         <Pressable
           style={[styles.quickItem, { backgroundColor: theme.surface }]}

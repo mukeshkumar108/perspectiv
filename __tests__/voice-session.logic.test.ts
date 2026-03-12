@@ -5,6 +5,7 @@ import {
   getCompleteActionState,
   getEndErrorAction,
   getTalkActionState,
+  getVoiceOrbState,
   shouldRetryFinalize,
   shouldWaitForHandshakePlayback,
 } from '../src/voice/sessionLogic';
@@ -131,5 +132,73 @@ describe('voice-session logic', () => {
     expect(
       shouldRetryFinalize(new ApiError(409, 'Other', 'turn_not_found'), 0),
     ).toBe(false);
+  });
+
+  it('maps orb states with clear precedence', () => {
+    expect(
+      getVoiceOrbState({
+        sessionId: null,
+        isRecording: false,
+        isAssistantThinking: false,
+        isAssistantSpeaking: false,
+        isHandshakePending: false,
+        isPreSpeakBurst: false,
+      }),
+    ).toBe('idle');
+
+    expect(
+      getVoiceOrbState({
+        sessionId: 'vsn_1',
+        isRecording: true,
+        isAssistantThinking: true,
+        isAssistantSpeaking: true,
+        isHandshakePending: true,
+        isPreSpeakBurst: true,
+      }),
+    ).toBe('recording');
+
+    expect(
+      getVoiceOrbState({
+        sessionId: 'vsn_1',
+        isRecording: false,
+        isAssistantThinking: true,
+        isAssistantSpeaking: false,
+        isHandshakePending: false,
+        isPreSpeakBurst: false,
+      }),
+    ).toBe('thinking');
+
+    expect(
+      getVoiceOrbState({
+        sessionId: 'vsn_1',
+        isRecording: false,
+        isAssistantThinking: false,
+        isAssistantSpeaking: false,
+        isHandshakePending: false,
+        isPreSpeakBurst: true,
+      }),
+    ).toBe('pre_speaking');
+
+    expect(
+      getVoiceOrbState({
+        sessionId: 'vsn_1',
+        isRecording: false,
+        isAssistantThinking: false,
+        isAssistantSpeaking: true,
+        isHandshakePending: false,
+        isPreSpeakBurst: false,
+      }),
+    ).toBe('speaking');
+
+    expect(
+      getVoiceOrbState({
+        sessionId: 'vsn_1',
+        isRecording: false,
+        isAssistantThinking: false,
+        isAssistantSpeaking: false,
+        isHandshakePending: false,
+        isPreSpeakBurst: false,
+      }),
+    ).toBe('listening');
   });
 });

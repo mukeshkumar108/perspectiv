@@ -65,6 +65,44 @@ describe('API Client', () => {
     });
   });
 
+  describe('getLessons', () => {
+    it('should fetch lessons catalog successfully', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: 'lesson_1',
+            title: 'Reset in 2 Minutes',
+            description: 'A short nervous-system reset.',
+            audioUrl: 'https://cdn.example.com/lessons/reset.mp3',
+            order: 1,
+            tags: ['breathing'],
+            durationSec: 120,
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify(mockResponse),
+      });
+
+      const result = await api.getLessons();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://b-attic.vercel.app/api/bluum/lessons',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-token',
+          }),
+        }),
+      );
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].title).toBe('Reset in 2 Minutes');
+      expect(result.items[0].audioUrl).toBe('https://cdn.example.com/lessons/reset.mp3');
+    });
+  });
+
   describe('submitReflection', () => {
     it('should submit reflection successfully', async () => {
       const mockResponse = {
@@ -418,6 +456,113 @@ describe('API Client', () => {
       });
       expect(turn.turn.assistant?.text).toBe('Great, one more detail.');
       expect(turn.session.readyToEnd).toBe(false);
+    });
+
+    it('should send textInput in final mode without audio and parse assistant input mode', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () =>
+          JSON.stringify({
+            session: {
+              id: 'vsn_text_1',
+              state: 'active',
+              readyToEnd: false,
+              nextTurnIndex: 5,
+            },
+            turn: {
+              id: 'vturn_text_1',
+              index: 4,
+              clientTurnId: '77777777-7777-4777-8777-777777777777',
+              userTranscript: { text: 'I feel better at night.' },
+              assistant: {
+                text: 'What helps most at night?',
+                audioUrl: 'https://cdn.example.com/text-turn.mp3',
+                audioMimeType: 'audio/mpeg',
+                audioExpiresAt: '2026-03-12T12:15:00.000Z',
+                ttsAvailable: true,
+                inputMode: 'choice',
+                choices: [
+                  { value: 'routine', label: 'A routine' },
+                  { value: 'music', label: 'Music' },
+                ],
+              },
+              safety: {
+                flagged: false,
+                reason: 'none',
+                safeResponse: null,
+              },
+            },
+          }),
+      });
+
+      const result = await api.submitVoiceTurn({
+        sessionId: 'vsn_text_1',
+        clientTurnId: '77777777-7777-4777-8777-777777777777',
+        responseMode: 'final',
+        textInput: 'I feel better at night.',
+      });
+
+      const body = mockFetch.mock.calls[0][1].body as FormData;
+      expect(body.get('responseMode')).toBe('final');
+      expect(body.get('textInput')).toBe('I feel better at night.');
+      expect(body.get('audio')).toBeNull();
+      expect(body.get('choiceValue')).toBeNull();
+      expect(result.turn.assistant?.inputMode).toBe('choice');
+      expect(result.turn.assistant?.choices).toEqual([
+        { value: 'routine', label: 'A routine' },
+        { value: 'music', label: 'Music' },
+      ]);
+    });
+
+    it('should send choiceValue in final mode without audio', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () =>
+          JSON.stringify({
+            session: {
+              id: 'vsn_choice_1',
+              state: 'active',
+              readyToEnd: false,
+              nextTurnIndex: 6,
+            },
+            turn: {
+              id: 'vturn_choice_1',
+              index: 5,
+              clientTurnId: '88888888-8888-4888-8888-888888888888',
+              userTranscript: { text: 'Music' },
+              assistant: {
+                text: 'Nice, what kind of music?',
+                audioUrl: null,
+                audioMimeType: null,
+                audioExpiresAt: null,
+                ttsAvailable: false,
+                inputMode: 'text',
+                choices: null,
+              },
+              safety: {
+                flagged: false,
+                reason: 'none',
+                safeResponse: null,
+              },
+            },
+          }),
+      });
+
+      const result = await api.submitVoiceTurn({
+        sessionId: 'vsn_choice_1',
+        clientTurnId: '88888888-8888-4888-8888-888888888888',
+        responseMode: 'final',
+        choiceValue: 'music',
+      });
+
+      const body = mockFetch.mock.calls[0][1].body as FormData;
+      expect(body.get('responseMode')).toBe('final');
+      expect(body.get('choiceValue')).toBe('music');
+      expect(body.get('audio')).toBeNull();
+      expect(body.get('textInput')).toBeNull();
+      expect(result.turn.assistant?.inputMode).toBe('text');
     });
 
     it('should send reflectionTrack=core on start and support staged->finalize for core track', async () => {

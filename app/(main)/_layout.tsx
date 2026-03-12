@@ -34,7 +34,21 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="lessons"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="guide/[id]"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="lesson/[id]"
         options={{
           presentation: 'card',
           animation: 'slide_from_right',

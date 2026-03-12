@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput as RNTextInput,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,17 +14,25 @@ import { Audio } from 'expo-av';
 
 import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
+import { VoiceOrbVisualizer } from '@/src/components/VoiceOrbVisualizer';
 import {
   useEndVoiceSession,
   useStartVoiceSession,
   useSubmitVoiceTurn,
 } from '@/src/hooks';
-import { ApiError, type VoiceFlow, type VoiceReflectionTrack } from '@/src/api';
+import {
+  ApiError,
+  type VoiceChoice,
+  type VoiceFlow,
+  type VoiceInputMode,
+  type VoiceReflectionTrack,
+} from '@/src/api';
 import {
   buildVoiceEndPayload,
   FINALIZE_RETRY_DELAYS_MS,
   getEndErrorAction,
   getTalkActionState,
+  getVoiceOrbState,
   shouldRetryFinalize,
   shouldWaitForHandshakePlayback,
 } from '@/src/voice/sessionLogic';
@@ -32,6 +41,11 @@ type Message = {
   id: string;
   role: 'assistant' | 'user' | 'system' | 'typing';
   text: string;
+};
+
+type AssistantInputHints = {
+  inputMode?: VoiceInputMode;
+  choices?: VoiceChoice[] | null;
 };
 
 type FlowOption = {
@@ -115,10 +129,15 @@ export default function VoiceSessionScreen() {
 
   const [selectedFlowOptionId, setSelectedFlowOptionId] = useState<FlowOption['id'] | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'orb' | 'transcript'>('orb');
   const [isRecording, setIsRecording] = useState(false);
   const [isHandshakePending, setIsHandshakePending] = useState(false);
   const [isAssistantSpeaking, setIsAssistantSpeaking] = useState(false);
   const [isAssistantThinking, setIsAssistantThinking] = useState(false);
+  const [isPreSpeakBurst, setIsPreSpeakBurst] = useState(false);
+  const [activeInputMode, setActiveInputMode] = useState<VoiceInputMode>('voice');
+  const [activeChoices, setActiveChoices] = useState<VoiceChoice[]>([]);
+  const [textInputValue, setTextInputValue] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [endHint, setEndHint] = useState<string | null>(null);
   const [safeResponse, setSafeResponse] = useState<{
@@ -139,6 +158,14 @@ export default function VoiceSessionScreen() {
     isHandshakePending,
     isAssistantSpeaking,
   });
+  const orbState = getVoiceOrbState({
+    sessionId,
+    isRecording,
+    isAssistantThinking,
+    isAssistantSpeaking,
+    isHandshakePending,
+    isPreSpeakBurst,
+  });
 
   const footerStatus = useMemo(() => {
     if (startMutation.isPending) {
@@ -150,6 +177,9 @@ export default function VoiceSessionScreen() {
     if (isAssistantThinking || turnMutation.isPending) {
       return { label: 'Assistant thinking...', spinner: true };
     }
+    if (isPreSpeakBurst) {
+      return { label: 'Preparing voice...', spinner: true };
+    }
     if (isAssistantSpeaking) {
       return { label: 'Assistant speaking...', spinner: true };
     }
@@ -157,6 +187,12 @@ export default function VoiceSessionScreen() {
       return { label: 'Recording...', spinner: false };
     }
     if (sessionId) {
+      if (activeInputMode === 'text') {
+        return { label: 'Type your response and send', spinner: false };
+      }
+      if (activeInputMode === 'choice') {
+        return { label: 'Choose an option to continue', spinner: false };
+      }
       return { label: 'Press to talk when ready', spinner: false };
     }
     if (selectedFlowOption) {
@@ -170,7 +206,9 @@ export default function VoiceSessionScreen() {
     isAssistantSpeaking,
     isAssistantThinking,
     isHandshakePending,
+    isPreSpeakBurst,
     isRecording,
+    activeInputMode,
     selectedFlowOption,
     sessionId,
     startMutation.isPending,
@@ -203,6 +241,7 @@ export default function VoiceSessionScreen() {
     }
     setIsAssistantSpeaking(false);
     setIsAssistantThinking(false);
+    setIsPreSpeakBurst(false);
     setIsRecording(false);
   }, []);
 
@@ -242,14 +281,29 @@ export default function VoiceSessionScreen() {
     setMessages((prev) => prev.filter((message) => message.id !== id));
   }, []);
 
+  const applyAssistantInputHints = useCallback((assistant?: AssistantInputHints) => {
+    const nextMode = assistant?.inputMode ?? 'voice';
+    const nextChoices =
+      nextMode === 'choice' ? assistant?.choices?.filter(Boolean) ?? [] : [];
+    setActiveInputMode(nextMode);
+    setActiveChoices(nextChoices);
+    if (nextMode !== 'text') {
+      setTextInputValue('');
+    }
+  }, []);
+
   const playAssistantAudio = useCallback(
     async (
       audioUrl: string | null,
       options?: {
         awaitCompletion?: boolean;
+        onPlaybackStart?: (meta: { durationMs: number | null }) => void;
       },
     ) => {
-      if (!audioUrl) return;
+      if (!audioUrl) {
+        options?.onPlaybackStart?.({ durationMs: null });
+        return;
+      }
       try {
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
@@ -259,37 +313,64 @@ export default function VoiceSessionScreen() {
           soundRef.current.setOnPlaybackStatusUpdate(null);
           await soundRef.current.unloadAsync();
         }
-        const { sound } = await Audio.Sound.createAsync(
+        const { sound, status } = await Audio.Sound.createAsync(
           { uri: audioUrl },
           { shouldPlay: true },
         );
         soundRef.current = sound;
+        const initialDurationMs =
+          status && 'isLoaded' in status && status.isLoaded
+            ? status.durationMillis ?? null
+            : null;
         setIsAssistantSpeaking(true);
+
+        let startNotified = false;
+        const notifyPlaybackStart = (durationMs: number | null) => {
+          if (startNotified) return;
+          startNotified = true;
+          options?.onPlaybackStart?.({ durationMs });
+        };
+
         const waitForPlayback = new Promise<void>((resolve) => {
           let settled = false;
+          const startFallbackTimeout = setTimeout(() => {
+            notifyPlaybackStart(initialDurationMs);
+          }, 1_200);
           const settle = () => {
             if (settled) return;
             settled = true;
+            clearTimeout(startFallbackTimeout);
             sound.setOnPlaybackStatusUpdate(null);
             setIsAssistantSpeaking(false);
             resolve();
           };
 
-          sound.setOnPlaybackStatusUpdate((status: any) => {
-            if (!status?.isLoaded) {
+          const handlePlaybackStatus = (statusUpdate: any) => {
+            if (!statusUpdate?.isLoaded) {
               settle();
               return;
             }
-            if (status.didJustFinish) {
+            if (
+              statusUpdate.isPlaying ||
+              (typeof statusUpdate.positionMillis === 'number' &&
+                statusUpdate.positionMillis > 0)
+            ) {
+              notifyPlaybackStart(statusUpdate.durationMillis ?? initialDurationMs);
+            }
+            if (statusUpdate.didJustFinish) {
               settle();
             }
-          });
+          };
+
+          sound.setOnPlaybackStatusUpdate(handlePlaybackStatus);
+          handlePlaybackStatus(status);
           setTimeout(settle, 45_000);
         });
         if (options?.awaitCompletion) {
           await waitForPlayback;
         }
       } catch {
+        options?.onPlaybackStart?.({ durationMs: null });
         setIsAssistantSpeaking(false);
         appendMessage('system', 'Audio playback unavailable; showing text only.');
       }
@@ -305,11 +386,22 @@ export default function VoiceSessionScreen() {
       awaitPlaybackCompletion?: boolean;
       fallbackLabel?: string;
     }) => {
-      const typingId = appendMessage('typing', '...');
+      const typingFrames = ['.', '..', '...'];
+      const typingId = appendMessage('typing', typingFrames[2]);
       setIsAssistantThinking(true);
-      await new Promise<void>((resolve) => setTimeout(resolve, 360));
-      removeMessage(typingId);
-      setIsAssistantThinking(false);
+      let typingIndex = 0;
+      let typingStopped = false;
+      const typingTimer = setInterval(() => {
+        typingIndex = (typingIndex + 1) % typingFrames.length;
+        updateMessageText(typingId, typingFrames[typingIndex]);
+      }, 260);
+      const stopTypingIndicator = () => {
+        if (typingStopped) return;
+        typingStopped = true;
+        clearInterval(typingTimer);
+        removeMessage(typingId);
+        setIsAssistantThinking(false);
+      };
 
       if (!payload.ttsAvailable) {
         appendMessage(
@@ -318,30 +410,69 @@ export default function VoiceSessionScreen() {
         );
       }
 
+      if (payload.audioUrl && payload.ttsAvailable) {
+        setIsPreSpeakBurst(true);
+        await new Promise<void>((resolve) => setTimeout(resolve, 80));
+        setIsPreSpeakBurst(false);
+      }
+
+      let resolvePlaybackStart: ((meta: { durationMs: number | null }) => void) | null =
+        null;
+      const playbackStartPromise = new Promise<{ durationMs: number | null }>(
+        (resolve) => {
+          resolvePlaybackStart = resolve;
+        },
+      );
       const playPromise = playAssistantAudio(payload.audioUrl, {
         awaitCompletion: payload.awaitPlaybackCompletion,
+        onPlaybackStart: (meta) => {
+          resolvePlaybackStart?.(meta);
+          resolvePlaybackStart = null;
+        },
       });
 
-      const assistantId = appendMessage('assistant', '');
       const words = payload.text.split(/\s+/).filter(Boolean);
       if (words.length === 0) {
+        stopTypingIndicator();
+        const assistantId = appendMessage('assistant', '');
         updateMessageText(assistantId, payload.text);
       } else {
-        const totalDuration = Math.min(2200, Math.max(520, words.length * 95));
-        const perWordDelay = Math.max(35, Math.floor(totalDuration / words.length));
+        const playbackMeta =
+          payload.audioUrl && payload.ttsAvailable
+            ? await Promise.race([
+                playbackStartPromise,
+                new Promise<{ durationMs: number | null }>((resolve) =>
+                  setTimeout(() => resolve({ durationMs: null }), 1_200),
+                ),
+              ])
+            : { durationMs: null };
+        stopTypingIndicator();
+        const assistantId = appendMessage('assistant', '');
+        const totalDuration =
+          playbackMeta.durationMs && playbackMeta.durationMs > 0
+            ? Math.min(14_000, Math.max(750, Math.floor(playbackMeta.durationMs * 0.9)))
+            : Math.min(2_200, Math.max(580, words.length * 88));
+        const perWordDelay = totalDuration / Math.max(1, words.length);
         for (let index = 0; index < words.length; index += 1) {
           updateMessageText(assistantId, words.slice(0, index + 1).join(' '));
+          const word = words[index] ?? '';
+          const extraPause = /[.!?]["']?$/.test(word)
+            ? Math.min(110, Math.floor(perWordDelay * 0.45))
+            : /[,;:]["']?$/.test(word)
+              ? Math.min(60, Math.floor(perWordDelay * 0.25))
+              : 0;
+          const waitMs = Math.max(28, Math.floor(perWordDelay + extraPause));
           // Keep this reveal lightweight and deterministic.
           // eslint-disable-next-line no-await-in-loop
-          await new Promise<void>((resolve) =>
-            setTimeout(resolve, perWordDelay),
-          );
+          await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
         }
+        updateMessageText(assistantId, payload.text);
       }
 
       if (payload.awaitPlaybackCompletion) {
         await playPromise;
       }
+      stopTypingIndicator();
     },
     [appendMessage, playAssistantAudio, removeMessage, updateMessageText],
   );
@@ -388,6 +519,8 @@ export default function VoiceSessionScreen() {
           text: string;
           audioUrl: string | null;
           ttsAvailable: boolean;
+          inputMode?: VoiceInputMode;
+          choices?: VoiceChoice[] | null;
         };
         safety?: {
           safeResponse?: {
@@ -404,6 +537,7 @@ export default function VoiceSessionScreen() {
         appendMessage('system', 'Still processing response. Please try speaking again.');
         return;
       }
+      applyAssistantInputHints(response.turn.assistant);
       await presentAssistantMessage({
         text: response.turn.assistant.text,
         audioUrl: response.turn.assistant.audioUrl,
@@ -412,7 +546,7 @@ export default function VoiceSessionScreen() {
         fallbackLabel: 'Assistant audio unavailable. Continuing in text.',
       });
     },
-    [appendMessage, presentAssistantMessage],
+    [appendMessage, applyAssistantInputHints, presentAssistantMessage],
   );
 
   const handleTurnError = useCallback((error: unknown) => {
@@ -432,6 +566,10 @@ export default function VoiceSessionScreen() {
         setIsHandshakePending(false);
         setIsAssistantSpeaking(false);
         setIsAssistantThinking(false);
+        setIsPreSpeakBurst(false);
+        setActiveInputMode('voice');
+        setActiveChoices([]);
+        setTextInputValue('');
         return;
       }
       Alert.alert('Turn failed', error.message);
@@ -444,9 +582,14 @@ export default function VoiceSessionScreen() {
     if (!selectedFlowOption) return;
     setSafeResponse(null);
     setEndHint(null);
+    setViewMode('orb');
     setIsHandshakePending(false);
     setIsAssistantSpeaking(false);
     setIsAssistantThinking(false);
+    setIsPreSpeakBurst(false);
+    setActiveInputMode('voice');
+    setActiveChoices([]);
+    setTextInputValue('');
     setMessages([]);
 
     try {
@@ -467,6 +610,7 @@ export default function VoiceSessionScreen() {
         result.assistant,
       );
       setIsHandshakePending(shouldWaitForHandshake);
+      applyAssistantInputHints(result.assistant);
       await presentAssistantMessage({
         text: result.assistant.text,
         audioUrl: result.assistant.audioUrl,
@@ -482,11 +626,22 @@ export default function VoiceSessionScreen() {
       setIsHandshakePending(false);
       setIsAssistantSpeaking(false);
       setIsAssistantThinking(false);
+      setIsPreSpeakBurst(false);
+      setActiveInputMode('voice');
+      setActiveChoices([]);
     }
   };
 
   const beginRecording = async () => {
-    if (!sessionId || isBusy || isHandshakePending || isAssistantSpeaking) return;
+    if (
+      !sessionId ||
+      activeInputMode !== 'voice' ||
+      isBusy ||
+      isHandshakePending ||
+      isAssistantSpeaking
+    ) {
+      return;
+    }
     const permission = await Audio.requestPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Microphone permission needed', 'Allow microphone access to use voice sessions.');
@@ -620,6 +775,55 @@ export default function VoiceSessionScreen() {
     }
   };
 
+  const submitTextTurn = async () => {
+    if (!sessionId || isBusy) return;
+    const textInput = textInputValue.trim();
+    if (!textInput) return;
+
+    const clientTurnId = createUuid();
+    const locale = 'en-US';
+    const deviceTs = new Date().toISOString();
+
+    setTextInputValue('');
+    try {
+      const response = await turnMutation.mutateAsync({
+        sessionId,
+        clientTurnId,
+        responseMode: 'final',
+        textInput,
+        locale,
+        deviceTs,
+      });
+      appendMessage('user', response.turn.userTranscript.text || textInput);
+      await applyAssistantTurn(response);
+    } catch (error) {
+      setTextInputValue(textInput);
+      handleTurnError(error);
+    }
+  };
+
+  const submitChoiceTurn = async (choice: VoiceChoice) => {
+    if (!sessionId || isBusy) return;
+    const clientTurnId = createUuid();
+    const locale = 'en-US';
+    const deviceTs = new Date().toISOString();
+
+    try {
+      const response = await turnMutation.mutateAsync({
+        sessionId,
+        clientTurnId,
+        responseMode: 'final',
+        choiceValue: choice.value,
+        locale,
+        deviceTs,
+      });
+      appendMessage('user', response.turn.userTranscript.text || choice.label);
+      await applyAssistantTurn(response);
+    } catch (error) {
+      handleTurnError(error);
+    }
+  };
+
   const exitSession = async () => {
     if (!sessionId) {
       router.back();
@@ -653,6 +857,23 @@ export default function VoiceSessionScreen() {
     }
   };
 
+  const safeResponseCard = safeResponse ? (
+    <Card style={styles.safeCard}>
+      <Text variant="bodyMedium">Support options</Text>
+      <Text variant="small" color={theme.textSecondary} style={styles.safeMessage}>
+        {safeResponse.message}
+      </Text>
+      {safeResponse.resources.map((resource) => (
+        <View key={`${resource.label}-${resource.value}`} style={styles.safeResource}>
+          <Text variant="small">{resource.label}</Text>
+          <Text variant="small" color={theme.textSecondary}>
+            {resource.value}
+          </Text>
+        </View>
+      ))}
+    </Card>
+  ) : null;
+
   return (
     <ScreenContainer style={styles.container} ambient={false}>
       <View style={styles.header}>
@@ -669,6 +890,45 @@ export default function VoiceSessionScreen() {
             {endHint}
           </Text>
         </Card>
+      )}
+
+      {sessionId && (
+        <View style={styles.viewToggleRow}>
+          <Pressable
+            onPress={() => setViewMode('orb')}
+            style={[
+              styles.viewToggleButton,
+              viewMode === 'orb' && {
+                backgroundColor: theme.text,
+              },
+            ]}
+            hitSlop={8}
+          >
+            <Text
+              variant="small"
+              color={viewMode === 'orb' ? theme.surface : theme.textSecondary}
+            >
+              Orb
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setViewMode('transcript')}
+            style={[
+              styles.viewToggleButton,
+              viewMode === 'transcript' && {
+                backgroundColor: theme.text,
+              },
+            ]}
+            hitSlop={8}
+          >
+            <Text
+              variant="small"
+              color={viewMode === 'transcript' ? theme.surface : theme.textSecondary}
+            >
+              Transcript
+            </Text>
+          </Pressable>
+        </View>
       )}
 
       {!sessionId && (
@@ -713,69 +973,63 @@ export default function VoiceSessionScreen() {
         </View>
       )}
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.messages}
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={scrollToLatest}
-      >
-        {messages.map((message, index) => {
-          const previous = index > 0 ? messages[index - 1] : null;
-          const currentSide = message.role === 'user' ? 'user' : 'assistant';
-          const previousSide =
-            previous && previous.role === 'user' ? 'user' : 'assistant';
-          const roleSwitched = Boolean(
-            previous &&
-              message.role !== 'system' &&
-              previous.role !== 'system' &&
-              currentSide !== previousSide,
-          );
+      {sessionId && viewMode === 'orb' ? (
+        <View style={styles.orbMode}>
+          <VoiceOrbVisualizer state={orbState} />
+          {safeResponseCard ? (
+            <View style={styles.orbSafeWrap}>{safeResponseCard}</View>
+          ) : null}
+        </View>
+      ) : (
+        <ScrollView
+          ref={scrollRef}
+          style={styles.messages}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={scrollToLatest}
+        >
+          {messages.map((message, index) => {
+            const previous = index > 0 ? messages[index - 1] : null;
+            const currentSide = message.role === 'user' ? 'user' : 'assistant';
+            const previousSide =
+              previous && previous.role === 'user' ? 'user' : 'assistant';
+            const roleSwitched = Boolean(
+              previous &&
+                message.role !== 'system' &&
+                previous.role !== 'system' &&
+                currentSide !== previousSide,
+            );
 
-          return (
-            <Card
-              key={message.id}
-              style={[
-                styles.messageCard,
-                roleSwitched && styles.turnGap,
-                message.role === 'user'
-                  ? styles.userMessageCard
-                  : styles.assistantMessageCard,
-                message.role === 'system' && styles.systemMessageCard,
-                message.role === 'typing' && styles.typingMessageCard,
-              ]}
-            >
-              <Text variant="small" color={theme.textTertiary} style={styles.speakerLabel}>
-                {message.role === 'assistant' || message.role === 'typing'
-                  ? 'Assistant'
-                  : message.role === 'user'
-                    ? 'You'
-                    : 'System'}
-              </Text>
-              <Text variant="body" style={styles.messageText}>
-                {message.text}
-              </Text>
-            </Card>
-          );
-        })}
-
-        {safeResponse && (
-          <Card style={styles.safeCard}>
-            <Text variant="bodyMedium">Support options</Text>
-            <Text variant="small" color={theme.textSecondary} style={styles.safeMessage}>
-              {safeResponse.message}
-            </Text>
-            {safeResponse.resources.map((resource) => (
-              <View key={`${resource.label}-${resource.value}`} style={styles.safeResource}>
-                <Text variant="small">{resource.label}</Text>
-                <Text variant="small" color={theme.textSecondary}>
-                  {resource.value}
+            return (
+              <Card
+                key={message.id}
+                style={[
+                  styles.messageCard,
+                  roleSwitched && styles.turnGap,
+                  message.role === 'user'
+                    ? styles.userMessageCard
+                    : styles.assistantMessageCard,
+                  message.role === 'system' && styles.systemMessageCard,
+                  message.role === 'typing' && styles.typingMessageCard,
+                ]}
+              >
+                <Text variant="small" color={theme.textTertiary} style={styles.speakerLabel}>
+                  {message.role === 'assistant' || message.role === 'typing'
+                    ? 'Assistant'
+                    : message.role === 'user'
+                      ? 'You'
+                      : 'System'}
                 </Text>
-              </View>
-            ))}
-          </Card>
-        )}
-      </ScrollView>
+                <Text variant="body" style={styles.messageText}>
+                  {message.text}
+                </Text>
+              </Card>
+            );
+          })}
+
+          {safeResponseCard}
+        </ScrollView>
+      )}
 
       <View
         style={[
@@ -818,18 +1072,76 @@ export default function VoiceSessionScreen() {
         )}
         {sessionId && (
           <View style={styles.controls}>
-            <Button
-              title={talkAction.title}
-              onPress={isRecording ? stopAndSendTurn : beginRecording}
-              disabled={talkAction.disabled}
-              icon={
-                isRecording ? (
-                  <Square size={18} color={theme.surface} />
+            {activeInputMode === 'voice' && (
+              <Button
+                title={talkAction.title}
+                onPress={isRecording ? stopAndSendTurn : beginRecording}
+                disabled={talkAction.disabled}
+                icon={
+                  isRecording ? (
+                    <Square size={18} color={theme.surface} />
+                  ) : (
+                    <Mic size={18} color={theme.surface} />
+                  )
+                }
+              />
+            )}
+            {activeInputMode === 'text' && (
+              <View style={styles.textComposer}>
+                <RNTextInput
+                  style={[
+                    styles.textComposerInput,
+                    {
+                      borderColor: theme.border,
+                      color: theme.text,
+                      backgroundColor: theme.surface,
+                    },
+                  ]}
+                  placeholder="Type your response..."
+                  placeholderTextColor={theme.textTertiary}
+                  value={textInputValue}
+                  onChangeText={setTextInputValue}
+                  editable={!isBusy}
+                  multiline
+                  maxLength={500}
+                  textAlignVertical="top"
+                />
+                <Button
+                  title="Send"
+                  onPress={submitTextTurn}
+                  disabled={isBusy || textInputValue.trim().length === 0}
+                />
+              </View>
+            )}
+            {activeInputMode === 'choice' && (
+              <View style={styles.choiceComposer}>
+                {activeChoices.length > 0 ? (
+                  <View style={styles.choiceWrap}>
+                    {activeChoices.map((choice) => (
+                      <Pressable
+                        key={choice.value}
+                        onPress={() => submitChoiceTurn(choice)}
+                        disabled={isBusy}
+                        style={[
+                          styles.choiceChip,
+                          {
+                            borderColor: theme.border,
+                            backgroundColor: theme.surface,
+                            opacity: isBusy ? 0.55 : 1,
+                          },
+                        ]}
+                      >
+                        <Text variant="small">{choice.label}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 ) : (
-                  <Mic size={18} color={theme.surface} />
-                )
-              }
-            />
+                  <Text variant="small" color={theme.textSecondary}>
+                    Waiting for options...
+                  </Text>
+                )}
+              </View>
+            )}
             <View style={styles.secondaryControls}>
               <Button
                 title="Exit"
@@ -862,9 +1174,33 @@ const styles = StyleSheet.create({
   hintCard: {
     marginBottom: spacing.md,
   },
+  viewToggleRow: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    padding: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(35, 30, 21, 0.08)',
+  },
+  viewToggleButton: {
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
   flowPicker: {
     gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  orbMode: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orbSafeWrap: {
+    width: '100%',
+    marginTop: spacing.md,
   },
   flowOptionCard: {
     gap: spacing.xs,
@@ -933,6 +1269,33 @@ const styles = StyleSheet.create({
   },
   controls: {
     gap: spacing.sm,
+  },
+  textComposer: {
+    gap: spacing.sm,
+  },
+  textComposerInput: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minHeight: 78,
+    maxHeight: 160,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  choiceComposer: {
+    gap: spacing.xs,
+  },
+  choiceWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  choiceChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   footer: {
     borderTopWidth: 1,

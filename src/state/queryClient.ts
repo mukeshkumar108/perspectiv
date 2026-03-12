@@ -32,4 +32,5 @@ export const queryKeys = {
   streaks: ['streaks'] as const,
   me: ['me'] as const,
   moments: ['moments'] as const,
+  lessons: ['lessons'] as const,
 };

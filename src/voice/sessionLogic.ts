@@ -2,6 +2,13 @@ import { ApiError } from '../api';
 import type { VoiceFlow } from '../api';
 
 export const FINALIZE_RETRY_DELAYS_MS = [250, 500, 1000] as const;
+export type VoiceOrbState =
+  | 'idle'
+  | 'listening'
+  | 'recording'
+  | 'thinking'
+  | 'pre_speaking'
+  | 'speaking';
 
 export function getCompleteActionState(readyToEnd: boolean) {
   return {
@@ -37,6 +44,31 @@ export function getTalkActionState(params: {
   const disabled =
     !sessionId || isBusy || isHandshakePending || isAssistantSpeaking;
   return { title, disabled };
+}
+
+export function getVoiceOrbState(params: {
+  sessionId: string | null;
+  isRecording: boolean;
+  isAssistantThinking: boolean;
+  isAssistantSpeaking: boolean;
+  isHandshakePending: boolean;
+  isPreSpeakBurst: boolean;
+}): VoiceOrbState {
+  const {
+    sessionId,
+    isRecording,
+    isAssistantThinking,
+    isAssistantSpeaking,
+    isHandshakePending,
+    isPreSpeakBurst,
+  } = params;
+
+  if (!sessionId) return 'idle';
+  if (isRecording) return 'recording';
+  if (isAssistantThinking) return 'thinking';
+  if (isPreSpeakBurst) return 'pre_speaking';
+  if (isAssistantSpeaking || isHandshakePending) return 'speaking';
+  return 'listening';
 }
 
 export function shouldRetryFinalize(
