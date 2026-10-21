@@ -154,6 +154,26 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
     [refreshStatus],
   );
 
+  const onPlaybackDiag = useCallback((info: Record<string, unknown>) => {
+    log('audio', JSON.stringify(info));
+  }, []);
+
+  /** Plays a short beep through the same output path, with no server involved. */
+  const testSound = useCallback(async () => {
+    const ready = await playback.current?.ensureReady();
+    if (!ready) return false;
+    await setAudioModeAsync(DUPLEX_AUDIO_MODE);
+    const rate = VOICE_OUTPUT_SAMPLE_RATE;
+    const samples = new Int16Array(Math.round(rate * 0.7));
+    for (let i = 0; i < samples.length; i += 1) {
+      const envelope = Math.min(1, i / 400, (samples.length - i) / 400);
+      samples[i] = Math.round(Math.sin((2 * Math.PI * 523 * i) / rate) * 0.5 * 32767 * envelope);
+    }
+    playback.current?.enqueue(int16ToBase64(samples), rate);
+    playback.current?.drain();
+    return true;
+  }, [playback]);
+
   const onPlaybackLevel = useCallback((level: number) => {
     if (statusRef.current === 'speaking') levelRef.current = Math.min(1, level * 3.2);
   }, []);
@@ -394,5 +414,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
     interrupt,
     onPlaybackState,
     onPlaybackLevel,
+    onPlaybackDiag,
+    testSound,
   };
 }

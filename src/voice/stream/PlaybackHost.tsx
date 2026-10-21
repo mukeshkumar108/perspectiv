@@ -20,6 +20,7 @@ export type PlaybackHandle = {
 type Props = {
   onState: (state: PlaybackState) => void;
   onLevel?: (level: number) => void;
+  onDiag?: (info: Record<string, unknown>) => void;
   onError?: (message: string) => void;
 };
 
@@ -31,6 +32,7 @@ function post(o){ window.ReactNativeWebView.postMessage(JSON.stringify(o)); }
 function ensure(){
   if(!ctx){
     var C = window.AudioContext || window.webkitAudioContext; ctx = new C();
+    ctx.onstatechange = function(){ post({t:'diag', what:'ctx-state', state: ctx.state, cur: ctx.currentTime}); };
     master = ctx.createGain(); analyser = ctx.createAnalyser(); analyser.fftSize = 512;
     master.connect(ctx.destination); master.connect(analyser);
     levelBuf = new Float32Array(analyser.fftSize);
@@ -54,6 +56,7 @@ function play(buf){
   var at = Math.max(next, ctx.currentTime + 0.03);
   src.start(at); next = at + buf.duration;
   srcs.push(src); setPlaying(true);
+  post({t:'diag', what:'play', state: ctx.state, cur: Math.round(ctx.currentTime*100)/100, lead: Math.round((at-ctx.currentTime)*100)/100, dur: Math.round(buf.duration*100)/100, rate: ctx.sampleRate, out: ctx.outputLatency});
   src.onended = function(){
     var k = srcs.indexOf(src);
     if(k < 0) return;
@@ -68,7 +71,7 @@ function release(){
 }
 function onMsg(e){
   var m; try { m = JSON.parse(e.data); } catch(x){ return; }
-  if(m.t === 'init'){ ensure(); post({t:'ready', state: ctx.state}); }
+  if(m.t === 'init'){ ensure(); post({t:'ready', state: ctx.state}); post({t:'diag', what:'init', state: ctx.state, rate: ctx.sampleRate, base: ctx.baseLatency, out: ctx.outputLatency}); }
   else if(m.t === 'chunk'){
     ensure();
     var bin = atob(m.d), n = bin.length >> 1;
@@ -103,7 +106,7 @@ post({t:'booted'});
 </script></body></html>`;
 
 export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function VoicePlaybackHost(
-  { onState, onLevel, onError },
+  { onState, onLevel, onDiag, onError },
   ref,
 ) {
   const webRef = useRef<WebView>(null);
@@ -138,7 +141,7 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
 
   const onMessage = useCallback(
     (event: WebViewMessageEvent) => {
-      let m: { t: string; m?: string; v?: number };
+      let m: { t: string; m?: string; v?: number; [key: string]: unknown };
       try {
         m = JSON.parse(event.nativeEvent.data);
       } catch {
@@ -153,11 +156,13 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
         onState(m.t);
       } else if (m.t === 'level') {
         onLevel?.(m.v ?? 0);
+      } else if (m.t === 'diag') {
+        onDiag?.(m as Record<string, unknown>);
       } else if (m.t === 'err') {
         onError?.(m.m ?? 'audio page error');
       }
     },
-    [onError, onLevel, onState],
+    [onError, onLevel, onDiag, onState],
   );
 
   return (

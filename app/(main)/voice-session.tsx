@@ -82,6 +82,7 @@ export default function VoiceSessionScreen() {
         ref={playbackRef}
         onState={voice.onPlaybackState}
         onLevel={voice.onPlaybackLevel}
+        onDiag={voice.onPlaybackDiag}
       />
 
       <View style={styles.header}>
@@ -108,6 +109,7 @@ export default function VoiceSessionScreen() {
 
       {!live ? (
         <ScrollView contentContainerStyle={styles.flowPicker} showsVerticalScrollIndicator={false}>
+          <Button title="Test sound" variant="ghost" onPress={() => void voice.testSound()} />
           {FLOW_OPTIONS.map((option) => (
             <Card key={option.id} style={[styles.flowCard, { borderColor: theme.border, borderWidth: 1 }]}>
               <Text variant="bodyMedium">{option.title}</Text>
