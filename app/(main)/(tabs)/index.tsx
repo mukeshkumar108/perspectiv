@@ -6,7 +6,7 @@ import {
   Image,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import homeHeadlines from '@/src/content/homeHeadlines.json';
 import Animated, {
   Easing,

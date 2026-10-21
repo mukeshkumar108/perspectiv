@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardFace: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,

@@ -39,13 +39,13 @@ export const motion = {
       .withInitialValues({
       opacity: 1,
       transform: [{ translateY: 20 }],
-    }),
+    } as never),
   itemEnter: (delay = 0, direction: MotionDirection = 'up') =>
     FadeIn.duration(motionTokens.duration.base)
       .delay(delay)
-      .withInitialValues({ transform: initialTransform(direction) }),
+      .withInitialValues({ transform: initialTransform(direction) } as never),
   modalPop: (delay = 0) =>
     FadeIn.duration(motionTokens.duration.slow)
       .delay(delay)
-      .withInitialValues({ opacity: 0, transform: [{ scale: 0.94 }, { translateY: 14 }] }),
+      .withInitialValues({ opacity: 0, transform: [{ scale: 0.94 }, { translateY: 14 }] } as never),
 };

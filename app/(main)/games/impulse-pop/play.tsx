@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import type { Audio } from 'expo-av';
+import type { Sound } from '@/src/audio/sound';
 import { Clock3, Flame, Trophy, X } from 'lucide-react-native';
 import Animated, {
   Easing,
@@ -276,8 +276,8 @@ export default function ImpulsePopScreen() {
   const savedRoundRef = useRef<number | null>(null);
   const lastHapticAtRef = useRef(0);
   const correctComboRef = useRef(0);
-  const hitSoundRef = useRef<Audio.Sound | null>(null);
-  const missSoundRef = useRef<Audio.Sound | null>(null);
+  const hitSoundRef = useRef<Sound | null>(null);
+  const missSoundRef = useRef<Sound | null>(null);
   const hitFlash = useSharedValue(0);
   const arenaPunch = useSharedValue(0);
   const arenaJoltX = useSharedValue(0);
@@ -310,7 +310,7 @@ export default function ImpulsePopScreen() {
   useEffect(() => {
     let mounted = true;
     const loadSounds = async () => {
-      const { Audio: AudioModule } = await import('expo-av');
+      const { Audio: AudioModule } = await import('@/src/audio/sound');
       try {
         await AudioModule.setAudioModeAsync({
           playsInSilentModeIOS: true,
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(178,151,255,0.5)',
   },
   textureWrap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 4,
   },
   textureDot: {
@@ -851,11 +851,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,200,226,0.92)',
   },
   hitFlash: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 18,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 30,

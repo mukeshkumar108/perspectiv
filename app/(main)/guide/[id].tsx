@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import type { AVPlaybackStatus, Audio } from 'expo-av';
+import type { AVPlaybackStatus, Sound } from '@/src/audio/sound';
 import {
   ArrowLeft,
   Pause,
@@ -39,7 +39,7 @@ export default function GuideDetailScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMs, setPositionMs] = useState(0);
   const [durationMs, setDurationMs] = useState((session?.durationMin ?? 5) * 60 * 1000);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<Sound | null>(null);
   const progress = useSharedValue(0);
   const progressRatio = useMemo(() => {
     if (!durationMs || durationMs <= 0) return 0;
@@ -58,7 +58,7 @@ export default function GuideDetailScreen() {
     if (!session) return;
 
     const loadSound = async () => {
-      const { Audio: AudioModule } = await import('expo-av');
+      const { Audio: AudioModule } = await import('@/src/audio/sound');
       try {
         await AudioModule.setAudioModeAsync({
           playsInSilentModeIOS: true,

@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   moodBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   moodCharacterDock: {
     position: 'absolute',
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   celebrationOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(247, 246, 235, 0.74)',
