@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
@@ -55,6 +55,8 @@ export default function VoiceSessionScreen() {
   const voice = useStreamingVoice(playbackRef);
 
   const live = voice.status !== 'idle' && voice.status !== 'error';
+  // Off by default: her replies vary from a line to a paragraph, and showing them makes the screen jump.
+  const [showText, setShowText] = useState(false);
 
   const begin = useCallback(
     async (flow: VoiceConnectFlow) => {
@@ -96,7 +98,15 @@ export default function VoiceSessionScreen() {
           <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
         </Pressable>
         <Text variant="bodyMedium">Voice Session</Text>
-        <View style={styles.headerSpacer} />
+        <View style={styles.headerAction}>
+          {live ? (
+            <Pressable onPress={() => setShowText((on) => !on)} hitSlop={12} accessibilityLabel="Show or hide text">
+              <Text variant="small" color={theme.textSecondary}>
+                {showText ? 'Hide text' : 'Show text'}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       {errorText ? (
@@ -135,21 +145,25 @@ export default function VoiceSessionScreen() {
           <Pressable style={styles.orbWrap} onPress={voice.interrupt} accessibilityLabel="Orb">
             <VoiceOrbVisualizer state={ORB_STATE[voice.status]} levelRef={voice.levelRef} />
           </Pressable>
-          <Text variant="bodyMedium" style={styles.statusLabel}>
-            {STATUS_LABEL[voice.status]}
-          </Text>
-          <View style={styles.transcript}>
-            {voice.userText ? (
-              <Text variant="small" color={theme.textSecondary} style={styles.line}>
-                {voice.userText}
-              </Text>
-            ) : null}
-            {voice.assistantText ? (
-              <Text variant="body" style={styles.line}>
-                {voice.assistantText}
-              </Text>
-            ) : null}
+          <View style={styles.statusSlot}>
+            <Text variant="bodyMedium" style={styles.statusLabel}>
+              {STATUS_LABEL[voice.status]}
+            </Text>
           </View>
+          {showText ? (
+            <ScrollView style={styles.transcript} contentContainerStyle={styles.transcriptContent}>
+              {voice.userText ? (
+                <Text variant="small" color={theme.textSecondary} style={styles.line}>
+                  {voice.userText}
+                </Text>
+              ) : null}
+              {voice.assistantText ? (
+                <Text variant="body" style={styles.line}>
+                  {voice.assistantText}
+                </Text>
+              ) : null}
+            </ScrollView>
+          ) : null}
           <Button title="End" variant="ghost" onPress={voice.stop} />
         </View>
       )}
@@ -166,7 +180,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     marginBottom: spacing.sm,
   },
-  headerSpacer: { width: 22 },
+  headerAction: { minWidth: 76, alignItems: 'flex-end' },
   errorCard: { marginBottom: spacing.md },
   flowPicker: { gap: spacing.sm, paddingBottom: spacing.lg },
   flowCard: {},
@@ -174,7 +188,10 @@ const styles = StyleSheet.create({
   flowAction: { marginTop: spacing.sm, alignItems: 'flex-start' },
   live: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.lg },
   orbWrap: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-  statusLabel: { marginBottom: spacing.sm },
-  transcript: { alignSelf: 'stretch', minHeight: 96, gap: spacing.xs, paddingHorizontal: spacing.md },
+  // A fixed slot, so the label changing never moves anything else.
+  statusSlot: { height: 36, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
+  statusLabel: { textAlign: 'center' },
+  transcript: { alignSelf: 'stretch', height: 150, marginBottom: spacing.sm },
+  transcriptContent: { gap: spacing.xs, paddingHorizontal: spacing.md },
   line: { textAlign: 'center' },
 });
