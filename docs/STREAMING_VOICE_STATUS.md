@@ -94,3 +94,20 @@ A bad token is refused with 403.
 - Not understood yet: on the phone the voice was silent while the server's audio was verified non-silent (rms 0.10-0.15).
   The app now logs audio-engine state (`[voice] audio {...}`) and the voice screen has a "Test sound" button that plays
   a beep through the same path with no server involved.
+
+## Durable memory for Bloom: off (2026-10-21)
+
+- What was happening: each Bloom call end made the Runtime hand the call to Cortex's legacy world interpreter
+  (28 turns vs 16 call ends vs 16 `[world-interpret]` runs in the last 4 h: once per session, never per message).
+  `SOPHIE_LEGACY_INTERPRETER_ENABLED=false` only governs companions on the Cortex memory pipeline (`MEMORY_PIPELINE_COMPANIONS`,
+  default `sophie`), so it never covered Bloom. In-turn, the same interpreter can also be triggered at a sitting/episode
+  boundary, plus a per-turn raw evidence write (no model call).
+- Fix (companion-runtime `main` @ `9239eac`, deployed): `DURABLE_MEMORY_DISABLED_COMPANIONS=bloom` in the VPS `deploy/.env`.
+  A listed companion keeps only its own conversation (tail + rolling summary): no Cortex interpretation or consolidation
+  at any boundary or call end, no evidence-store or Honcho mirror writes, no world read into the prompt. Verified live: a Bloom
+  call end no longer produces a `[world-interpret]` line. Default (unset) behaviour is unchanged. To turn it back on, remove
+  the `bloom` entry and restart the Runtime.
+- Already written before the switch: Bloom calls from earlier today (including synthetic `e2e-*` users from my tests) are in
+  Cortex. Erase tooling exists (`synapse-cortex/docs/DATA_LIFECYCLE.md`); not run.
+- Note: `tests/test_preparation.py::test_trajectory_restores...` fails on a clean checkout because
+  `evals/behaviour/datasets/__init__.py` imports `cambridge.py`, which is untracked in the working tree.
