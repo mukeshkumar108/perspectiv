@@ -77,3 +77,20 @@ A bad token is refused with 403.
 - Voice Demo (its prompt is a per-turn template; turn slots are filled empty).
 - The pool has one slot: one call at a time.
 - Cortex memory for Bloom stays off (needs sign-off). Spoken turns are not saved anywhere yet.
+
+## Audio reliability work (2026-10-21, evening)
+
+- Lemonfox streams at about 1x real time with ~1 s start-up per sentence, and sometimes stalls or crawls (first
+  byte 5.6 s, 0.19x seen live). Deployed in `voice-runtime` (`consumer-cutover`): bounded reads + cancel-on-interrupt
+  (a stuck stream no longer blocks the single TTS thread), re-request of a slow first byte (4 s, twice), and a
+  one-sentence look-ahead (next queued sentence is requested while the current one streams; local test: gap under
+  0.3 s vs over 0.5 s without it; seen live as "prefetched").
+- Second provider chosen by voice name: a session asking for `Noelle` is served by `heygen/heygen-voice-1-turbo`
+  through OpenRouter (`/audio/speech`, raw PCM, `audio/pcm;rate=44100;channels=1`, about $4 per million characters,
+  measured 2-5.5x real time live). Settings: `VOICE_ALT_TTS_*` in the VPS `deploy/.env`; key `voice-tts` on OpenRouter,
+  capped at $2/day. Sessions that do not ask for that voice (Sophie web) stay on Lemonfox unchanged. 44.1 kHz goes
+  through one stateful soxr stream. `b_attic` connect now returns `voice: "Noelle"` and the app sends it.
+  Rollback: delete the `VOICE_ALT_TTS_*` lines from the VPS env and restart; Noelle then falls back to Lemonfox.
+- Not understood yet: on the phone the voice was silent while the server's audio was verified non-silent (rms 0.10-0.15).
+  The app now logs audio-engine state (`[voice] audio {...}`) and the voice screen has a "Test sound" button that plays
+  a beep through the same path with no server involved.
