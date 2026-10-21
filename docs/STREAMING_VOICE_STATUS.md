@@ -36,42 +36,44 @@ iPhone in Expo Go 57.0.9, **[unproven]** = not run.
 - **[unproven]**: any run of this screen on a phone, any connection to `sophie-voice`, and the whole
   end-to-end flow. The web audio first-chunk lead (60 ms) and 16 kHz output rate are taken from `sophie-mob`.
 
-## Server side (built and tested locally; not deployed)
+## Server side: deployed and verified (2026-10-21)
 
 Decision taken (option A): the flow prompt reaches the Runtime through its existing
-`TurnInput.application_context.character_constitution` (`product-context-v1`). Verified in the Runtime code:
-the constitution is **prepended** to the registered Bloom base instruction (`subtractive_prompt.py`
-`compile_foreground_prompt`), so Bloom's base, tools and the other prompt blocks are kept, not replaced.
-`bloom` is already a registered profile and an isolated product; no Runtime code change is needed.
-The Runtime's own `TurnInput` schema accepts the payload shape voice now builds **[ran]**.
+`TurnInput.application_context.character_constitution` (`product-context-v1`). Verified in Runtime code:
+the constitution is **prepended** to Bloom's registered base instruction (`compile_foreground_prompt`), so
+Bloom's base, tools and other prompt blocks are kept. `bloom` was already a registered, isolated product.
 
-- `b_attic`, branch `voice-streaming-connect`: `POST /api/bluum/voice/connect` (Clerk user + flow ->
-  signed 5 min token) and `POST /api/bluum/voice/session-config` (service key + token -> unchanged flow
-  prompt, user, timezone). 9 new tests pass; 2 pre-existing failures in `promptPolicy.test.ts` are unrelated.
-  Env: `VOICE_SESSION_SECRET`, `VOICE_SERVICE_KEY`, `VOICE_PUBLIC_URL` (the `wss://.../v1/realtime` URL).
-- `sophie-voice`, branch `bloom-session-context` in the separate worktree `~/play/sophie-voice-bloom`
-  (your uncommitted work in `~/play/sophie-voice` is untouched, but it overlaps `websocket_router.py`, so
-  merging will need a manual reconcile): `?token=` on `/v1/realtime` is exchanged server to server, and
-  `companion_id`, `trusted_user_context` and `application_context` are copied into each TurnInput. Invalid
-  token is rejected before a slot is claimed. 665 tests pass (9 new).
-  Env: `VOICE_SESSION_CONFIG_URL` (b_attic `.../api/bluum/voice/session-config`), `VOICE_SESSION_CONFIG_KEY`
-  (same value as b_attic `VOICE_SERVICE_KEY`), optional `VOICE_REQUIRE_SESSION_TOKEN=1`.
-- Not done: Cortex memory for Bloom (stays off, needs your sign-off); the deploy; any run against live
-  services.
+Correction found at deploy time: the VPS does not run `sophie-voice`. It runs `voice-runtime`
+(`github.com/mukeshkumar108/voice-runtime`, branch `consumer-cutover`), which already had a product-issued
+call-token design (HMAC token, `GET {host}/api/voice/context`, `POST {host}/api/voice/turn`) built for the
+Sophie web host. My first `sophie-voice` branch (`bloom-session-context`) was built on the wrong base and was
+not deployed. The change was redone on `consumer-cutover` (commit `55ff5ae`, pushed, 669 tests pass).
 
-### Why it stopped: deploy needs access I was denied
+- `voice-runtime` (VPS): token may carry a `host` claim, honoured only if listed in `VOICE_ALLOWED_HOSTS`
+  (set to `https://b-attic.vercel.app`; the env file was backed up first); the host's context response may
+  carry `application_context`, forwarded verbatim into each TurnInput. Sophie's behaviour is unchanged
+  (tests cover it). Redeployed; container healthy.
+- `b_attic` (Vercel production, `main` @ `9543148`): `POST /api/bluum/voice/connect` (Clerk user + flow ->
+  5 min token; returns `wss://api.unknwnfreq.xyz/voice/v1/realtime`), `GET /api/voice/context` and
+  `POST /api/voice/turn` (bearer = the token; made public in `src/proxy.ts` because they verify it
+  themselves). New Vercel production env: `VOICE_SESSION_SECRET` (the same value the voice server uses),
+  `VOICE_PUBLIC_URL`, `VOICE_HOST_PUBLIC_URL`. Production was identical to `main` before the deploy.
+- Cross-language check: a token minted by the `b_attic` code verifies in the voice server's Python verifier.
 
-The permission system blocked a read-only `ssh deploy@161.97.150.246`, so I did not touch the VPS. To finish:
+### End-to-end result (scripted client from a Mac, not the phone)
 
-1. Merge `bloom-session-context` into `sophie-voice` main (reconcile with your uncommitted router edits) and
-   `voice-streaming-connect` into `b_attic` main; push both.
-2. Set the env vars above on Vercel (b_attic) and in the `voice-runtime` container; use one shared secret
-   value for `VOICE_SERVICE_KEY` / `VOICE_SESSION_CONFIG_KEY`.
-3. Make the voice server reachable over TLS (`wss://`); Expo Go on a phone will not connect to plain `ws://`
-   on a public host reliably. Whether `voice-runtime` is publicly reachable today is still unknown.
-4. Rebuild and restart `voice-runtime` on the VPS using the recipe in the handover.
-5. In Expo Go, open the Voice screen, tap a flow, and talk. First thing to check in the logs: the connect
-   call returns a token, voice logs the token exchange, and the first TurnInput carries `companion_id=bloom`.
+Over public `wss://` to the live server with a Bloom token (synthetic user, so the context fetch returned
+404 and the call ran as plain Bloom): speech in, accurate transcript, Bloom reply as streamed audio
+(8.2 s), no errors. Speech-end to first audio: 3.7 s; the brain's first token alone took 2.3 s.
+`GET /api/voice/context` for a real user id returned 200 with the 9,009 character Reflection Core prompt.
+A bad token is refused with 403.
 
-The two-sentence honest status: transport pieces are unit-tested and the Runtime contract is verified, but no
-audio has flowed phone -> sophie-voice -> Runtime -> phone yet.
+### Still unproven
+
+- Anything on the phone: the Expo Go screen, mic capture into the live server, playback of the reply, the
+  turn gate timing (800 ms cooldown is a guess), the 16 kHz output assumption in the client.
+- The real flow prompt inside a live Runtime turn for a real user (the scripted run used a synthetic user so
+  that no real person's record was written). Check the first phone session's Runtime logs for this.
+- Voice Demo (its prompt is a per-turn template; turn slots are filled empty).
+- The pool has one slot: one call at a time.
+- Cortex memory for Bloom stays off (needs sign-off). Spoken turns are not saved anywhere yet.
