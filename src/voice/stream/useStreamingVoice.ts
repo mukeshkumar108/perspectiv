@@ -47,7 +47,8 @@ export type VoiceConnection = {
 
 const MIC_STALL_MS = 4000;
 // Nothing heard from the server or the speaker for this long while she should be answering.
-const REPLY_STALL_MS = 15_000;
+// Long enough that a slow model (10-17 s seen on a bad turn) still gets to answer; the server fails over on its own well before this.
+const REPLY_STALL_MS = 45_000;
 // How long a gap between spoken sentences keeps the status on Speaking.
 const SPEAKING_GRACE_MS = 1800;
 
