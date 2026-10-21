@@ -143,6 +143,29 @@ export const VoiceSessionStateSchema = z.enum([
   'inactive',
 ]);
 
+// Streaming voice connect (replaces the push-to-talk session/start|turn|end routes)
+export const VoiceConnectFlowSchema = z.enum([
+  'onboarding',
+  'first_reflection_day0',
+  'first_reflection_core',
+  'voice_demo',
+]);
+export type VoiceConnectFlow = z.infer<typeof VoiceConnectFlowSchema>;
+
+export const VoiceConnectRequestSchema = z.object({
+  flow: VoiceConnectFlowSchema,
+  timezone: z.string().optional(),
+});
+export type VoiceConnectRequest = z.infer<typeof VoiceConnectRequestSchema>;
+
+export const VoiceConnectResponseSchema = z.object({
+  voiceUrl: z.string(),
+  token: z.string(),
+  instructions: z.string().optional(),
+  voice: z.string().optional(),
+});
+export type VoiceConnectResponse = z.infer<typeof VoiceConnectResponseSchema>;
+
 export const VoiceInputModeSchema = z.enum(['voice', 'text', 'choice']);
 export type VoiceInputMode = z.infer<typeof VoiceInputModeSchema>;
 export const VoiceInputTypeSchema = z.enum(['audio', 'text', 'choice']);

@@ -5,4 +5,4 @@ export * from './useMood';
 export * from './useMoment';
 export * from './useMoments';
 export * from './useLessons';
-export * from './useVoiceSession';
+export * from './useVoiceConnect';

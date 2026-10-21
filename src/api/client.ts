@@ -12,6 +12,8 @@ import {
   ReflectionResponseSchema,
   StreaksResponseSchema,
   TodayResponseSchema,
+  VoiceConnectRequestSchema,
+  VoiceConnectResponseSchema,
   VoiceEndRequestSchema,
   VoiceEndResponseSchema,
   VoiceStartRequestSchema,
@@ -29,6 +31,8 @@ import {
   type ReflectionResponse,
   type StreaksResponse,
   type TodayResponse,
+  type VoiceConnectRequest,
+  type VoiceConnectResponse,
   type VoiceEndRequest,
   type VoiceEndResponse,
   type VoiceStartRequest,
@@ -473,6 +477,21 @@ export const api = {
    */
   getLessons(): Promise<LessonsResponse> {
     return request("/api/bluum/lessons", { method: "GET" }, LessonsResponseSchema);
+  },
+
+  /**
+   * Get a streaming voice connection (URL + short-lived token) for a session flow
+   */
+  connectVoice(data: VoiceConnectRequest): Promise<VoiceConnectResponse> {
+    VoiceConnectRequestSchema.parse(data);
+    return request(
+      "/api/bluum/voice/connect",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      VoiceConnectResponseSchema,
+    );
   },
 
   /**
