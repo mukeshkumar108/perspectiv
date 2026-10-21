@@ -63,3 +63,19 @@ describe('voice stream pcm helpers', () => {
     expect(next.map((x) => Array.from(x))).toEqual([[9, 10, 11, 12]]);
   });
 });
+
+describe('pcm16ToWav', () => {
+  it('writes a valid mono 16-bit WAV header and the samples', () => {
+    const { pcm16ToWav } = require('../src/voice/stream/pcm');
+    const wav: Uint8Array = pcm16ToWav(Int16Array.from([1, -2, 3]), 16000);
+    const view = new DataView(wav.buffer);
+    const text = (o: number, n: number) => String.fromCharCode(...wav.slice(o, o + n));
+    expect(text(0, 4)).toBe('RIFF');
+    expect(text(8, 4)).toBe('WAVE');
+    expect(view.getUint32(24, true)).toBe(16000);
+    expect(view.getUint16(22, true)).toBe(1);
+    expect(view.getUint32(40, true)).toBe(6);
+    expect([view.getInt16(44, true), view.getInt16(46, true), view.getInt16(48, true)]).toEqual([1, -2, 3]);
+    expect(wav.length).toBe(44 + 6);
+  });
+});

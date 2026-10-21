@@ -31,6 +31,31 @@ export function rms(samples: Int16Array): number {
   return Math.sqrt(sum / samples.length);
 }
 
+/** Wraps mono 16-bit PCM in a WAV container (for players that only take files). */
+export function pcm16ToWav(samples: Int16Array, sampleRate: number): Uint8Array {
+  const dataBytes = samples.length * 2;
+  const out = new Uint8Array(44 + dataBytes);
+  const view = new DataView(out.buffer);
+  const tag = (offset: number, text: string) => {
+    for (let i = 0; i < text.length; i += 1) view.setUint8(offset + i, text.charCodeAt(i));
+  };
+  tag(0, 'RIFF');
+  view.setUint32(4, 36 + dataBytes, true);
+  tag(8, 'WAVE');
+  tag(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  tag(36, 'data');
+  view.setUint32(40, dataBytes, true);
+  for (let i = 0; i < samples.length; i += 1) view.setInt16(44 + i * 2, samples[i], true);
+  return out;
+}
+
 /** Streaming linear resampler. Keeps its position across calls so buffer edges stay continuous. */
 export class LinearResampler {
   private readonly step: number;

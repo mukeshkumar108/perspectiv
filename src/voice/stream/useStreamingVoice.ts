@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { AppState } from 'react-native';
+import { File, Paths } from 'expo-file-system';
 import {
+  createAudioPlayer,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioStream,
@@ -12,6 +14,7 @@ import {
   PcmChunker,
   VOICE_INPUT_SAMPLE_RATE,
   int16ToBase64,
+  pcm16ToWav,
   rms,
 } from './pcm';
 import {
@@ -158,19 +161,49 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
     log('audio', JSON.stringify(info));
   }, []);
 
-  /** Plays a short beep through the same output path, with no server involved. */
+  /**
+   * Three beeps, no server involved, to find where sound is lost:
+   *   low  (392 Hz): native expo-audio player, playback-only audio mode
+   *   mid  (523 Hz): hidden WebView, playback-only audio mode
+   *   high (784 Hz): hidden WebView, record+play audio mode (what a session uses)
+   */
   const testSound = useCallback(async () => {
     const ready = await playback.current?.ensureReady();
     if (!ready) return false;
-    await setAudioModeAsync(DUPLEX_AUDIO_MODE);
     const rate = VOICE_OUTPUT_SAMPLE_RATE;
-    const samples = new Int16Array(Math.round(rate * 0.7));
-    for (let i = 0; i < samples.length; i += 1) {
-      const envelope = Math.min(1, i / 400, (samples.length - i) / 400);
-      samples[i] = Math.round(Math.sin((2 * Math.PI * 523 * i) / rate) * 0.5 * 32767 * envelope);
-    }
-    playback.current?.enqueue(int16ToBase64(samples), rate);
+    const tone = (hz: number) => {
+      const samples = new Int16Array(Math.round(rate * 0.8));
+      for (let i = 0; i < samples.length; i += 1) {
+        const envelope = Math.min(1, i / 400, (samples.length - i) / 400);
+        samples[i] = Math.round(Math.sin((2 * Math.PI * hz * i) / rate) * 0.6 * 32767 * envelope);
+      }
+      return samples;
+    };
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    log('test LOW: native expo-audio player, playback-only mode');
+    await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true, interruptionMode: 'doNotMix' });
+    const file = new File(Paths.cache, 'voice-test.wav');
+    if (file.exists) file.delete();
+    file.create();
+    file.write(pcm16ToWav(tone(392), rate));
+    const player = createAudioPlayer({ uri: file.uri });
+    player.volume = 1;
+    player.play();
+    await wait(1500);
+    player.remove();
+
+    log('test MID: hidden WebView, playback-only mode');
+    playback.current?.enqueue(int16ToBase64(tone(523)), rate);
     playback.current?.drain();
+    await wait(1500);
+
+    log('test HIGH: hidden WebView, record+play mode');
+    await setAudioModeAsync(DUPLEX_AUDIO_MODE);
+    playback.current?.enqueue(int16ToBase64(tone(784)), rate);
+    playback.current?.drain();
+    await wait(1200);
+    log('test done');
     return true;
   }, [playback]);
 
