@@ -111,3 +111,19 @@ A bad token is refused with 403.
   Cortex. Erase tooling exists (`synapse-cortex/docs/DATA_LIFECYCLE.md`); not run.
 - Note: `tests/test_preparation.py::test_trajectory_restores...` fails on a clean checkout because
   `evals/behaviour/datasets/__init__.py` imports `cambridge.py`, which is untracked in the working tree.
+
+## Cortex model spend: NanoGPT-only mode (2026-10-21)
+
+- Why `gpt-5.6-luna` fired: `openai/gpt-5.6-luna` is not in the NanoGPT subscription (NanoGPT's own `/api/subscription/v1/models`
+  lists GLM, Qwen 3.8, Kimi, DeepSeek, MiniMax; it does not list luna, `gpt-5.4-nano`, the Gemini flash-lites or `qwen3.7-flash`).
+  Cortex's structured-call adapter sent any model outside a hard-coded list to OpenRouter and had no retry or fallback at all.
+  `SCENE_NARRATIVE_MODEL` defaulted to luna and was not overridden on the VPS; the agents' `openrouter:qwen/qwen3.7-flash`
+  fallbacks and the Gemini defaults for meaning/judge were the same kind of spend. The big luna weeks were Oct 8-14 (eval/dev); recent
+  use was a trickle (22-36 requests/day).
+- Fix (synapse-cortex `main` @ `3d4b5eb`, deployed): `LLM_NANO_ONLY=true`. The requested model gets 3 attempts, then 3 other
+  subscription models get 2 attempts each (qwen3.8-27b, kimi-k2.6, deepseek-v4-flash, glm-5.3-flash, in measured JSON order),
+  inside a 120 s budget; a model outside the subscription is substituted; `openrouter:` chain entries are skipped; the turn
+  extractor routes to NanoGPT. Explicit VPS settings: scene narrative `qwen3.8-27b`, meaning and judge `glm-5.3-flash`, agent
+  fallbacks `qwen3.8-flash`. Verified in the production container: a luna request ran on qwen3.8-27b via NanoGPT at $0.
+  Unset the flag to return to the old behaviour. Full Cortex suite: 884 passed.
+- The same chain idea for speech recognition (Parakeet, then Lemonfox) is not built yet.
