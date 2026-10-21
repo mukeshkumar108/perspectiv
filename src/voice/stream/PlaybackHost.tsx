@@ -12,22 +12,60 @@ export type PlaybackHandle = {
   /** Resolves true once the hidden audio page is running. */
   ensureReady: () => Promise<boolean>;
   enqueue: (base64Pcm16: string, sampleRate: number) => void;
+  /** Start anything still held in the pre-roll buffer (the reply has finished arriving). */
+  drain: () => void;
   flush: () => void;
 };
 
 type Props = {
   onState: (state: PlaybackState) => void;
+  onLevel?: (level: number) => void;
   onError?: (message: string) => void;
 };
 
 const PAGE = `<!doctype html><html><body><script>
-var ctx, next = 0, srcs = [], playing = false;
+var ctx, master, analyser, next = 0, srcs = [], playing = false;
+var hold = [], holdSecs = 0, holdTimer = null, levelTimer = null, levelBuf = null;
+var PREROLL_S = 0.9, MAX_HOLD_MS = 700;
 function post(o){ window.ReactNativeWebView.postMessage(JSON.stringify(o)); }
 function ensure(){
-  if(!ctx){ var C = window.AudioContext || window.webkitAudioContext; ctx = new C(); }
+  if(!ctx){
+    var C = window.AudioContext || window.webkitAudioContext; ctx = new C();
+    master = ctx.createGain(); analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+    master.connect(ctx.destination); master.connect(analyser);
+    levelBuf = new Float32Array(analyser.fftSize);
+  }
   if(ctx.state !== 'running'){ ctx.resume(); }
 }
-function setPlaying(p){ if(p !== playing){ playing = p; post({t: p ? 'playing' : 'idle'}); } }
+function setPlaying(p){
+  if(p === playing) return;
+  playing = p;
+  post({t: p ? 'playing' : 'idle'});
+  if(p && !levelTimer){
+    levelTimer = setInterval(function(){
+      analyser.getFloatTimeDomainData(levelBuf);
+      var s = 0; for(var i = 0; i < levelBuf.length; i++) s += levelBuf[i] * levelBuf[i];
+      post({t:'level', v: Math.sqrt(s / levelBuf.length)});
+    }, 66);
+  } else if(!p && levelTimer){ clearInterval(levelTimer); levelTimer = null; post({t:'level', v: 0}); }
+}
+function play(buf){
+  var src = ctx.createBufferSource(); src.buffer = buf; src.connect(master);
+  var at = Math.max(next, ctx.currentTime + 0.03);
+  src.start(at); next = at + buf.duration;
+  srcs.push(src); setPlaying(true);
+  src.onended = function(){
+    var k = srcs.indexOf(src);
+    if(k < 0) return;
+    srcs.splice(k, 1);
+    if(srcs.length === 0 && hold.length === 0) setPlaying(false);
+  };
+}
+function release(){
+  if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+  var h = hold; hold = []; holdSecs = 0;
+  h.forEach(play);
+}
 function onMsg(e){
   var m; try { m = JSON.parse(e.data); } catch(x){ return; }
   if(m.t === 'init'){ ensure(); post({t:'ready', state: ctx.state}); }
@@ -41,19 +79,19 @@ function onMsg(e){
       if(s >= 32768) s -= 65536;
       ch[i] = s / 32768;
     }
-    var src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
-    var lead = next <= ctx.currentTime ? 0.06 : 0;
-    var at = Math.max(next, ctx.currentTime + lead);
-    src.start(at); next = at + buf.duration;
-    srcs.push(src); setPlaying(true);
-    src.onended = function(){
-      var k = srcs.indexOf(src);
-      if(k < 0) return;
-      srcs.splice(k, 1);
-      if(srcs.length === 0) setPlaying(false);
-    };
+    var continuing = srcs.length > 0 && next > ctx.currentTime + 0.02;
+    if(continuing && hold.length === 0){ play(buf); }
+    else {
+      // fresh start or underrun: build a little cushion so slow text-to-speech does not stutter
+      hold.push(buf); holdSecs += buf.duration;
+      if(holdSecs >= PREROLL_S) release();
+      else if(!holdTimer) holdTimer = setTimeout(release, MAX_HOLD_MS);
+    }
   }
+  else if(m.t === 'drain'){ release(); }
   else if(m.t === 'flush'){
+    if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+    hold = []; holdSecs = 0;
     var old = srcs; srcs = []; next = 0;
     old.forEach(function(s){ try { s.stop(); } catch(x){} });
     setPlaying(false);
@@ -65,7 +103,7 @@ post({t:'booted'});
 </script></body></html>`;
 
 export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function VoicePlaybackHost(
-  { onState, onError },
+  { onState, onLevel, onError },
   ref,
 ) {
   const webRef = useRef<WebView>(null);
@@ -92,6 +130,7 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
           send({ t: 'init' });
         }),
       enqueue: (d, rate) => send({ t: 'chunk', d, rate }),
+      drain: () => send({ t: 'drain' }),
       flush: () => send({ t: 'flush' }),
     }),
     [send],
@@ -99,7 +138,7 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
 
   const onMessage = useCallback(
     (event: WebViewMessageEvent) => {
-      let m: { t: string; m?: string };
+      let m: { t: string; m?: string; v?: number };
       try {
         m = JSON.parse(event.nativeEvent.data);
       } catch {
@@ -112,11 +151,13 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
         readyWaiters.current.splice(0).forEach((resolve) => resolve(true));
       } else if (m.t === 'playing' || m.t === 'idle') {
         onState(m.t);
+      } else if (m.t === 'level') {
+        onLevel?.(m.v ?? 0);
       } else if (m.t === 'err') {
         onError?.(m.m ?? 'audio page error');
       }
     },
-    [onError, onState],
+    [onError, onLevel, onState],
   );
 
   return (

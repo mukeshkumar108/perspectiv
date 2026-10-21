@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Canvas, Circle } from '@shopify/react-native-skia';
 
@@ -8,6 +8,8 @@ import { useTheme } from '@/src/ui/useTheme';
 
 type Props = {
   state: VoiceOrbState;
+  /** 0..1 live level of whatever is audible (mic while listening, voice while speaking). */
+  levelRef?: RefObject<number>;
 };
 
 type DotSpec = {
@@ -38,6 +40,7 @@ type StateVisualParams = {
 
 type AnimState = StateVisualParams & {
   stateMs: number;
+  level: number;
 };
 
 const TWO_PI = Math.PI * 2;
@@ -331,7 +334,7 @@ function buildRingLayer(params: {
   return dots;
 }
 
-export function VoiceOrbVisualizer({ state }: Props) {
+export function VoiceOrbVisualizer({ state, levelRef }: Props) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const size = Math.max(320, Math.min(width - spacing.xs * 2, 460));
@@ -341,8 +344,10 @@ export function VoiceOrbVisualizer({ state }: Props) {
   const animRef = useRef<AnimState>({
     ...STATE_PARAMS.idle,
     stateMs: 0,
+    level: 0,
   });
   const lastTsRef = useRef<number | null>(null);
+  const lastRenderRef = useRef(0);
 
   useEffect(() => {
     animRef.current.stateMs = 0;
@@ -376,9 +381,17 @@ export function VoiceOrbVisualizer({ state }: Props) {
       anim.lobeCoupling = lerp(anim.lobeCoupling, target.lobeCoupling, smooth);
       anim.innerAlpha = lerp(anim.innerAlpha, target.innerAlpha, smooth);
 
+      // Fast attack, slower release: the orb jumps with a syllable and settles after it.
+      const rawLevel = state === 'listening' || state === 'speaking' ? (levelRef?.current ?? 0) : 0;
+      anim.level = lerp(anim.level, rawLevel, 1 - Math.exp(-dt * (rawLevel > anim.level ? 22 : 7)));
+
       anim.stateMs += dt * 1000;
 
-      setFrameTick((v) => (v + 1) % 100000);
+      // ~35 fps is plenty for this and keeps the JS thread free for the audio stream.
+      if (ts - lastRenderRef.current >= 28) {
+        lastRenderRef.current = ts;
+        setFrameTick((v) => (v + 1) % 100000);
+      }
       raf = requestAnimationFrame(frame);
     };
 
@@ -387,7 +400,7 @@ export function VoiceOrbVisualizer({ state }: Props) {
       if (raf !== null) cancelAnimationFrame(raf);
       lastTsRef.current = null;
     };
-  }, [state]);
+  }, [state, levelRef]);
 
   const anim = animRef.current;
   const choreography = getChoreography({
@@ -406,7 +419,8 @@ export function VoiceOrbVisualizer({ state }: Props) {
     isHeartbeatState
       ? getIdleHeartbeatAccent(anim.stateMs) * (size * 0.038) * heartbeatScale
       : 0;
-  const pulse = basePulse + idleHeartbeatPulse;
+  const levelPush = anim.level * size * 0.065;
+  const pulse = basePulse + idleHeartbeatPulse + levelPush;
   const idleSeparationKick =
     isHeartbeatState ? getIdleOuterPullAccent(anim.stateMs) * heartbeatScale : 0;
   const idleOuterPull = idleSeparationKick * (size * 0.088);
@@ -445,9 +459,9 @@ export function VoiceOrbVisualizer({ state }: Props) {
     radius: Math.max(24, outerRadius),
     angleBase: choreography.outerAngle,
     phaseOffsetSteps: 0,
-    dotRadius: anim.outerDot,
+    dotRadius: anim.outerDot + anim.level * 3.2,
     color: colors.outer,
-    lobeAmp: anim.lobeAmp,
+    lobeAmp: anim.lobeAmp + anim.level * 0.09,
     lobeCount: anim.lobeCount,
     lobePhase: lobePhaseOuter,
   });
@@ -459,9 +473,9 @@ export function VoiceOrbVisualizer({ state }: Props) {
     radius: Math.max(24, innerRadius),
     angleBase: choreography.innerAngle,
     phaseOffsetSteps: 0.5,
-    dotRadius: anim.innerDot,
+    dotRadius: anim.innerDot + anim.level * 2.4,
     color: colors.inner,
-    lobeAmp: anim.lobeAmp * 0.78,
+    lobeAmp: (anim.lobeAmp + anim.level * 0.09) * 0.78,
     lobeCount: anim.lobeCount,
     lobePhase: lobePhaseInner,
   });

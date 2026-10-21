@@ -10,6 +10,11 @@ export type VoiceClientMessage =
       };
     }
   | { type: 'input_audio_buffer.append'; audio: string }
+  | {
+      type: 'conversation.item.create';
+      item: { type: 'message'; role: 'user'; content: { type: 'input_text'; text: string }[] };
+    }
+  | { type: 'response.create'; response?: undefined }
   | { type: 'input_audio_buffer.commit' | 'response.cancel' }
   | {
       type: 'response.create';

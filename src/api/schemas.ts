@@ -161,6 +161,7 @@ export type VoiceConnectRequest = z.infer<typeof VoiceConnectRequestSchema>;
 export const VoiceConnectResponseSchema = z.object({
   voiceUrl: z.string(),
   token: z.string(),
+  opener: z.string().optional(),
   instructions: z.string().optional(),
   voice: z.string().optional(),
 });

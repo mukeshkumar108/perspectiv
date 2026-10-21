@@ -61,7 +61,12 @@ export default function VoiceSessionScreen() {
       try {
         const info = await connect.mutateAsync({ flow, timezone: deviceTimezone() });
         const url = `${info.voiceUrl}${info.voiceUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(info.token)}`;
-        await voice.start({ url, instructions: info.instructions, voice: info.voice });
+        await voice.start({
+          url,
+          instructions: info.instructions,
+          voice: info.voice,
+          opener: info.opener,
+        });
       } catch {
         // connect errors are shown through connect.error below
       }
@@ -73,7 +78,11 @@ export default function VoiceSessionScreen() {
 
   return (
     <ScreenContainer style={styles.container} ambient={false}>
-      <VoicePlaybackHost ref={playbackRef} onState={voice.onPlaybackState} />
+      <VoicePlaybackHost
+        ref={playbackRef}
+        onState={voice.onPlaybackState}
+        onLevel={voice.onPlaybackLevel}
+      />
 
       <View style={styles.header}>
         <Pressable
@@ -119,7 +128,7 @@ export default function VoiceSessionScreen() {
       ) : (
         <View style={styles.live}>
           <Pressable style={styles.orbWrap} onPress={voice.interrupt} accessibilityLabel="Orb">
-            <VoiceOrbVisualizer state={ORB_STATE[voice.status]} />
+            <VoiceOrbVisualizer state={ORB_STATE[voice.status]} levelRef={voice.levelRef} />
           </Pressable>
           <Text variant="bodyMedium" style={styles.statusLabel}>
             {STATUS_LABEL[voice.status]}
