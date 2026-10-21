@@ -257,6 +257,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
 
       switch (type) {
         case 'input_audio_buffer.speech_started':
+          log('server heard speech start', statusRef.current);
           refreshStatus();
           break;
         case 'input_audio_buffer.speech_stopped':
@@ -281,8 +282,13 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
           setAssistantText('');
           refreshStatus();
           break;
-        case 'response.done':
-          log('response.done');
+        case 'response.done': {
+          const response = (typeof message.response === 'object' && message.response !== null ? message.response : {}) as {
+            status?: string;
+            status_details?: { reason?: string };
+          };
+          // 'cancelled' here (instead of 'completed') is what a reply cut off by the server looks like
+          log('response.done', response.status ?? 'unknown', response.status_details?.reason ?? '');
           responseOpenRef.current = false;
           userTurnOpenRef.current = false;
           cancellingRef.current = false;
@@ -291,6 +297,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
           playback.current?.drain();
           refreshStatus();
           break;
+        }
         case 'error':
           log('server error', errorMessageOf(message));
           setError(errorMessageOf(message));

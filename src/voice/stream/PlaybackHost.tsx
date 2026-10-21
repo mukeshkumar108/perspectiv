@@ -161,6 +161,8 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
         return;
       }
       if (m.t === 'booted') {
+        // A second 'booted' during a session means the hidden audio page reloaded (iOS can drop it), losing queued audio.
+        onDiag?.({ what: 'booted', again: booted.current });
         booted.current = true;
         queue.current.splice(0).forEach((text) => webRef.current?.postMessage(text));
       } else if (m.t === 'ready') {
