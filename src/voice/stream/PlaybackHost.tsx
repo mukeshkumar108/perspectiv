@@ -27,9 +27,22 @@ type Props = {
 const PAGE = `<!doctype html><html><body><script>
 var ctx, master, analyser, next = 0, srcs = [], playing = false;
 var hold = [], holdSecs = 0, holdTimer = null, levelTimer = null, levelBuf = null;
-var PREROLL_S = 0.9, MAX_HOLD_MS = 700;
+var PREROLL_S = 0.35, MAX_HOLD_MS = 400;
 function post(o){ window.ReactNativeWebView.postMessage(JSON.stringify(o)); }
+var unmuteEl = null;
+function unmute(){
+  // iOS plays Web Audio through the ringer/silent switch unless a media element is playing; a silent loop fixes that.
+  if(unmuteEl) return;
+  try {
+    var wav = 'data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+    unmuteEl = document.createElement('audio');
+    unmuteEl.setAttribute('playsinline', ''); unmuteEl.setAttribute('x-webkit-airplay', 'deny');
+    unmuteEl.loop = true; unmuteEl.src = wav; unmuteEl.volume = 0.01;
+    var p = unmuteEl.play(); if(p && p.catch) p.catch(function(){ unmuteEl = null; });
+  } catch(e){ unmuteEl = null; }
+}
 function ensure(){
+  unmute();
   if(!ctx){
     var C = window.AudioContext || window.webkitAudioContext; ctx = new C();
     ctx.onstatechange = function(){ post({t:'diag', what:'ctx-state', state: ctx.state, cur: ctx.currentTime}); };

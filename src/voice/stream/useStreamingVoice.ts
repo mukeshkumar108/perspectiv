@@ -48,6 +48,8 @@ export type VoiceConnection = {
 const MIC_STALL_MS = 4000;
 // Nothing heard from the server or the speaker for this long while she should be answering.
 const REPLY_STALL_MS = 15_000;
+// How long a gap between spoken sentences keeps the status on Speaking.
+const SPEAKING_GRACE_MS = 1800;
 
 // iOS resets the audio session when the mic stream starts, which silences playback unless the
 // mode is applied again afterwards. Measured on device in the Expo Go spike.
@@ -78,6 +80,8 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
   const userTurnOpenRef = useRef(false);
   const cancellingRef = useRef(false);
   const lastActivityRef = useRef(0);
+  const lastPlaybackEndRef = useRef(0);
+  const graceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** 0..1 level of whatever is audible right now (mic while listening, speaker while speaking). */
   const levelRef = useRef(0);
 
@@ -90,10 +94,21 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
   /** The status is a fact about the phone: speaking only while audio is actually playing. */
   const refreshStatus = useCallback(() => {
     if (!socketRef.current || !micActiveRef.current) return;
-    if (playbackActiveRef.current) setStatus('speaking');
-    else if (responseOpenRef.current || userTurnOpenRef.current) setStatus('thinking');
-    else setStatus('listening');
+    if (playbackActiveRef.current) {
+      setStatus('speaking');
+    } else if (responseOpenRef.current && Date.now() - lastPlaybackEndRef.current < SPEAKING_GRACE_MS) {
+      // A pause between sentences is still her turn: do not flicker to Thinking and back.
+      setStatus('speaking');
+      if (graceTimerRef.current) clearTimeout(graceTimerRef.current);
+      graceTimerRef.current = setTimeout(() => refreshStatusRef.current(), SPEAKING_GRACE_MS + 50);
+    } else if (responseOpenRef.current || userTurnOpenRef.current) {
+      setStatus('thinking');
+    } else {
+      setStatus('listening');
+    }
   }, [setStatus]);
+  const refreshStatusRef = useRef(refreshStatus);
+  refreshStatusRef.current = refreshStatus;
 
   const send = useCallback((message: VoiceClientMessage) => {
     const socket = socketRef.current;
@@ -150,6 +165,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
       log('playback', state);
       lastActivityRef.current = Date.now();
       playbackActiveRef.current = state === 'playing';
+      if (state === 'idle') lastPlaybackEndRef.current = Date.now();
       gateRef.current.playback(state, Date.now());
       if (state === 'idle') levelRef.current = 0;
       refreshStatus();
