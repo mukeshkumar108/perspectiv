@@ -109,6 +109,9 @@ export default function VoiceSessionScreen() {
 
       {!live ? (
         <ScrollView contentContainerStyle={styles.flowPicker} showsVerticalScrollIndicator={false}>
+          <Text variant="small" color={theme.textSecondary}>
+            Ringer on and volume up, so you can hear her.
+          </Text>
           <Button title="Test sound" variant="ghost" onPress={() => void voice.testSound()} />
           {FLOW_OPTIONS.map((option) => (
             <Card key={option.id} style={[styles.flowCard, { borderColor: theme.border, borderWidth: 1 }]}>
