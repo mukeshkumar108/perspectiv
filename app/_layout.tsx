@@ -14,12 +14,13 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { useFonts as usePetronaFonts, Petrona_400Regular, Petrona_500Medium } from '@expo-google-fonts/petrona';
 import {
-  useFonts as useInstrumentSansFonts,
-  InstrumentSans_400Regular,
-  InstrumentSans_500Medium,
-} from '@expo-google-fonts/instrument-sans';
+  useFonts as useInterFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 
 import { AuthProvider, useAuthReady } from '@/src/auth';
 import { BluumMark } from '@/src/components/BluumMark';
@@ -84,11 +85,12 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [instrumentLoaded] = useInstrumentSansFonts({
-    InstrumentSans_400Regular,
-    InstrumentSans_500Medium,
+  const [fontsLoaded] = useInterFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
-  const [serifLoaded] = usePetronaFonts({ Petrona_400Regular, Petrona_500Medium });
   const [showSplashOverlay, setShowSplashOverlay] = useState(true);
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
   const splashOpacity = useSharedValue(1);
@@ -110,7 +112,7 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
-  const fontsReady = instrumentLoaded && serifLoaded;
+  const fontsReady = fontsLoaded;
 
   useEffect(() => {
     if (!fontsReady || !minSplashElapsed) return;

@@ -26,7 +26,7 @@ export function CountdownOverlay({ count, accent, hint }: { count: number; accen
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', gap: 20 },
-  disc: { width: 148, height: 148, borderRadius: 74, alignItems: 'center', justifyContent: 'center' },
-  num: { fontSize: 64, lineHeight: 70 },
+  disc: { width: 116, height: 116, borderRadius: 58, alignItems: 'center', justifyContent: 'center' },
+  num: { fontSize: 48, lineHeight: 54 },
   hint: { maxWidth: 260 },
 });

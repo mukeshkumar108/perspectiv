@@ -197,8 +197,8 @@ export default function StroopBloomPlay() {
 const styles = StyleSheet.create({
   stage: { flex: 1, justifyContent: 'space-between', paddingBottom: spacing.lg },
   rule: { marginTop: spacing.sm },
-  wordCard: { borderRadius: 32, height: 220, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  word: { fontSize: 60, lineHeight: 68, letterSpacing: 1 },
+  wordCard: { borderRadius: 28, height: 180, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  word: { fontSize: 44, lineHeight: 52, letterSpacing: 1 },
   deadline: { position: 'absolute', left: 28, right: 28, bottom: 22, height: 4, borderRadius: 2, overflow: 'hidden' },
   deadlineFill: { height: 4, borderRadius: 2 },
   popup: { position: 'absolute', top: 18, right: 24 },

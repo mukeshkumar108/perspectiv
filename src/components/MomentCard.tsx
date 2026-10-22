@@ -39,11 +39,11 @@ export function MomentCard({ card, createdAt, showDate = true }: { card: VoiceCa
         )}
       </View>
       {card?.headline ? (
-        <Text variant="title" style={styles.headline}>
+        <Text variant="bodyMedium" color={theme.textSecondary} style={styles.headline}>
           {card.headline}
         </Text>
       ) : null}
-      <Text variant="body">{card?.moment}</Text>
+      <Text variant="quote">{card?.moment}</Text>
       {card?.tags?.length ? (
         <Text variant="caption" color={theme.textSecondary}>
           {card.tags.join('  ·  ')}
@@ -54,7 +54,7 @@ export function MomentCard({ card, createdAt, showDate = true }: { card: VoiceCa
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 24, padding: spacing.lg, gap: spacing.sm },
+  card: { borderRadius: 28, padding: 20, gap: 8 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dot: { width: 8, height: 8, borderRadius: 4 },
   date: { marginLeft: 'auto' },

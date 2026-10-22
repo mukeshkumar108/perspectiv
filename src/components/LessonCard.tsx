@@ -60,7 +60,7 @@ export function LessonCard({
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 28, padding: spacing.lg, gap: spacing.sm, overflow: 'hidden' },
+  card: { borderRadius: 28, padding: 20, gap: 8, overflow: 'hidden' },
   glow: { position: 'absolute', width: 170, height: 170, borderRadius: 85, right: -60, top: -70, opacity: 0.45 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { marginTop: spacing.xs, maxWidth: '88%' },

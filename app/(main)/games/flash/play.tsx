@@ -161,8 +161,8 @@ export default function FlashPlay() {
 
 const styles = StyleSheet.create({
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.xxl },
-  circle: { width: 270, height: 270, borderRadius: 135, borderWidth: 2, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  label: { fontSize: 44, lineHeight: 50 },
+  circle: { width: 240, height: 240, borderRadius: 120, borderWidth: 2, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  label: { fontSize: 36, lineHeight: 42 },
   dots: { flexDirection: 'row', gap: spacing.sm },
   dot: { width: 10, height: 10, borderRadius: 5 },
 });

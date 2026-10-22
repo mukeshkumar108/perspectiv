@@ -83,9 +83,9 @@ export function ResultScreen({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: spacing.md, paddingTop: spacing.xl, paddingBottom: spacing.lg },
-  hero: { borderRadius: 32, padding: spacing.xl, gap: spacing.sm, alignItems: 'flex-start', overflow: 'hidden', minHeight: 250, justifyContent: 'center' },
+  hero: { borderRadius: 28, padding: 24, gap: spacing.sm, alignItems: 'flex-start', overflow: 'hidden', minHeight: 210, justifyContent: 'center' },
   glow: { position: 'absolute', width: 220, height: 220, borderRadius: 110, right: -80, top: -90, opacity: 0.4 },
-  score: { fontSize: 84, lineHeight: 90 },
+  score: { fontSize: 56, lineHeight: 62 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: 7 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   stat: { flexGrow: 1, flexBasis: '47%', borderRadius: 22, padding: spacing.md, gap: 4 },

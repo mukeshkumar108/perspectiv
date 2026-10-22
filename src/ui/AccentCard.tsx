@@ -44,7 +44,7 @@ export function AccentCard({ title, subtitle, accent, icon, onPress, disabled }:
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, borderRadius: radius.xl, padding: spacing.md + 2 },
+  card: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, borderRadius: 24, padding: 16 },
   disc: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, paddingTop: 1 },
   sub: { marginTop: 3 },

@@ -9,6 +9,8 @@ type Props = {
   state: VoiceOrbState;
   /** 0..1 live level of whatever is audible (mic while listening, voice while speaking). */
   levelRef?: RefObject<number>;
+  /** Overrides the default size (which fills most of the width), for small uses. */
+  size?: number;
 };
 
 /**
@@ -61,9 +63,9 @@ const easeOutBack = (t: number) => {
 
 type Anim = Look & { phase: number; time: number; level: number; enter: number };
 
-export function VoiceOrb({ state, levelRef }: Props) {
+export function VoiceOrb({ state, levelRef, size: sizeProp }: Props) {
   const { width } = useWindowDimensions();
-  const size = Math.max(280, Math.min(width - 32, 400));
+  const size = sizeProp ?? Math.max(280, Math.min(width - 32, 400));
   const center = size / 2;
 
   const [, setTick] = useState(0);

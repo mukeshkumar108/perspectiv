@@ -14,6 +14,7 @@ export const spacing = {
 } as const;
 
 export const radius = {
+  card: 28,
   sm: 8,
   md: 12,
   lg: 16,
@@ -22,48 +23,30 @@ export const radius = {
 } as const;
 
 export const typography = {
-  hero: {
-    fontSize: 35,
-    lineHeight: 41,
-    fontWeight: '600' as const,
-  },
-  title: {
-    fontSize: 25,
-    lineHeight: 31,
-    fontWeight: '600' as const,
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 25,
-    fontWeight: '200' as const,
-  },
-  bodyMedium: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400' as const,
-  },
-  small: {
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: '400' as const,
-  },
-  caption: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    fontWeight: '400' as const,
-  },
-  // A person's own words, set in the serif so they read as something said, not as interface.
-  quote: {
-    fontSize: 23,
-    lineHeight: 32,
-    fontWeight: '400' as const,
-  },
-  // Small capital labels above a value ("EMAIL"), used for hierarchy on dense screens.
-  overline: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '500' as const,
-  },
+  // One headline per screen.
+  hero: { fontSize: 30, lineHeight: 36, fontWeight: '600' as const },
+  // A card's heading.
+  title: { fontSize: 21, lineHeight: 27, fontWeight: '600' as const },
+  body: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
+  bodyMedium: { fontSize: 16, lineHeight: 24, fontWeight: '500' as const },
+  small: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
+  caption: { fontSize: 12.5, lineHeight: 17, fontWeight: '400' as const },
+  // A person's own words.
+  quote: { fontSize: 19, lineHeight: 28, fontWeight: '500' as const },
+  // Small capitals above a headline or a value.
+  overline: { fontSize: 11, lineHeight: 14, fontWeight: '500' as const },
+} as const;
+
+/** The rhythm every screen sits on, so nothing is placed by feel. */
+export const layout = {
+  /** Space at the left and right edge of every screen. */
+  screen: 20,
+  /** Padding inside a card. */
+  card: 20,
+  /** Space between cards, and between a headline and what follows it. */
+  gap: 16,
+  /** Space between sections. */
+  section: 28,
 } as const;
 
 /** The one place the brand colours live. Everything coloured in the app comes from here. */

@@ -17,3 +17,4 @@ export { PrimaryButton } from './PrimaryButton';
 export { Burst } from './Burst';
 export { CountUp } from './CountUp';
 export { Waveform, waveHeights } from './Waveform';
+export { ScreenIntro } from './ScreenIntro';

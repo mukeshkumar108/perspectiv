@@ -4,8 +4,9 @@ import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import Animated from 'react-native-reanimated';
 import { Activity, Headphones, Timer, Wind, Zap } from 'lucide-react-native';
 
-import { AccentCard, Overline, ScreenContainer, Text, sessionAccents, spacing } from '@/src/ui';
+import { AccentCard, Overline, ScreenContainer, ScreenIntro, Text, layout, sessionAccents } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
+import { AppBar } from '@/src/components/AppBar';
 import { useTheme } from '@/src/ui/useTheme';
 
 const ICON = { size: 20, strokeWidth: 1.8 } as const;
@@ -34,13 +35,9 @@ export default function ExploreScreen() {
 
   return (
     <ScreenContainer ambient={false} safeBottom={false}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xxxl }]} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={motion.itemEnter(40, 'up')} style={styles.head}>
-          <Text variant="hero">Explore</Text>
-          <Text variant="body" color={theme.textTertiary}>
-            Small things that sit alongside your daily conversation.
-          </Text>
-        </Animated.View>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + layout.section }]} showsVerticalScrollIndicator={false}>
+        <AppBar />
+        <ScreenIntro eyebrow="Explore" title="Small things alongside your day" />
 
         <Animated.View entering={motion.itemEnter(110, 'up')} style={styles.sections}>
           <Section title="Listen" why="A few minutes on how attention and mood actually work.">
@@ -63,9 +60,8 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: spacing.lg, paddingTop: spacing.lg },
-  head: { gap: spacing.sm },
-  sections: { gap: spacing.xl },
-  section: { gap: spacing.sm },
-  sectionHead: { gap: 4, marginBottom: spacing.xs },
+  content: { gap: layout.gap, paddingTop: 8 },
+  sections: { gap: layout.section },
+  section: { gap: 12 },
+  sectionHead: { gap: 4, marginBottom: 2 },
 });

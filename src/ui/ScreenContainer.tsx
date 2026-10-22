@@ -1,6 +1,6 @@
 import { View, ViewProps, StyleSheet, ScrollView, ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing } from './tokens';
+import { layout } from './tokens';
 import { useTheme } from './useTheme';
 
 interface ScreenContainerProps extends ViewProps {
@@ -37,7 +37,7 @@ export function ScreenContainer({
       backgroundColor: ambient ? 'transparent' : theme.background,
       paddingTop: safeTop ? insets.top : 0,
       paddingBottom: safeBottom ? insets.bottom : 0,
-      paddingHorizontal: padded ? spacing.lg : 0,
+      paddingHorizontal: padded ? layout.screen : 0,
     },
     style,
   ];

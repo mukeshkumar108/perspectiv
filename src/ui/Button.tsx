@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: typography.bodyMedium.fontSize,
     fontWeight: typography.bodyMedium.fontWeight,
-    fontFamily: 'InstrumentSans_500Medium',
+    fontFamily: 'Inter_500Medium',
   },
   primaryText: {
     fontSize: 18,

@@ -248,3 +248,11 @@ A bad token is refused with 403.
 - One accent, a warm coral (`brand.accent`), replacing the candy pink as the hero (gender-neutral, calmer, still warm); a soft rose is kept only for the evening session. Session colours are unchanged otherwise (yellow, blue, sage, grey). Reaction game go-signal is green.
 - Moments is a stack of cards you swipe through (the date is the heading), Shuffle or shake for a random one; the day-grouped timeline is the second view. Lessons and the audio player use a waveform.
 - Palette is cream (#F6F0E8), surface #FBF8F4, ink #2B1F18. Icon, splash and logo are regenerated in coral.
+
+## Type and layout system, third pass (2026-10-22, late)
+
+- One family, Inter (400, 500, 600, 700): Petrona and Instrument Sans removed (Petrona's spacing and leading did not hold up on device). Restrained scale in `src/ui/tokens.ts`:
+  hero 30/36 (one per screen), title 21/27, body 16/24, small 14/20, caption 12.5/17, quote 19/28, overline 11/14 with 1.3 tracking.
+- Layout rhythm in `layout` (screen edge 20, card padding 20, gap 16, section 28) and `radius.card` 28; the one `Card`; `ScreenIntro` (small coloured label, one headline, hairline) and `AppBar` (mark, name, one small thing) open every main screen.
+  Today, Moments and Explore rebuilt on them; oversized numbers in games and results brought down. The time-of-day wash is gone: the app is one calm cream, like the reference.
+- The look is modelled on inne: cream page, rounded cards, hairlines, a small label over the headline, quiet shadows, an orb or card instead of photos.

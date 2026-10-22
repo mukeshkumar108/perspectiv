@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-import { Burst, PrimaryButton, ScreenContainer, ScreenHeader, Text, brand, daypartTint, sessionAccents, spacing } from '@/src/ui';
+import { Burst, PrimaryButton, ScreenContainer, ScreenHeader, Text, brand, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { LiveVoiceView } from '@/src/components/LiveVoiceView';
 import { VoiceOrb } from '@/src/components/VoiceOrb';
@@ -65,7 +65,7 @@ export default function TalkScreen() {
   const closing = CLOSING[plannedFlow.current] ?? CLOSING.daytime;
 
   return (
-    <ScreenContainer style={styles.container} ambient={false} tint={live || finished ? theme.background : daypartTint[plan.daypart]}>
+    <ScreenContainer style={styles.container} ambient={false}>
       <VoicePlaybackHost ref={playbackRef} onState={voice.onPlaybackState} onLevel={voice.onPlaybackLevel} onDiag={voice.onPlaybackDiag} />
       <ScreenHeader
         onBack={() => {

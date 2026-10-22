@@ -48,6 +48,6 @@ export function PrimaryButton({ title, onPress, variant = 'solid', disabled, loa
 }
 
 const styles = StyleSheet.create({
-  btn: { height: 56, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch', paddingHorizontal: spacing.lg },
+  btn: { height: 52, borderRadius: radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch', paddingHorizontal: spacing.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });

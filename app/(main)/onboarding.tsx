@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInRight, FadeOutLeft, FadeIn } from 'react-native-reanimated';
 import { AudioLines, Moon, ShieldCheck, Sunrise, MessageCircle, TrendingUp } from 'lucide-react-native';
 
-import { Overline, Pill, PressScale, PrimaryButton, ScreenContainer, Text, TextInput, brand, daypartTint, sessionAccents, spacing } from '@/src/ui';
+import { Overline, Pill, PressScale, PrimaryButton, ScreenContainer, Text, TextInput, brand, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { VoiceOrb } from '@/src/components/VoiceOrb';
 import { markOnboardingDone, useUpdateProfile } from '@/src/hooks';
@@ -62,10 +62,9 @@ export default function OnboardingScreen() {
     router.replace('/(main)/(tabs)' as any);
   };
 
-  const tint = [daypartTint.evening, daypartTint.morning, daypartTint.day, daypartTint.evening, daypartTint.morning][step];
 
   return (
-    <ScreenContainer ambient={false} tint={tint} style={styles.screen}>
+    <ScreenContainer ambient={false} style={styles.screen}>
       <VoicePlaybackHost ref={playbackRef} onState={voice.onPlaybackState} onLevel={voice.onPlaybackLevel} onDiag={voice.onPlaybackDiag} />
 
       <View style={styles.dots}>

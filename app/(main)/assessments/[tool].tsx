@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   ends: { flexDirection: 'row', justifyContent: 'space-between' },
   result: { borderRadius: 28, padding: spacing.lg, gap: spacing.sm, alignItems: 'flex-start', overflow: 'hidden', minHeight: 240 },
   scoreRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  bigScore: { fontSize: 72, lineHeight: 78 },
+  bigScore: { fontSize: 56, lineHeight: 62 },
   band: { borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: 6 },
   support: { borderWidth: 1, borderRadius: 24, padding: spacing.lg, gap: spacing.sm },
 });

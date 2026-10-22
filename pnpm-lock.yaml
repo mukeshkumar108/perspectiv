@@ -14,12 +14,9 @@ importers:
       '@expo-google-fonts/geist':
         specifier: ^0.4.1
         version: 0.4.1
-      '@expo-google-fonts/instrument-sans':
+      '@expo-google-fonts/inter':
         specifier: ^0.4.2
         version: 0.4.2
-      '@expo-google-fonts/petrona':
-        specifier: ^0.4.4
-        version: 0.4.4
       '@expo-google-fonts/radio-canada-big':
         specifier: ^0.4.2
         version: 0.4.2
@@ -836,14 +833,11 @@ packages:
   '@expo-google-fonts/geist@0.4.1':
     resolution: {integrity: sha512-UOBwoTJkKC0ViMOS8gjlQyUcT/5PX0phCroz/8z0DP1+7FcoD1RGGeG//nVQYWbT3y/ze4XoE63gSunml9Wdbw==}
 
-  '@expo-google-fonts/instrument-sans@0.4.2':
-    resolution: {integrity: sha512-YR0jemCJ/eUlknOfxxxiLnJWpFDaT0KgLiB1q333jIDPlRAERfuMpOislkWA1A7HGX85N9LCsjWLlB3QOZo1wg==}
+  '@expo-google-fonts/inter@0.4.2':
+    resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
 
   '@expo-google-fonts/material-symbols@0.4.50':
     resolution: {integrity: sha512-XNSgSfd+1p6wqRAzzhrckGngHJQ1/z+oCMdI5FN+x/VnDeMMFGkXsuRNPYcZTYYff1GwVwx4u6Gqnb30aALysw==}
-
-  '@expo-google-fonts/petrona@0.4.4':
-    resolution: {integrity: sha512-qwGiqtmXr7+kRZYx/RmL3oumTW47ehgMXE0nirZiUg8CX5LR4UUosI2sG7ej0U94mWnBna+lMEc6dHbGvlniow==}
 
   '@expo-google-fonts/radio-canada-big@0.4.2':
     resolution: {integrity: sha512-lBAcW0ld2W4QqBkGTdmdW7mY/D8Cj9DaZ2H1GcIk/Jlx8+EdJuj8cKlZonIQb27bpMNDzboDB2C3kFVzgK9TRg==}
@@ -6671,11 +6665,9 @@ snapshots:
 
   '@expo-google-fonts/geist@0.4.1': {}
 
-  '@expo-google-fonts/instrument-sans@0.4.2': {}
+  '@expo-google-fonts/inter@0.4.2': {}
 
   '@expo-google-fonts/material-symbols@0.4.50': {}
-
-  '@expo-google-fonts/petrona@0.4.4': {}
 
   '@expo-google-fonts/radio-canada-big@0.4.2': {}
 
