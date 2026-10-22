@@ -6,7 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import Animated from 'react-native-reanimated';
 
-import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
+import { PrimaryButton, ScreenContainer, ScreenHeader, Text, spacing } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
 
@@ -46,7 +46,8 @@ export default function SignInScreen() {
   }
 
   return (
-    <ScreenContainer style={styles.container}>
+    <ScreenContainer style={styles.container} ambient={false}>
+      <ScreenHeader />
       <View style={styles.content}>
         <Animated.View entering={motion.itemEnter(60, 'up')}>
           <Text variant="title" center>
@@ -61,16 +62,8 @@ export default function SignInScreen() {
           style={styles.buttons}
           entering={motion.itemEnter(120, 'up')}
         >
-          <Button
-            title="Continue with Google"
-            variant="secondary"
-            onPress={() => handleOAuthSignIn('google')}
-          />
-          <Button
-            title="Continue with Apple"
-            variant="secondary"
-            onPress={() => handleOAuthSignIn('apple')}
-          />
+          <PrimaryButton title="Continue with Google" variant="outline" onPress={() => handleOAuthSignIn('google')} />
+          <PrimaryButton title="Continue with Apple" variant="outline" onPress={() => handleOAuthSignIn('apple')} />
         </Animated.View>
       </View>
 

@@ -2,68 +2,48 @@ import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
+import { PrimaryButton, PressScale, ScreenContainer, Text, spacing } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
-import { BloomVisual } from '@/src/components/BloomVisual';
+import { useTheme } from '@/src/ui/useTheme';
+import { VoiceOrb } from '@/src/components/VoiceOrb';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-
-  const handleContinue = () => {
-    router.push('/(auth)/sign-in' as any);
-  };
+  const theme = useTheme();
 
   return (
-    <ScreenContainer style={styles.container}>
+    <ScreenContainer style={styles.container} ambient={false}>
       <View style={styles.content}>
-        <Animated.View entering={FadeIn.duration(320).delay(80)}>
-          <BloomVisual size={180} />
+        <Animated.View entering={FadeIn.duration(600)}>
+          <VoiceOrb state="idle" />
         </Animated.View>
 
-        <Animated.View
-          style={styles.textContainer}
-          entering={motion.itemEnter(140, 'up')}
-        >
-          <Text variant="hero" center style={styles.title}>
-            Perspectiv
+        <Animated.View style={styles.textContainer} entering={motion.itemEnter(260, 'up')}>
+          <Text variant="hero" center>
+            Bluum
           </Text>
-          <Text variant="body" center style={styles.subtitle}>
-            A moment of reflection, every day
+          <Text variant="body" center color={theme.textSecondary}>
+            A few minutes of talking a day, to catch the good you would normally rush past.
           </Text>
         </Animated.View>
       </View>
 
-      <Animated.View
-        style={styles.footer}
-        entering={motion.itemEnter(200, 'up')}
-      >
-        <Button title="Continue" onPress={handleContinue} />
+      <Animated.View style={styles.footer} entering={motion.itemEnter(340, 'up')}>
+        <PrimaryButton title="Get started" arrow onPress={() => router.push('/(auth)/sign-up' as any)} />
+        <PressScale onPress={() => router.push('/(auth)/sign-in' as any)} style={styles.link}>
+          <Text variant="small" center color={theme.textSecondary}>
+            I already have an account
+          </Text>
+        </PressScale>
       </Animated.View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'space-between',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xl,
-  },
-  textContainer: {
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  title: {
-    letterSpacing: -1,
-  },
-  subtitle: {
-    opacity: 0.7,
-  },
-  footer: {
-    paddingBottom: spacing.lg,
-  },
+  container: { justifyContent: 'space-between' },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
+  textContainer: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
+  footer: { gap: spacing.sm, paddingBottom: spacing.lg },
+  link: { paddingVertical: spacing.md },
 });

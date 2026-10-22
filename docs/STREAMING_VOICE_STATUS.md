@@ -218,3 +218,14 @@ A bad token is refused with 403.
 - History is now the person's kept moments (from voice sessions), not the old quick-capture list. Quick capture is removed. Home: "Talk to Bluum" and a new simple Check in screen (the old Reflect screen and its mood picker are no longer linked).
 - Games: the exit button moved to the top left (the Expo Go dev button covers the top right in development).
 - Orb: pink, ink and grey; arriving core with slow pink ripples; thinking comet; star spokes while speaking and listening.
+
+## Games, players, assessments, history (2026-10-22, evening)
+
+- Games rebuilt on a shared kit (`src/games/kit`: `useGameRun` clock, `GameShell`, `CountdownOverlay`, `ResultScreen` with count-up, new-best badge and burst). Impulse Pop (go/no-go with a changing target cue), Memory Match
+  (flipping cards, combos, board clears), Stroop Bloom (respond to the word, ignore the ink) keep their stored metrics and histories. New: Flash (eight-round simple reaction time; own history in `src/games/flash`). Old Impulse Pop logic files removed.
+- Assessments: intro with what it is, length and privacy; one question at a time with a progress bar; answers advance themselves; result saves on finish with a count-up and burst; PHQ-9 item 9 above zero shows support (Samaritans 116 123, US 988).
+- Mood check-in: burst on pick; colour wash and a large face on Done.
+- History: pink summary (streak, week dots, totals) and a day-grouped timeline. One `AudioPlayerScreen` (orb, scrubber, large play) for lessons and guided sessions via `useAudioPlayback`.
+- Type scale retuned (hero 34/40, title 25/31, body 16/25); `Text` has `medium`; `PrimaryButton` is the full-width button for new screens; `Burst` and `CountUp` are shared reward pieces.
+- Welcome now leads with the orb and says Bluum; sign-in and sign-up use full-width buttons.
+- Not seen on a device. Expo Go off Wi-Fi needs `npx expo login` then `npx expo start --tunnel`.

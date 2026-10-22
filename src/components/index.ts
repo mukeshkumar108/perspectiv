@@ -6,3 +6,4 @@ export * from './Character';
 export { MomentCard } from './MomentCard';
 export { LessonCard } from './LessonCard';
 export { WeekStrip } from './WeekStrip';
+export { AudioPlayerScreen } from './AudioPlayerScreen';
