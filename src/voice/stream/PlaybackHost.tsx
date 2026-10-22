@@ -73,7 +73,14 @@ function release(){
 }
 function onMsg(e){
   var m; try { m = JSON.parse(e.data); } catch(x){ return; }
-  if(m.t === 'init'){ ensure(); post({t:'ready', state: ctx.state}); post({t:'diag', what:'init', state: ctx.state, rate: ctx.sampleRate, base: ctx.baseLatency, out: ctx.outputLatency}); }
+  if(m.t === 'init'){
+    // A new session starts with a fresh audio context. After an earlier session the phone's audio session has been stopped and restarted
+    // (the microphone does that), and on iOS a context that outlived it can report 'running' while producing silence.
+    if(ctx){ try { ctx.close(); } catch(x){} ctx = null; master = null; analyser = null; }
+    if(holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+    if(levelTimer){ clearInterval(levelTimer); levelTimer = null; }
+    srcs = []; hold = []; holdSecs = 0; next = 0; playing = false;
+    ensure(); post({t:'ready', state: ctx.state}); post({t:'diag', what:'init', state: ctx.state, rate: ctx.sampleRate, base: ctx.baseLatency, out: ctx.outputLatency}); }
   else if(m.t === 'chunk'){
     ensure();
     var bin = atob(m.d), n = bin.length >> 1;
