@@ -80,3 +80,9 @@ export function voiceDeviation(reports: Reportish[]): Deviation {
 
   return { rows, priorSessions: window.length, calibrating: window.length < BASELINE_SESSIONS_NEEDED };
 }
+
+/** One metric as shown to a reader (fractions become percentages), from a raw stored value. */
+export function displayMetric(metric: VoiceMetric, raw: unknown): string | null {
+  const v = num(raw);
+  return v === null ? null : formatMetric(metric, scale(metric.key, v));
+}

@@ -7,35 +7,42 @@ import { ScreenContainer, Text, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { useRateVoiceMemory, useVoiceResearch } from '@/src/hooks';
 import type { MemoryItem } from '@/src/api/schemas';
-import { BASELINE_SESSIONS_NEEDED, VOICE_METRICS, formatMetric, voiceDeviation } from '@/src/voice/deviation';
+import { BASELINE_SESSIONS_NEEDED, VOICE_METRICS, displayMetric, formatMetric, voiceDeviation } from '@/src/voice/deviation';
 
 type Rated = { id: string; label: string; basis?: string | null; correct?: boolean | null };
+
+/** An internal id like "style_enjoys_sharing_pe" as readable text, for items whose label we do not have. */
+const readableId = (id: string) => id.replace(/^(style|theme|fact|person|thread)_/, '').replace(/_\d{8}$/, '').replace(/_/g, ' ');
 
 function RateRow({ item, reportId }: { item: Rated; reportId?: string }) {
   const theme = useTheme();
   const rate = useRateVoiceMemory();
   const set = (correct: boolean) =>
     rate.mutate({ id: item.id, correct: item.correct === correct ? null : correct, reportId });
+  const pill = (active: boolean) => [
+    styles.pill,
+    { borderColor: active ? theme.text : theme.border, backgroundColor: active ? theme.text : 'transparent' },
+  ];
   return (
     <View style={styles.rateRow}>
-      <View style={styles.rateText}>
-        <Text variant="small">{item.label}</Text>
-        {item.basis ? (
-          <Text variant="small" color={theme.textSecondary}>
-            {item.basis}
+      <Text variant="small">{item.label}</Text>
+      {item.basis ? (
+        <Text variant="small" color={theme.textSecondary}>
+          {item.basis}
+        </Text>
+      ) : null}
+      <View style={styles.pills}>
+        <Pressable onPress={() => set(true)} hitSlop={6} accessibilityLabel="Accurate" style={pill(item.correct === true)}>
+          <Text variant="small" color={item.correct === true ? theme.background : theme.textSecondary}>
+            Accurate
           </Text>
-        ) : null}
+        </Pressable>
+        <Pressable onPress={() => set(false)} hitSlop={6} accessibilityLabel="Inaccurate" style={pill(item.correct === false)}>
+          <Text variant="small" color={item.correct === false ? theme.background : theme.textSecondary}>
+            Inaccurate
+          </Text>
+        </Pressable>
       </View>
-      <Pressable onPress={() => set(true)} hitSlop={8} accessibilityLabel="Right">
-        <Text variant="bodyMedium" color={item.correct === true ? theme.text : theme.textSecondary}>
-          {item.correct === true ? 'Right' : 'Right?'}
-        </Text>
-      </Pressable>
-      <Pressable onPress={() => set(false)} hitSlop={8} accessibilityLabel="Wrong">
-        <Text variant="bodyMedium" color={item.correct === false ? theme.text : theme.textSecondary}>
-          {item.correct === false ? 'Wrong' : 'Wrong?'}
-        </Text>
-      </Pressable>
     </View>
   );
 }
@@ -187,11 +194,12 @@ export default function ResearchScreen() {
 
               <View style={styles.section}>
                 <Text variant="small" color={theme.textSecondary}>
-                  Voice, raw ({String(voice.utterances ?? 0)} utterances, {String(voice.clean_utterances ?? '?')} clean enough for jitter, shimmer and HNR)
+                  Voice, raw ({String(voice.utterances ?? 0)} utterances
+                  {voice.clean_utterances !== undefined ? `, ${String(voice.clean_utterances)} clean enough for jitter, shimmer and HNR` : ''})
                 </Text>
                 <Text variant="small">
-                  {VOICE_METRICS.filter((m) => voice[m.key] !== undefined)
-                    .map((m) => `${m.label} ${String(voice[m.key])}`)
+                  {VOICE_METRICS.filter((m) => displayMetric(m, voice[m.key]) !== null)
+                    .map((m) => `${m.label} ${displayMetric(m, voice[m.key])} ${m.unit}`)
                     .join('  ·  ') || 'none captured'}
                 </Text>
               </View>
@@ -203,7 +211,7 @@ export default function ResearchScreen() {
                     <RateRow
                       key={`${u.id}-${u.action}`}
                       reportId={r.id}
-                      item={{ id: u.id, label: `${u.action}: ${labelFor.get(u.id) ?? u.id}`, basis: u.basis, correct: u.correct }}
+                      item={{ id: u.id, label: `${u.action}: ${labelFor.get(u.id) ?? readableId(u.id)}`, basis: u.basis, correct: u.correct }}
                     />
                   ))}
                 </View>
@@ -234,8 +242,9 @@ const styles = StyleSheet.create({
   card: {},
   gap: { marginTop: spacing.xs },
   section: { marginTop: spacing.sm, gap: spacing.xs },
-  rateRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  rateText: { flex: 1 },
+  rateRow: { gap: 2, marginBottom: spacing.xs },
+  pills: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
+  pill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: spacing.sm, paddingVertical: 4 },
   scoreHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   scoreName: { flex: 3 },
   scoreNum: { flex: 2, textAlign: 'right' },
