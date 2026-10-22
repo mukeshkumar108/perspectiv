@@ -187,3 +187,14 @@ A bad token is refused with 403.
 - voice-runtime (`2923aca`, report prompt v3): card condensed, memory call is shown fact/theme ids and returns `ref`/`recurring`, style notes only about how they talk (one per session).
 - Found, not yet changed: `voice_reflection_core_v1.md` (the core flow prompt) contradicts the new rules: "Mentioning a moment does not end the session", RELIVE "at least two to three turns, do not rush to land", "name a few ordinary things she might have done and let her react",
   "lead the conversation", LAND with six beats, and an evening-only framing. Cause of the never-ending sessions and the leading questions. Rewrite pending approval.
+
+## Five modular sessions (2026-10-22, evening)
+
+- b_attic (`main` @ `26f0ac2`): session prompts are composed from `src/lib/llm/prompts/modules/` (`kernel`, `product`, `rules` + one of `morning`, `daytime`, `evening`, `ten_things`,
+  `onboarding`), replacing `voice_reflection_core_v1.md` and the welcome v5 prompt for those flows (the old day0/core/demo flows are still accepted). Each flow has its own opening and
+  closing (no closing question). Onboarding no longer claims the practice "rewires the brain" or is "scientifically validated"; it says the research is encouraging and that we measure.
+- Morning intention: the report turns what they are looking forward to into one thread held until 18:00 local (`notBeforeHour`, enforced in the voice server) that expires the next day;
+  the evening session gets it as a due follow-up. Ten things: each named item is stored as a `self_regard` fact and offered back lightly later. Cards carry a `kind` (intention, self,
+  moment); the app labels them in "My moments". Invented memory refs from the model are dropped.
+- App: five buttons (Morning, Drop-in, Evening reflection, Ten things about you, Welcome). The buttons are the test override: pick any session at any time.
+- voice-runtime `905bd91`; Runtime hedge `VOICE_HEDGE_S=2.5` live. Not yet checked in a real session: how well she follows the closing rules and the new flows.

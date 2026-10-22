@@ -179,7 +179,7 @@ export default function ResearchScreen() {
           return (
             <Card key={r.id} style={[styles.card, { borderColor: theme.border, borderWidth: 1 }]}>
               <Text variant="small" color={theme.textSecondary}>
-                {new Date(r.createdAt).toLocaleString()} · {r.durationSeconds ?? '?'}s · ${(r.costUsd ?? 0).toFixed(4)}
+                {new Date(r.createdAt).toLocaleString()} · {r.flow ?? 'session'} · {r.durationSeconds ?? '?'}s · ${(r.costUsd ?? 0).toFixed(4)}
               </Text>
               {r.card?.headline ? <Text variant="bodyMedium" style={styles.gap}>{r.card.headline}</Text> : null}
               {r.card?.moment ? <Text variant="body">{r.card.moment}</Text> : null}

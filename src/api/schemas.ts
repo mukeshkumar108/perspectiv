@@ -146,6 +146,10 @@ export const VoiceSessionStateSchema = z.enum([
 // Streaming voice connect (replaces the push-to-talk session/start|turn|end routes)
 export const VoiceConnectFlowSchema = z.enum([
   'onboarding',
+  'morning',
+  'daytime',
+  'evening',
+  'ten_things',
   'first_reflection_day0',
   'first_reflection_core',
   'voice_demo',
@@ -169,6 +173,7 @@ export type VoiceConnectResponse = z.infer<typeof VoiceConnectResponseSchema>;
 
 // Session reports (gratitude library + research view). Loose on purpose: the profile and voice numbers are hypotheses we are still shaping.
 export const VoiceCardSchema = z.object({
+  kind: z.string().nullish(),
   headline: z.string().nullish(),
   moment: z.string().nullish(),
   theme: z.string().nullish(),

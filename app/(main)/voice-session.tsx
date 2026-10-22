@@ -15,10 +15,11 @@ import { useStreamingVoice, type StreamingVoiceStatus } from '@/src/voice/stream
 type FlowOption = { id: VoiceConnectFlow; title: string; subtitle: string };
 
 const FLOW_OPTIONS: FlowOption[] = [
-  { id: 'onboarding', title: 'Onboarding', subtitle: 'Collect profile details and setup preferences.' },
-  { id: 'first_reflection_day0', title: 'First Reflection Day0', subtitle: 'Run the Day0 first-reflection intro and prompt.' },
-  { id: 'first_reflection_core', title: 'Reflection Core', subtitle: 'Run the default core reflection prompt.' },
-  { id: 'voice_demo', title: 'Voice Demo', subtitle: 'Run the demo conversation.' },
+  { id: 'morning', title: 'Morning', subtitle: 'First session of the day: what are you looking forward to?' },
+  { id: 'daytime', title: 'Drop-in', subtitle: 'A quick one during the day: something happen, something to catch?' },
+  { id: 'evening', title: 'Evening reflection', subtitle: 'The main practice: one good moment from today.' },
+  { id: 'ten_things', title: 'Ten things about you', subtitle: 'Different today: things you actually like about yourself.' },
+  { id: 'onboarding', title: 'Welcome', subtitle: 'First conversation: what Bluum is and what brought you here.' },
 ];
 
 const STATUS_LABEL: Record<StreamingVoiceStatus, string> = {
@@ -124,7 +125,7 @@ export default function VoiceSessionScreen() {
           </Text>
           <Button title="Test sound" variant="ghost" onPress={() => void voice.testSound()} />
           <View style={styles.linkRow}>
-            <Button title="What I was grateful for" variant="ghost" onPress={() => router.push('/(main)/library' as any)} />
+            <Button title="My moments" variant="ghost" onPress={() => router.push('/(main)/library' as any)} />
             <Button title="Session research" variant="ghost" onPress={() => router.push('/(main)/research' as any)} />
           </View>
           {FLOW_OPTIONS.map((option) => (

@@ -6,6 +6,8 @@ import { ScreenContainer, Text, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { useVoiceLibrary } from '@/src/hooks';
 
+const KIND_LABEL: Record<string, string> = { intention: 'Looking forward to', self: 'About me' };
+
 function formatDay(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -26,7 +28,7 @@ export default function LibraryScreen() {
         <Pressable onPress={() => router.back()} hitSlop={16}>
           <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
         </Pressable>
-        <Text variant="bodyMedium">What you were grateful for</Text>
+        <Text variant="bodyMedium">Your moments</Text>
         <View style={styles.spacer} />
       </View>
 
@@ -48,6 +50,7 @@ export default function LibraryScreen() {
             <Card key={item.id} style={[styles.card, { borderColor: theme.border, borderWidth: 1 }]}>
               <Text variant="small" color={theme.textSecondary}>
                 {formatDay(item.createdAt)}
+                {item.card?.kind && KIND_LABEL[item.card.kind] ? `  ·  ${KIND_LABEL[item.card.kind]}` : ''}
               </Text>
               {item.card?.headline ? (
                 <Text variant="bodyMedium" style={styles.headline}>
