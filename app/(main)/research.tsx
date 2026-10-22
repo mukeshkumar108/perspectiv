@@ -68,7 +68,10 @@ export default function ResearchScreen() {
   if (memory) {
     for (const p of memory.people) labelFor.set(p.id, `${str(p.name)}${p.relation ? ` (${str(p.relation)})` : ''}`);
     for (const t of memory.themes) labelFor.set(t.id, str(t.label));
-    for (const f of memory.facts) labelFor.set(f.id, str(f.fact));
+    for (const f of memory.facts) {
+      const n = typeof f.count === 'number' ? f.count : 1;
+      labelFor.set(f.id, `${str(f.fact)}${f.habit ? ` · habit, mentioned ${n} times` : n > 1 ? ` · mentioned ${n} times` : ''}`);
+    }
     for (const t of memory.openThreads) labelFor.set(t.id, `${str(t.topic)} [${str(t.status)}]`);
   }
 
@@ -194,8 +197,7 @@ export default function ResearchScreen() {
 
               <View style={styles.section}>
                 <Text variant="small" color={theme.textSecondary}>
-                  Voice, raw ({String(voice.utterances ?? 0)} utterances
-                  {voice.clean_utterances !== undefined ? `, ${String(voice.clean_utterances)} clean enough for jitter, shimmer and HNR` : ''})
+                  Voice, raw and uncalibrated ({String(voice.utterances ?? 0)} utterances)
                 </Text>
                 <Text variant="small">
                   {VOICE_METRICS.filter((m) => displayMetric(m, voice[m.key]) !== null)
