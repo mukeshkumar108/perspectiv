@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
@@ -6,19 +7,9 @@ import { ScreenContainer, Text, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { useRateVoiceMemory, useVoiceResearch } from '@/src/hooks';
 import type { MemoryItem } from '@/src/api/schemas';
+import { BASELINE_SESSIONS_NEEDED, VOICE_METRICS, formatMetric, voiceDeviation } from '@/src/voice/deviation';
 
 type Rated = { id: string; label: string; basis?: string | null; correct?: boolean | null };
-
-const VOICE_KEYS: [string, string][] = [
-  ['f0_mean_hz', 'pitch Hz'],
-  ['f0_sd_st', 'pitch variation st'],
-  ['articulation_rate_syl_s', 'syllables/s'],
-  ['pause_ratio', 'pauses'],
-  ['loudness_sd_db', 'loudness var dB'],
-  ['jitter_local', 'jitter'],
-  ['shimmer_local', 'shimmer'],
-  ['hnr_db', 'HNR dB'],
-];
 
 function RateRow({ item, reportId }: { item: Rated; reportId?: string }) {
   const theme = useTheme();
@@ -59,7 +50,13 @@ export default function ResearchScreen() {
   const router = useRouter();
   const { data, isLoading, error, status, fetchStatus, refetch } = useVoiceResearch();
 
+  // The query is gated on auth being ready; if it is idle with nothing loaded, ask once rather than leave the screen empty.
+  useEffect(() => {
+    if (!data && fetchStatus === 'idle' && !error) void refetch();
+  }, [data, fetchStatus, error, refetch]);
+
   const memory = data?.memory;
+  const deviation = voiceDeviation(data?.reports ?? []);
   const labelFor = new Map<string, string>();
   if (memory) {
     for (const p of memory.people) labelFor.set(p.id, `${str(p.name)}${p.relation ? ` (${str(p.relation)})` : ''}`);
@@ -95,6 +92,40 @@ export default function ResearchScreen() {
               <Text variant="bodyMedium">Try again</Text>
             </Pressable>
           </View>
+        ) : null}
+
+        {data && data.reports.length ? (
+          <Card style={[styles.card, { borderColor: theme.border, borderWidth: 1 }]}>
+            <Text variant="bodyMedium">Voice scores, latest session</Text>
+            <Text variant="small" color={theme.textSecondary}>
+              Acoustic baseline (calibrating, raw phone signal). Not calibrated for noise or room: only change against this person's own
+              earlier sessions is meaningful. {deviation.calibrating
+                ? `Building a baseline: ${deviation.priorSessions} of ${BASELINE_SESSIONS_NEEDED} earlier sessions.`
+                : `Compared with their last ${deviation.priorSessions} sessions.`}
+            </Text>
+            <View style={styles.section}>
+              <View style={styles.scoreHead}>
+                <Text variant="small" color={theme.textSecondary} style={styles.scoreName}>Measure</Text>
+                <Text variant="small" color={theme.textSecondary} style={styles.scoreNum}>Latest</Text>
+                <Text variant="small" color={theme.textSecondary} style={styles.scoreNum}>Own avg</Text>
+                <Text variant="small" color={theme.textSecondary} style={styles.scoreNum}>Change</Text>
+              </View>
+              {deviation.rows.map((row, i) => {
+                const metric = VOICE_METRICS[i];
+                return (
+                  <View key={row.key} style={styles.scoreHead}>
+                    <Text variant="small" style={styles.scoreName}>{row.label} ({row.unit})</Text>
+                    <Text variant="small" style={styles.scoreNum}>{formatMetric(metric, row.latest)}</Text>
+                    <Text variant="small" style={styles.scoreNum}>{formatMetric(metric, row.baselineMean)}</Text>
+                    <Text variant="small" style={styles.scoreNum}>
+                      {row.pctChange === null ? 'n/a' : `${row.pctChange >= 0 ? '+' : ''}${row.pctChange.toFixed(0)}%`}
+                      {row.z === null ? '' : ` (${row.z >= 0 ? '+' : ''}${row.z.toFixed(1)}σ)`}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
         ) : null}
 
         {memory ? (
@@ -155,10 +186,12 @@ export default function ResearchScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text variant="small" color={theme.textSecondary}>Voice (raw, {String(voice.utterances ?? 0)} utterances)</Text>
+                <Text variant="small" color={theme.textSecondary}>
+                  Voice, raw ({String(voice.utterances ?? 0)} utterances, {String(voice.clean_utterances ?? '?')} clean enough for jitter, shimmer and HNR)
+                </Text>
                 <Text variant="small">
-                  {VOICE_KEYS.filter(([k]) => voice[k] !== undefined)
-                    .map(([k, label]) => `${label} ${String(voice[k])}`)
+                  {VOICE_METRICS.filter((m) => voice[m.key] !== undefined)
+                    .map((m) => `${m.label} ${String(voice[m.key])}`)
                     .join('  ·  ') || 'none captured'}
                 </Text>
               </View>
@@ -203,4 +236,7 @@ const styles = StyleSheet.create({
   section: { marginTop: spacing.sm, gap: spacing.xs },
   rateRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rateText: { flex: 1 },
+  scoreHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  scoreName: { flex: 3 },
+  scoreNum: { flex: 2, textAlign: 'right' },
 });

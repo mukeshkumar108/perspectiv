@@ -163,3 +163,17 @@ A bad token is refused with 403.
   memory updates with Right/Wrong taps, prompt and rule versions, cost; no transcripts). Linked from the voice session picker. Typecheck is clean apart
   from the untracked `useLogActivity.ts`; 47 jest tests pass; `expo export` bundles.
 - `lighter_touch` compares the latest session with the person's own previous three (needs 4 reports) and is a first guess, not a validated signal.
+
+## Fixes after the first real report (2026-10-22, afternoon)
+
+- Prompt: every session prompt now ends with `SESSION_GUARDRAILS` (b_attic `src/lib/voice/directive.ts`): no invented body, weather or personal day; no
+  steering toward a topic or category; short answers are fine. Triggered by Bloom saying "the sun's out here too" and asking "what animals have surprised
+  you lately?" (the latter made the cow story partly prompted).
+- Rules: `lighter_touch` (voice-based) is off by default (`VOICE_RULE_LIGHTER_TOUCH=1` turns it on); rule version `rules-v0.1`. The two transcript-profile rules stay on.
+- Voice features (voice-runtime `efc1605`): clips under 1 s are skipped; each clip records a rough `snr_db`; jitter, shimmer and HNR are kept only from clips with
+  SNR >= 15 dB (`clean_utterances` says how many). First real call read jitter 0.030, shimmer 0.13, HNR 9.4 dB, outside clean-lab ranges: phone mic, compression
+  and outdoor noise. Absolute values are not interpretable; only change against the person's own history.
+- Research screen: "Voice scores, latest session" table (latest, own average, % change, sigma once 3 earlier sessions exist; calibrating until 5), labelled as a raw
+  phone signal; the query auto-refetches if it sits idle; the empty state says why. Right/Wrong persistence covered by a route test. The cause of the first blank
+  screen (no request was sent) is still not identified.
+- Memory prompt v2: shorter theme labels. A real regression test caught that a rewrite had dropped the voice worker's entry point.
