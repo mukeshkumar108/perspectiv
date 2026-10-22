@@ -10,6 +10,7 @@ export function useVoiceLibrary() {
     queryKey: queryKeys.voiceLibrary,
     queryFn: () => api.getVoiceLibrary(),
     enabled: authReady,
+    refetchOnMount: 'always',
   });
 }
 
@@ -19,6 +20,7 @@ export function useVoiceResearch() {
     queryKey: queryKeys.voiceResearch,
     queryFn: () => api.getVoiceResearch(),
     enabled: authReady,
+    refetchOnMount: 'always',
   });
 }
 

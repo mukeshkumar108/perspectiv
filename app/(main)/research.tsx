@@ -57,7 +57,7 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '');
 export default function ResearchScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { data, isLoading, error } = useVoiceResearch();
+  const { data, isLoading, error, status, fetchStatus, refetch } = useVoiceResearch();
 
   const memory = data?.memory;
   const labelFor = new Map<string, string>();
@@ -83,10 +83,18 @@ export default function ResearchScreen() {
           Working assumptions, not findings. Everything below is a guess we are testing. No transcripts are kept or shown.
         </Text>
 
-        {isLoading ? (
-          <Text variant="small" color={theme.textSecondary}>Loading</Text>
-        ) : error ? (
-          <Text variant="small" color={theme.textSecondary}>Could not load the reports.</Text>
+        {!data ? (
+          <View style={styles.section}>
+            <Text variant="small" color={theme.textSecondary}>
+              {isLoading ? 'Loading' : error ? `Could not load the reports: ${error.message}` : 'Not loaded yet'}
+            </Text>
+            <Text variant="small" color={theme.textSecondary}>
+              state: {status} / {fetchStatus}
+            </Text>
+            <Pressable onPress={() => void refetch()} hitSlop={12}>
+              <Text variant="bodyMedium">Try again</Text>
+            </Pressable>
+          </View>
         ) : null}
 
         {memory ? (
