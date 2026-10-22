@@ -177,3 +177,13 @@ A bad token is refused with 403.
   phone signal; the query auto-refetches if it sits idle; the empty state says why. Right/Wrong persistence covered by a route test. The cause of the first blank
   screen (no request was sent) is still not identified.
 - Memory prompt v2: shorter theme labels. A real regression test caught that a rewrite had dropped the voice worker's entry point.
+
+## Exit ramps, re-entry, habits, hedge (2026-10-22, late afternoon)
+
+- Runtime (`main` @ `0b99c79`, `VOICE_HEDGE_S=2.5` on the VPS): a silent first model is joined (not replaced) by the next candidate after 2.5 s; the first to
+  emit speaks, the rest are cancelled. Replaces stacked 4.5 s deadlines (13 s of silence seen live when MiniMax and DeepSeek both stalled). Existing deadline kept as the fallback when the hedge is off.
+- b_attic (`main` @ `7c41894`): session prompt now appends OPENING and CLOSING rules plus a per-session context line (first session ever / first today and how long since / back again
+  today, with the part of the day in the person's timezone). Facts merge by the model's `ref`, then by wording; said twice or "every day" makes a `habit` (count, never expires), shown to Bloom as "Known, not news".
+- voice-runtime (`2923aca`, report prompt v3): card condensed, memory call is shown fact/theme ids and returns `ref`/`recurring`, style notes only about how they talk (one per session).
+- Found, not yet changed: `voice_reflection_core_v1.md` (the core flow prompt) contradicts the new rules: "Mentioning a moment does not end the session", RELIVE "at least two to three turns, do not rush to land", "name a few ordinary things she might have done and let her react",
+  "lead the conversation", LAND with six beats, and an evening-only framing. Cause of the never-ending sessions and the leading questions. Rewrite pending approval.
