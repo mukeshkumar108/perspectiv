@@ -10,3 +10,4 @@ export { AudioPlayerScreen } from './AudioPlayerScreen';
 export { LiveVoiceView } from './LiveVoiceView';
 export { BluumTabBar } from './BluumTabBar';
 export { BluumMark } from './BluumMark';
+export { MomentDeck, type DeckItem } from './MomentDeck';

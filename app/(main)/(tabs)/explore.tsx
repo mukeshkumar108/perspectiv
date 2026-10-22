@@ -49,7 +49,7 @@ export default function ExploreScreen() {
           </Section>
 
           <Section title="Train your attention" why="Thirty seconds each. They measure how alert and controlled you are, so you can watch it change.">
-            <AccentCard title="Flash" subtitle="Reaction time. Tap when it turns pink." accent={sessionAccents.morning} icon={<Timer color={theme.text} {...ICON} />} onPress={go('/(main)/games/flash')} />
+            <AccentCard title="Flash" subtitle="Reaction time. Tap when it turns green." accent={sessionAccents.morning} icon={<Timer color={theme.text} {...ICON} />} onPress={go('/(main)/games/flash')} />
             <AccentCard title="All games" subtitle="Impulse Pop, Memory Match, Stroop Bloom." accent={sessionAccents.ten_things} icon={<Zap color={theme.text} {...ICON} />} onPress={go('/(main)/(tabs)/games')} />
           </Section>
 

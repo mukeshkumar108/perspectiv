@@ -4,6 +4,8 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSeq
 import * as Haptics from 'expo-haptics';
 
 import { Text, brand, sessionAccents, spacing } from '@/src/ui';
+
+const GO_GREEN = '#58C98F';
 import { useTheme } from '@/src/ui/useTheme';
 import { CountdownOverlay, GameShell, ResultScreen, median, useGameRun } from '@/src/games/kit';
 import { addFlashSession, listFlashHistory } from '@/src/games/flash/storage';
@@ -131,13 +133,13 @@ export default function FlashPlay() {
     );
   }
 
-  const fill = stage === 'go' ? brand.pink : stage === 'hit' ? accent.base : stage === 'early' ? theme.border : theme.surface;
+  const fill = stage === 'go' ? GO_GREEN : stage === 'hit' ? accent.base : stage === 'early' ? theme.border : theme.surface;
   const label = stage === 'wait' ? 'Wait' : stage === 'go' ? 'Tap' : stage === 'hit' ? `${lastMs} ms` : 'Too soon';
-  const sub = stage === 'wait' ? 'for pink' : stage === 'hit' ? `+${points(lastMs)}` : stage === 'early' ? 'Round restarts' : 'now';
+  const sub = stage === 'wait' ? 'for green' : stage === 'hit' ? `+${points(lastMs)}` : stage === 'early' ? 'Round restarts' : 'now';
 
   return (
     <GameShell accent={accent.base} score={score} timeLeftMs={(ROUNDS - times.length) * 1000} durationMs={ROUNDS * 1000} clockLabel={`Round ${round} of ${ROUNDS}`} showHud={phase === 'playing'}>
-      <Pressable style={styles.stage} onPressIn={press} accessibilityRole="button" accessibilityLabel="Tap when the circle turns pink">
+      <Pressable style={styles.stage} onPressIn={press} accessibilityRole="button" accessibilityLabel="Tap when the circle turns green">
         <Animated.View style={[styles.circle, { backgroundColor: fill, borderColor: stage === 'wait' ? theme.text : 'transparent' }, circle]}>
           <Text variant="hero" style={styles.label}>
             {label}
@@ -148,11 +150,11 @@ export default function FlashPlay() {
         </Animated.View>
         <View style={styles.dots}>
           {Array.from({ length: ROUNDS }, (_, i) => (
-            <View key={i} style={[styles.dot, { backgroundColor: i < times.length ? brand.pink : theme.border }]} />
+            <View key={i} style={[styles.dot, { backgroundColor: i < times.length ? brand.accent : theme.border }]} />
           ))}
         </View>
       </Pressable>
-      {phase === 'countdown' ? <CountdownOverlay count={count} accent={accent.base} hint="Tap when the circle turns pink" /> : null}
+      {phase === 'countdown' ? <CountdownOverlay count={count} accent={accent.base} hint="Tap when the circle turns green" /> : null}
     </GameShell>
   );
 }

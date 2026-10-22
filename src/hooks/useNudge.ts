@@ -45,7 +45,7 @@ export function useNudge(sessionsKept: number) {
   if (sessionsKept >= 2 && now - lastFlash > 5 * DAY && !quiet('flash')) {
     nudge = {
       id: 'flash',
-      title: 'Thirty seconds, tap when it turns pink',
+      title: 'Thirty seconds, tap when it turns green',
       why: 'A quick read on how alert you are today. Over weeks it shows your own pattern, and what rest and stress do to it.',
       cta: 'Try Flash',
       route: '/(main)/games/flash',

@@ -87,7 +87,7 @@ export function Button({
       backgroundColor: 'transparent',
       textColor: theme.surface,
       labelBackground: theme.text,
-      arrowBackground: '#FF7DAF',
+      arrowBackground: '#FF8F6B',
       borderColor: 'transparent',
       borderWidth: 0,
     },
@@ -164,7 +164,7 @@ export function Button({
                 { backgroundColor: primaryVariant.arrowBackground },
               ]}
             >
-              <ArrowRight size={24} color="#231E15" strokeWidth={2.5} />
+              <ArrowRight size={24} color="#2B1F18" strokeWidth={2.5} />
             </View>
           )}
         </View>
@@ -187,7 +187,7 @@ export function Button({
             <View
               style={[
                 styles.arrowWrap,
-                { backgroundColor: '#FF7782' },
+                { backgroundColor: '#FF8F6B' },
               ]}
             >
               <ArrowRight

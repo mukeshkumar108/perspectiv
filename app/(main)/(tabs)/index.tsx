@@ -39,7 +39,7 @@ export default function TodayScreen() {
         <Animated.View entering={motion.itemEnter(40, 'up')} style={styles.top}>
           <BluumMark size={38} />
           <PressScale onPress={() => router.push('/(main)/(tabs)/moments' as any)} accessibilityLabel={`${streak} day streak`} style={[styles.streak, { backgroundColor: theme.surface }]}>
-            <Flame size={16} color={streak > 0 ? brand.pink : theme.textTertiary} fill={streak > 0 ? brand.pink : 'transparent'} strokeWidth={2} />
+            <Flame size={16} color={streak > 0 ? brand.accent : theme.textTertiary} fill={streak > 0 ? brand.accent : 'transparent'} strokeWidth={2} />
             <Text variant="small" medium>
               {streak}
             </Text>
@@ -57,18 +57,20 @@ export default function TodayScreen() {
           <VoiceOrb state="idle" />
         </PressScale>
 
-        <Animated.View entering={FadeInDown.delay(260).duration(380)} style={[styles.next, { backgroundColor: accent.soft }]}>
-          <View style={[styles.glow, { backgroundColor: accent.base }]} />
-          <Overline color={theme.textSecondary}>Next up</Overline>
-          <Text variant="title">{plan.title}</Text>
-          <Text variant="small" color={theme.textSecondary}>
+        <Animated.View entering={FadeInDown.delay(260).duration(380)} style={[styles.next, { backgroundColor: brand.accent }]}>
+          <View style={[styles.glow, { backgroundColor: accent.soft }]} />
+          <Overline color={theme.text}>Next up</Overline>
+          <Text variant="hero" style={styles.nextTitle}>
+            {plan.title}
+          </Text>
+          <Text variant="body" color={theme.text}>
             {plan.subtitle}
           </Text>
           <View style={styles.cta}>
             <PrimaryButton title="Talk to Bluum" arrow onPress={talk} />
           </View>
           {plan.eveningOpensAtHour ? (
-            <Text variant="caption" color={theme.textSecondary}>
+            <Text variant="caption" color={theme.text}>
               {`Your evening reflection opens at ${plan.eveningOpensAtHour > 12 ? plan.eveningOpensAtHour - 12 : plan.eveningOpensAtHour} pm.`}
             </Text>
           ) : null}
@@ -117,7 +119,8 @@ const styles = StyleSheet.create({
   greeting: { gap: spacing.sm },
   orbStage: { alignItems: 'center', justifyContent: 'center', marginVertical: -spacing.md },
   next: { borderRadius: 32, padding: spacing.lg, gap: spacing.sm, overflow: 'hidden' },
-  glow: { position: 'absolute', width: 200, height: 200, borderRadius: 100, right: -70, top: -90, opacity: 0.4 },
+  glow: { position: 'absolute', width: 220, height: 220, borderRadius: 110, right: -80, top: -100, opacity: 0.55 },
+  nextTitle: { marginTop: 2 },
   cta: { marginTop: spacing.md },
   nudge: { borderRadius: 28, padding: spacing.lg, gap: spacing.sm },
   nudgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },

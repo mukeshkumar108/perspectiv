@@ -12,9 +12,9 @@ type Props = {
 };
 
 /**
- * Black, pink and grey on the app's pale background.
- * Arriving: a small core blooms in and soft pink rings ripple out, slowly, like a held breath.
- * Thinking: nearly silent. A pink comet circles the core, trailing off into grey.
+ * Black, coral and grey on the app's pale background.
+ * Arriving: a small core blooms in and soft coral rings ripple out, slowly, like a held breath.
+ * Thinking: nearly silent. A coral comet circles the core, trailing off into grey.
  * You speaking: dots drift inward along a star of spokes and gather.
  * Her speaking: dots stream outward along the star, shrinking and fading as they go, and follow her voice.
  */
@@ -109,7 +109,7 @@ export function VoiceOrb({ state, levelRef }: Props) {
     };
   }, [state, levelRef, anim]);
 
-  const { ink, pink, grey } = { ink: brand.ink, pink: brand.pink, grey: brand.grey };
+  const { ink, pink, grey } = { ink: brand.ink, pink: brand.accent, grey: brand.grey };
   const lvl = anim.level * anim.levelGain;
   const arrive = easeOutBack(anim.enter);
 
@@ -120,7 +120,7 @@ export function VoiceOrb({ state, levelRef }: Props) {
   const dots: { key: string; x: number; y: number; r: number; c: string }[] = [];
   const rings: { key: string; r: number; c: string }[] = [];
 
-  // Spokes: long spokes carry the colour of whoever is speaking (pink for her, ink for you), short ones are grey.
+  // Spokes: long spokes carry the colour of whoever is speaking (coral for her, ink for you), short ones are grey.
   if (anim.spokeAlpha > 0.01) {
     const drift = anim.time * 0.06;
     const speaking = anim.flow > 0;
@@ -147,7 +147,7 @@ export function VoiceOrb({ state, levelRef }: Props) {
     }
   }
 
-  // Arriving: soft pink rings ripple out and fade.
+  // Arriving: soft coral rings ripple out and fade.
   if (anim.ripple > 0.01) {
     for (let i = 0; i < RINGS; i += 1) {
       const p = fract(anim.time * 0.36 + i / RINGS);

@@ -27,8 +27,8 @@ function TalkButton({ onPress }: { onPress: () => void }) {
   const theme = useTheme();
   return (
     <View style={styles.talkSlot}>
-      <Animated.View style={[styles.ring, { backgroundColor: brand.pink }, ringStyle]} pointerEvents="none" />
-      <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel="Talk to Bluum" scaleTo={0.92} style={[styles.talk, { backgroundColor: brand.pink }]}>
+      <Animated.View style={[styles.ring, { backgroundColor: brand.accent }, ringStyle]} pointerEvents="none" />
+      <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel="Talk to Bluum" scaleTo={0.92} style={[styles.talk, { backgroundColor: brand.accent }]}>
         <Mic size={26} color={theme.text} strokeWidth={2} />
       </PressScale>
     </View>
@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', paddingHorizontal: spacing.sm },
   item: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 6 },
   talkSlot: { width: 84, alignItems: 'center', justifyContent: 'center', marginTop: -26 },
-  talk: { width: 66, height: 66, borderRadius: 33, alignItems: 'center', justifyContent: 'center', shadowColor: brand.pink, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 8 } },
+  talk: { width: 66, height: 66, borderRadius: 33, alignItems: 'center', justifyContent: 'center', shadowColor: brand.accent, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 8 } },
   ring: { position: 'absolute', width: 66, height: 66, borderRadius: 33 },
 });

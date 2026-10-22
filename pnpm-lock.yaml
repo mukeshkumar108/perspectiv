@@ -11,15 +11,15 @@ importers:
       '@clerk/clerk-expo':
         specifier: ^2.19.20
         version: 2.19.20(7d66f3e31aa6a1944a76593475f2d9f7)
-      '@expo-google-fonts/bitter':
-        specifier: ^0.4.2
-        version: 0.4.2
       '@expo-google-fonts/geist':
         specifier: ^0.4.1
         version: 0.4.1
       '@expo-google-fonts/instrument-sans':
         specifier: ^0.4.2
         version: 0.4.2
+      '@expo-google-fonts/petrona':
+        specifier: ^0.4.4
+        version: 0.4.4
       '@expo-google-fonts/radio-canada-big':
         specifier: ^0.4.2
         version: 0.4.2
@@ -74,6 +74,9 @@ importers:
       expo-secure-store:
         specifier: ^57.0.4
         version: 57.0.4(expo@57.0.31)
+      expo-sensors:
+        specifier: ~57.0.3
+        version: 57.0.3(expo@57.0.31)(react-native@0.86.3(@babel/core@7.28.6)(@react-native/jest-preset@0.86.3(@babel/core@7.28.6)(react@19.2.3))(@react-native/metro-config@0.86.3(@babel/core@7.28.6))(@types/react@19.2.18)(bufferutil@4.1.0)(react@19.2.3)(utf-8-validate@5.0.10))
       expo-splash-screen:
         specifier: ~57.0.10
         version: 57.0.10(expo@57.0.31)(typescript@6.0.3)
@@ -830,9 +833,6 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@expo-google-fonts/bitter@0.4.2':
-    resolution: {integrity: sha512-7nAQQhj1k7CTn77ivgRnR39HqrVbzezJ3d8N9EWeDIfFDpZ9ACUNzHI7sg++JmvDnx1wuXwmfpjagTPTg2ZgWw==}
-
   '@expo-google-fonts/geist@0.4.1':
     resolution: {integrity: sha512-UOBwoTJkKC0ViMOS8gjlQyUcT/5PX0phCroz/8z0DP1+7FcoD1RGGeG//nVQYWbT3y/ze4XoE63gSunml9Wdbw==}
 
@@ -841,6 +841,9 @@ packages:
 
   '@expo-google-fonts/material-symbols@0.4.50':
     resolution: {integrity: sha512-XNSgSfd+1p6wqRAzzhrckGngHJQ1/z+oCMdI5FN+x/VnDeMMFGkXsuRNPYcZTYYff1GwVwx4u6Gqnb30aALysw==}
+
+  '@expo-google-fonts/petrona@0.4.4':
+    resolution: {integrity: sha512-qwGiqtmXr7+kRZYx/RmL3oumTW47ehgMXE0nirZiUg8CX5LR4UUosI2sG7ej0U94mWnBna+lMEc6dHbGvlniow==}
 
   '@expo-google-fonts/radio-canada-big@0.4.2':
     resolution: {integrity: sha512-lBAcW0ld2W4QqBkGTdmdW7mY/D8Cj9DaZ2H1GcIk/Jlx8+EdJuj8cKlZonIQb27bpMNDzboDB2C3kFVzgK9TRg==}
@@ -3182,6 +3185,12 @@ packages:
     resolution: {integrity: sha512-7zBA1RThURTXdP4w65kBzZNbcSsfArqVd+p+ETAnPRWXO8J296Qd0YaCVyRpJ0HSwlCnGdvOnqO+NgSreHsOhA==}
     peerDependencies:
       expo: '*'
+
+  expo-sensors@57.0.3:
+    resolution: {integrity: sha512-3MmJ37S/fbN+Ejk9gCeo5pa50hMkW3BYe7IPZX1tKi0Tw1Wvy/FY9FKnVQowOacrDqyWEpmLGgwi3HmDY7DCnw==}
+    peerDependencies:
+      expo: '*'
+      react-native: '*'
 
   expo-server@57.0.3:
     resolution: {integrity: sha512-aK+LdKzauHSGmsOStZtyxdzv0zWssCkxTw3m4QuOhfDSJsZaMRTd9O41d8ixU/QfELTbaJ0oRNcF7JFV/7O9YQ==}
@@ -6660,13 +6669,13 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@expo-google-fonts/bitter@0.4.2': {}
-
   '@expo-google-fonts/geist@0.4.1': {}
 
   '@expo-google-fonts/instrument-sans@0.4.2': {}
 
   '@expo-google-fonts/material-symbols@0.4.50': {}
+
+  '@expo-google-fonts/petrona@0.4.4': {}
 
   '@expo-google-fonts/radio-canada-big@0.4.2': {}
 
@@ -9718,6 +9727,12 @@ snapshots:
   expo-secure-store@57.0.4(expo@57.0.31):
     dependencies:
       expo: 57.0.31(af7b73de3405638147cce52115356050)
+
+  expo-sensors@57.0.3(expo@57.0.31)(react-native@0.86.3(@babel/core@7.28.6)(@react-native/jest-preset@0.86.3(@babel/core@7.28.6)(react@19.2.3))(@react-native/metro-config@0.86.3(@babel/core@7.28.6))(@types/react@19.2.18)(bufferutil@4.1.0)(react@19.2.3)(utf-8-validate@5.0.10)):
+    dependencies:
+      expo: 57.0.31(af7b73de3405638147cce52115356050)
+      invariant: 2.2.4
+      react-native: 0.86.3(@babel/core@7.28.6)(@react-native/jest-preset@0.86.3(@babel/core@7.28.6)(react@19.2.3))(@react-native/metro-config@0.86.3(@babel/core@7.28.6))(@types/react@19.2.18)(bufferutil@4.1.0)(react@19.2.3)(utf-8-validate@5.0.10)
 
   expo-server@57.0.3: {}
 

@@ -70,7 +70,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.dots}>
         {Array.from({ length: STEPS }, (_, i) => (
-          <View key={i} style={[styles.dot, { backgroundColor: i <= step ? brand.pink : theme.border, width: i === step ? 26 : 8 }]} />
+          <View key={i} style={[styles.dot, { backgroundColor: i <= step ? brand.accent : theme.border, width: i === step ? 26 : 8 }]} />
         ))}
       </View>
 
@@ -170,7 +170,7 @@ export default function OnboardingScreen() {
         {step === 3 ? (
           <PrimaryButton title="Continue" arrow disabled={name.trim().length === 0} loading={update.isPending} onPress={saveName} />
         ) : step === STEPS - 1 ? (
-          <PrimaryButton title="Start my first conversation" variant="pink" onPress={finish} />
+          <PrimaryButton title="Start my first conversation" variant="accent" onPress={finish} />
         ) : (
           <PrimaryButton title={step === 0 ? 'Get started' : 'Continue'} arrow onPress={next} />
         )}

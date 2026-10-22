@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react-native';
 
-import { Overline, PressScale, ScreenContainer, ScreenHeader, Text, brand, spacing } from '@/src/ui';
+import { Overline, PressScale, ScreenContainer, ScreenHeader, Text, Waveform, brand, spacing } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
 import { VoiceOrb } from '@/src/components/VoiceOrb';
@@ -12,7 +12,7 @@ import { formatMs, useAudioPlayback } from '@/src/audio/useAudioPlayback';
 type Accent = { base: string; soft: string };
 
 /**
- * One audio screen for lessons and guided sessions: the orb breathes while it plays, a pink scrubber, skip and a large play button.
+ * One audio screen for lessons and guided sessions: the orb breathes while it plays, an accent-coloured scrubber, skip and a large play button.
  * Everything that plays audio in the app goes through this, so they look and behave the same.
  */
 export function AudioPlayerScreen({
@@ -65,9 +65,7 @@ export function AudioPlayerScreen({
             The audio would not load. Check your connection and try again.
           </Text>
         ) : null}
-        <View style={[styles.track, { backgroundColor: theme.border }]}>
-          <Animated.View style={[styles.fill, { backgroundColor: brand.pink }, fill]} />
-        </View>
+        <Waveform seed={title} progress={ratio} height={44} count={44} activeColor={brand.accent} />
         <View style={styles.timeRow}>
           <Text variant="caption" color={theme.textTertiary}>
             {formatMs(positionMs)}
@@ -84,7 +82,7 @@ export function AudioPlayerScreen({
               15
             </Text>
           </PressScale>
-          <PressScale onPress={toggle} disabled={!source} accessibilityLabel={isPlaying ? 'Pause' : 'Play'} scaleTo={0.93} style={[styles.play, { backgroundColor: brand.pink }]}>
+          <PressScale onPress={toggle} disabled={!source} accessibilityLabel={isPlaying ? 'Pause' : 'Play'} scaleTo={0.93} style={[styles.play, { backgroundColor: brand.accent }]}>
             {isPlaying ? <Pause size={28} color={theme.text} strokeWidth={2.2} /> : <Play size={28} color={theme.text} fill={theme.text} strokeWidth={0} style={styles.playIcon} />}
           </PressScale>
           <PressScale onPress={() => seekBy(15000)} accessibilityLabel="Forward 15 seconds" style={styles.skip}>

@@ -8,7 +8,7 @@ export default function FlashPregameScreen() {
   return (
     <GamePregame
       title="Flash"
-      subtitle="Eight rounds. Wait for the circle to turn pink, then tap as fast as you can."
+      subtitle="Eight rounds. Wait for the circle to turn green, then tap as fast as you can."
       hideLength
       whyItHelps={[
         'Reaction time is one of the simplest ways to see how alert you are.',
@@ -22,7 +22,7 @@ export default function FlashPregameScreen() {
       ]}
       howToPlay={[
         'Keep your thumb ready and wait.',
-        'When the circle turns pink, tap anywhere.',
+        'When the circle turns green, tap anywhere.',
         'Tap early and the round starts again.',
       ]}
       playPath="/(main)/games/flash/play"

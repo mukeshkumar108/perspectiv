@@ -10,7 +10,7 @@ interface PrimaryButtonProps {
   title: string;
   onPress?: () => void;
   /** 'solid' is the main action, 'outline' the quieter one. */
-  variant?: 'solid' | 'outline' | 'pink';
+  variant?: 'solid' | 'outline' | 'accent';
   disabled?: boolean;
   loading?: boolean;
   arrow?: boolean;
@@ -21,8 +21,8 @@ interface PrimaryButtonProps {
 export function PrimaryButton({ title, onPress, variant = 'solid', disabled, loading, arrow, icon }: PrimaryButtonProps) {
   const theme = useTheme();
   const solid = variant === 'solid';
-  const pink = variant === 'pink';
-  const bg = solid ? theme.text : pink ? brand.pink : 'transparent';
+  const accent = variant === 'accent';
+  const bg = solid ? theme.text : accent ? brand.accent : 'transparent';
   const fg = solid ? theme.background : theme.text;
   return (
     <PressScale
@@ -30,7 +30,7 @@ export function PrimaryButton({ title, onPress, variant = 'solid', disabled, loa
       disabled={disabled || loading}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={[styles.btn, { backgroundColor: bg, borderColor: solid || pink ? 'transparent' : theme.text, opacity: disabled ? 0.35 : 1 }]}
+      style={[styles.btn, { backgroundColor: bg, borderColor: solid || accent ? 'transparent' : theme.text, opacity: disabled ? 0.35 : 1 }]}
     >
       {loading ? (
         <ActivityIndicator color={fg} />

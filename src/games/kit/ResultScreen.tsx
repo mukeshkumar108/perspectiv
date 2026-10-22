@@ -45,11 +45,11 @@ export function ResultScreen({
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInUp.duration(420)} style={[styles.hero, { backgroundColor: accent.soft }]}>
           <View style={[styles.glow, { backgroundColor: accent.base }]} />
-          <Burst color={isBest ? brand.pink : accent.base} run={burst} spread={130} />
+          <Burst color={isBest ? brand.accent : accent.base} run={burst} spread={130} />
           <Overline color={theme.textSecondary}>{title}</Overline>
           <CountUp to={score} style={styles.score} />
           {isBest ? (
-            <View style={[styles.badge, { backgroundColor: brand.pink }]}>
+            <View style={[styles.badge, { backgroundColor: brand.accent }]}>
               <Trophy size={14} color={theme.text} strokeWidth={2} />
               <Text variant="small" medium>
                 New best

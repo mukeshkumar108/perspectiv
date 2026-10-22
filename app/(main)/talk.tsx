@@ -80,8 +80,8 @@ export default function TalkScreen() {
         <View style={styles.center}>
           <Animated.View entering={FadeIn.duration(500)} style={styles.closing}>
             <View style={styles.dotWrap}>
-              <View style={[styles.dot, { backgroundColor: brand.pink }]} />
-              <Burst color={brand.pink} run={burst} spread={110} />
+              <View style={[styles.dot, { backgroundColor: brand.accent }]} />
+              <Burst color={brand.accent} run={burst} spread={110} />
             </View>
             <Text variant="hero" center>
               {closing.line}
@@ -113,7 +113,7 @@ export default function TalkScreen() {
             </Text>
           ) : null}
           <View style={styles.footer}>
-            <PrimaryButton title={connecting ? 'Connecting' : plan.title === 'Talk to Bluum' ? 'Start talking' : `Begin ${plan.title.toLowerCase()}`} variant="pink" loading={connecting} onPress={() => void begin(plannedFlow.current)} />
+            <PrimaryButton title={connecting ? 'Connecting' : plan.title === 'Talk to Bluum' ? 'Start talking' : `Begin ${plan.title.toLowerCase()}`} variant="accent" loading={connecting} onPress={() => void begin(plannedFlow.current)} />
             <Text variant="caption" center color={theme.textTertiary}>
               Ringer on and volume up. Your voice is measured, never stored.
             </Text>

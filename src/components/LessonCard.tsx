@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Play } from 'lucide-react-native';
 
-import { Overline, PressScale, Text, spacing } from '@/src/ui';
+import { Overline, PressScale, Text, Waveform, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 
 type Accent = { base: string; soft: string };
@@ -51,9 +51,9 @@ export function LessonCard({
         <View style={[styles.play, { backgroundColor: theme.text }]}>
           <Play size={16} color={theme.background} fill={theme.background} strokeWidth={0} style={styles.playIcon} />
         </View>
-        <Text variant="small" medium>
-          Listen
-        </Text>
+        <View style={styles.wave}>
+          <Waveform seed={title} height={30} count={26} idleColor={`${accent.base}`} activeColor={theme.text} />
+        </View>
       </View>
     </PressScale>
   );
@@ -67,4 +67,5 @@ const styles = StyleSheet.create({
   bottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   play: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   playIcon: { marginLeft: 2 },
+  wave: { flex: 1 },
 });

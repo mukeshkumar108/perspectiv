@@ -23,13 +23,13 @@ export const radius = {
 
 export const typography = {
   hero: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 35,
+    lineHeight: 41,
     fontWeight: '600' as const,
   },
   title: {
-    fontSize: 23,
-    lineHeight: 30,
+    fontSize: 25,
+    lineHeight: 31,
     fontWeight: '600' as const,
   },
   body: {
@@ -52,6 +52,12 @@ export const typography = {
     lineHeight: 18,
     fontWeight: '400' as const,
   },
+  // A person's own words, set in the serif so they read as something said, not as interface.
+  quote: {
+    fontSize: 23,
+    lineHeight: 32,
+    fontWeight: '400' as const,
+  },
   // Small capital labels above a value ("EMAIL"), used for hierarchy on dense screens.
   overline: {
     fontSize: 11,
@@ -62,9 +68,15 @@ export const typography = {
 
 /** The one place the brand colours live. Everything coloured in the app comes from here. */
 export const brand = {
-  pink: '#FF7DAF',
-  pinkSoft: '#FFE0EC',
-  ink: '#231E15',
+  /** The one accent: a warm coral. Buttons, the Talk button, the orb, the streak. */
+  accent: '#FF8F6B',
+  accentSoft: '#FFE3D6',
+  /** A deeper coral for small text, where the bright one would be hard to read. */
+  accentDeep: '#D2603A',
+  /** A soft rose, kept for the evening. */
+  rose: '#F4A6BE',
+  roseSoft: '#FBE3EA',
+  ink: '#2B1F18',
   grey: '#B8BDCC',
   greySoft: '#E7E9EF',
 } as const;
@@ -74,7 +86,7 @@ export type SessionKind = 'morning' | 'daytime' | 'evening' | 'ten_things' | 'on
 export const sessionAccents: Record<SessionKind, { base: string; soft: string }> = {
   morning: { base: '#FFDC61', soft: '#FFF4C2' },
   daytime: { base: '#98C6FD', soft: '#DCEBFF' },
-  evening: { base: brand.pink, soft: brand.pinkSoft },
+  evening: { base: brand.rose, soft: brand.roseSoft },
   ten_things: { base: '#76D8AA', soft: '#D9F5E7' },
   onboarding: { base: brand.grey, soft: brand.greySoft },
 };
@@ -83,16 +95,16 @@ export const sessionAccents: Record<SessionKind, { base: string; soft: string }>
 export const colors = {
   light: {
     // Bold warm palette
-    background: '#F1F3F5',
-    backgroundSecondary: '#D79637',
-    surface: '#FFFFFF',
-    text: '#231E15',
-    textSecondary: '#231E15',
-    textTertiary: '#6F675C',
-    border: '#DBD9D2',
+    background: '#F6F0E8',
+    backgroundSecondary: '#EDE3D6',
+    surface: '#FBF8F4',
+    text: '#2B1F18',
+    textSecondary: '#5E4F45',
+    textTertiary: '#8A7B70',
+    border: '#E3D8CB',
     borderLight: '#EEE2D2',
     // Primary button
-    primary: '#231E15',
+    primary: '#2B1F18',
     primaryText: '#FFFFFF',
     // Accent highlights
     accent: '#D79637',
@@ -144,9 +156,9 @@ export type Colors = {
   successLight: string;
 };
 
-/** A pale wash for the page that follows the time of day: yellow in the morning, blue by day, pink in the evening. */
+/** A pale wash for the page that follows the time of day: yellow in the morning, blue by day, rose in the evening. */
 export const daypartTint = {
-  morning: '#FFF7D6',
-  day: '#E6F1FF',
-  evening: '#FFE9F1',
+  morning: '#FBF0CE',
+  day: '#E8EFF7',
+  evening: '#FAE6EA',
 } as const;

@@ -240,3 +240,11 @@ A bad token is refused with 403.
 - Identity: Bitter (500) for headlines, Instrument Sans for the rest; the Bluum mark (core plus a star of shrinking dots) is the logo, splash, icon and tab bar; the orb is the character. App icon and splash images regenerated.
 - Data: moments, lessons and profile are cached on the phone and shown at once while they refresh. Backend (b_attic `aca0105`): a spoken session that produced a card now counts for the day's streak; the library returns `flow` and `recent`.
 - Known: the streak endpoint counts back from the most recent completed day even if it was days ago (existing behaviour, pinned by tests); not changed.
+
+## Look and feel, second pass (2026-10-22, night)
+
+- Direction taken from the references the founder liked (inne first): cream paper, warm brown ink, large soft serif headlines, one bold colour, calm cards.
+  Headlines and a person's own words in Petrona (Bitter was too angular; Fraunces and Lora were the alternatives), the rest in Instrument Sans.
+- One accent, a warm coral (`brand.accent`), replacing the candy pink as the hero (gender-neutral, calmer, still warm); a soft rose is kept only for the evening session. Session colours are unchanged otherwise (yellow, blue, sage, grey). Reaction game go-signal is green.
+- Moments is a stack of cards you swipe through (the date is the heading), Shuffle or shake for a random one; the day-grouped timeline is the second view. Lessons and the audio player use a waveform.
+- Palette is cream (#F6F0E8), surface #FBF8F4, ink #2B1F18. Icon, splash and logo are regenerated in coral.

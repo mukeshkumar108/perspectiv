@@ -14,7 +14,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { useFonts as useBitterFonts, Bitter_500Medium, Bitter_600SemiBold } from '@expo-google-fonts/bitter';
+import { useFonts as usePetronaFonts, Petrona_400Regular, Petrona_500Medium } from '@expo-google-fonts/petrona';
 import {
   useFonts as useInstrumentSansFonts,
   InstrumentSans_400Regular,
@@ -88,7 +88,7 @@ export default function RootLayout() {
     InstrumentSans_400Regular,
     InstrumentSans_500Medium,
   });
-  const [bitterLoaded] = useBitterFonts({ Bitter_500Medium, Bitter_600SemiBold });
+  const [serifLoaded] = usePetronaFonts({ Petrona_400Regular, Petrona_500Medium });
   const [showSplashOverlay, setShowSplashOverlay] = useState(true);
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
   const splashOpacity = useSharedValue(1);
@@ -110,7 +110,7 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
-  const fontsReady = instrumentLoaded && bitterLoaded;
+  const fontsReady = instrumentLoaded && serifLoaded;
 
   useEffect(() => {
     if (!fontsReady || !minSplashElapsed) return;
@@ -146,7 +146,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#F1F3F5',
+    backgroundColor: '#F6F0E8',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
