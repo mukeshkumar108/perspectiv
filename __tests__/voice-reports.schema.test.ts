@@ -22,3 +22,17 @@ describe('voice report schemas', () => {
     expect(VoiceRateRequestSchema.parse({ id: 'x', correct: null }).correct).toBeNull();
   });
 });
+
+import { LessonsResponseSchema } from '../src/api/schemas';
+
+describe('lessons catalog', () => {
+  it('accepts the nulls the server sends for metadata a lesson does not have', () => {
+    const parsed = LessonsResponseSchema.parse({
+      items: [{ id: 'lesson_001', slug: 'manual-save', title: 'Why everything piles up', description: 'x', order: 1, durationSec: null, tags: [], version: 'v1', audioUrl: 'https://x/a.mp3', audioMimeType: 'audio/mpeg', uploadedAt: '2026-01-01T00:00:00.000Z', pathname: 'voice/lessons/a.mp3' },
+        { id: 'b', slug: 'b', title: 'B', description: null, order: null, durationSec: null, tags: null, version: null, audioUrl: 'https://x/b.mp3' }],
+    });
+    expect(parsed.items).toHaveLength(2);
+    expect(parsed.items[1].order).toBeUndefined();
+    expect(parsed.items[1].description).toBe('');
+  });
+});

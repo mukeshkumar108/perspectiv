@@ -1,93 +1,69 @@
-import { StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Card, ScreenContainer, Text, spacing } from '@/src/ui';
+import { LabeledValue, Overline, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { scoreBand } from '@/src/assessments/model';
 import { useAssessmentResults } from '@/src/assessments/storage';
 import { useImpulsePopHistory } from '@/src/games/impulsePop/storage';
 import { useMemoryMatchHistory } from '@/src/games/memoryMatch/storage';
+import { useStroopBloomHistory } from '@/src/games/stroopBloom/storage';
 
-export default function ProfileScreen() {
-  const router = useRouter();
+type Accent = { base: string; soft: string };
+
+function Panel({ title, accent, children }: { title: string; accent: Accent; children: React.ReactNode }) {
+  return (
+    <View style={[styles.panel, { backgroundColor: accent.soft }]}>
+      <View style={styles.panelHead}>
+        <View style={[styles.dot, { backgroundColor: accent.base }]} />
+        <Overline>{title}</Overline>
+      </View>
+      <View style={styles.values}>{children}</View>
+    </View>
+  );
+}
+
+export default function ProgressScreen() {
   const theme = useTheme();
-
   const assessments = useAssessmentResults(20);
   const impulse = useImpulsePopHistory(20);
   const memory = useMemoryMatchHistory(20);
+  const stroop = useStroopBloomHistory(20);
 
-  const bestImpulse = impulse.reduce((best, item) => Math.max(best, item.score), 0);
-  const bestMemory = memory.reduce((best, item) => Math.max(best, item.score), 0);
-  const latestAssessment = assessments[0];
+  const best = (items: { score: number }[]) => items.reduce((b, item) => Math.max(b, item.score), 0);
+  const latest = assessments[0];
 
   return (
-    <ScreenContainer scroll>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
-
-      <View style={styles.content}>
-        <Text variant="title">Profile</Text>
-        <Text variant="body" color={theme.textSecondary}>
-          Latest stats and trends from games and assessments.
+    <ScreenContainer safeBottom={false} ambient={false}>
+      <ScreenHeader title="Progress" />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text variant="body" color={theme.textTertiary}>
+          Your highs and your latest scores. Saved on this device.
         </Text>
 
-        <Card style={styles.card}>
-          <Text variant="bodyMedium">Game highs</Text>
-          <Text variant="small" color={theme.textSecondary}>
-            Impulse Pop best: {bestImpulse}
-          </Text>
-          <Text variant="small" color={theme.textSecondary}>
-            Memory Match best: {bestMemory}
-          </Text>
-          <Text variant="caption" color={theme.textTertiary}>
-            Sessions saved locally on your device.
-          </Text>
-        </Card>
+        <Panel title="Game highs" accent={sessionAccents.daytime}>
+          <LabeledValue label="Impulse Pop" value={String(best(impulse))} />
+          <LabeledValue label="Memory Match" value={String(best(memory))} />
+          <LabeledValue label="Stroop Bloom" value={String(best(stroop))} />
+        </Panel>
 
-        <Card style={styles.card}>
-          <Text variant="bodyMedium">Assessments</Text>
-          {latestAssessment ? (
-            <>
-              <Text variant="small" color={theme.textSecondary}>
-                Latest: {latestAssessment.type.toUpperCase()} {latestAssessment.score}/{latestAssessment.maxScore}
-              </Text>
-              <Text variant="caption" color={theme.textTertiary}>
-                Band: {scoreBand(latestAssessment.type, latestAssessment.score)}
-              </Text>
-            </>
+        <Panel title="Latest assessment" accent={sessionAccents.evening}>
+          {latest ? (
+            <LabeledValue label={latest.type.toUpperCase()} value={`${latest.score} of ${latest.maxScore}`} secondary={scoreBand(latest.type, latest.score)} />
           ) : (
-            <Text variant="small" color={theme.textSecondary}>
-              No assessments completed yet.
+            <Text variant="small" color={theme.textTertiary}>
+              None yet.
             </Text>
           )}
-        </Card>
-
-        <View style={styles.actions}>
-          <Button title="Open Assessments" variant="secondary" onPress={() => router.push('/(main)/assessments' as any)} />
-          <Button title="Open Games" variant="secondary" onPress={() => router.push('/(main)/(tabs)/games' as any)} />
-        </View>
-      </View>
+        </Panel>
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  content: {
-    flex: 1,
-    gap: spacing.lg,
-  },
-  card: {
-    gap: spacing.xs,
-  },
-  actions: {
-    gap: spacing.sm,
-    alignItems: 'flex-start',
-  },
+  content: { gap: spacing.md, paddingBottom: spacing.xxl },
+  panel: { borderRadius: 24, padding: spacing.lg, gap: spacing.md },
+  panelHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  values: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xl },
 });

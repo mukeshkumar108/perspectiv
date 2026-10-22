@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 
-import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
+import { ScreenContainer, Text, Button, Card, spacing, ScreenHeader } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { api, ApiError, API_BASE_URL } from '@/src/api';
 import { useAuthStatus } from '@/src/auth';
@@ -63,9 +63,7 @@ export default function DebugScreen() {
 
   return (
     <ScreenContainer style={styles.container}>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
+      <ScreenHeader />
 
       <ScrollView
         style={styles.scroll}

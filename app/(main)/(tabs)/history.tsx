@@ -1,253 +1,73 @@
-import { Pressable, StyleSheet, View, FlatList, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 
-import { ScreenContainer, Text, spacing } from '@/src/ui';
+import { Overline, ScreenContainer, Text, spacing } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
-import { useStreaks, useMoments } from '@/src/hooks';
-import { useMomentCache } from '@/src/storage';
-import type { MomentItem } from '@/src/api/schemas';
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return 'Today';
-  } else if (diffDays === 1) {
-    return 'Yesterday';
-  } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  } else {
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-}
-
-function MomentListItem({ item }: { item: MomentItem }) {
-  const theme = useTheme();
-
-  return (
-    <View style={styles.momentItem}>
-      <Text
-        variant="body"
-        numberOfLines={2}
-        style={styles.momentText}
-      >
-        {item.text || '(No text)'}
-      </Text>
-      <Text variant="caption" color={theme.textTertiary}>
-        {formatDate(item.createdAt)}
-      </Text>
-    </View>
-  );
-}
-
-function mergeMoments(local: MomentItem[], remote: MomentItem[]) {
-  const seenTextDates = new Set<string>();
-  const seenIds = new Set<string>();
-  const merged: MomentItem[] = [];
-  const all = [...local, ...remote];
-
-  for (const item of all) {
-    const key = `${item.text ?? ''}::${item.createdAt}`;
-    if (item.id && seenIds.has(item.id)) continue;
-    if (seenTextDates.has(key)) continue;
-    seenTextDates.add(key);
-    if (item.id) seenIds.add(item.id);
-    merged.push(item);
-  }
-
-  return merged;
-}
+import { MomentCard } from '@/src/components/MomentCard';
+import { useStreaks, useVoiceLibrary } from '@/src/hooks';
 
 export default function HistoryScreen() {
-  const router = useRouter();
   const theme = useTheme();
-  const { data: streaksData } = useStreaks();
-  const { data: momentsData, isLoading: momentsLoading } = useMoments(20);
+  const tabBarHeight = useBottomTabBarHeight();
+  const { data: streaks } = useStreaks();
+  const { data, isLoading, error, refetch } = useVoiceLibrary();
+  const items = data?.items ?? [];
 
-  const cachedMoments = useMomentCache(20) as MomentItem[];
-  const moments = mergeMoments(cachedMoments, momentsData?.items ?? []);
-  const weeklyMomentCount = moments.filter((item) => {
-    const createdAt = new Date(item.createdAt).getTime();
-    if (Number.isNaN(createdAt)) return false;
-    const ageMs = Date.now() - createdAt;
-    return ageMs >= 0 && ageMs <= 7 * 24 * 60 * 60 * 1000;
-  }).length;
-  const showLoading = moments.length === 0 && momentsLoading;
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const thisWeek = items.filter((item) => new Date(item.createdAt).getTime() >= weekAgo).length;
 
   return (
-    <ScreenContainer>
-      <View style={styles.content}>
-        <Animated.View entering={motion.itemEnter(60, 'up')}>
-          <View style={styles.headerRow}>
+    <ScreenContainer ambient={false} safeBottom={false}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xxxl }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={motion.itemEnter(60, 'up')} style={styles.head}>
+          <Text variant="hero">Your days</Text>
+          <View style={styles.stats}>
             <View>
-              <Text variant="title">History</Text>
-              <Text variant="body" color={theme.textSecondary} style={styles.subtitle}>
-                A record of days.
-              </Text>
+              <Overline>This week</Overline>
+              <Text variant="title">{thisWeek}</Text>
             </View>
-            <View style={styles.headerActions}>
-              <Pressable onPress={() => router.push('/(main)/(tabs)/games' as any)} hitSlop={12}>
-                <Text variant="small" color={theme.textSecondary}>
-                  Games
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/(main)/(tabs)/skia-lab' as any)} hitSlop={12}>
-                <Text variant="small" color={theme.textSecondary}>
-                  Skia Lab
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/(main)/(tabs)/character-lab' as any)} hitSlop={12}>
-                <Text variant="small" color={theme.textSecondary}>
-                  Character Lab
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => router.push('/(main)/debug' as any)} hitSlop={12}>
-                <Text variant="small" color={theme.textSecondary}>
-                  Debug
-                </Text>
-              </Pressable>
+            <View>
+              <Overline>Streak</Overline>
+              <Text variant="title">{streaks?.currentStreak ?? 0}</Text>
+            </View>
+            <View>
+              <Overline>Kept in total</Overline>
+              <Text variant="title">{items.length}</Text>
             </View>
           </View>
         </Animated.View>
 
-        <Animated.View
-          style={styles.stats}
-          entering={motion.itemEnter(140, 'up')}
-        >
-          <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
-            <Text variant="hero" color={theme.text}>
-              {streaksData?.totalReflections ?? 0}
-            </Text>
-            <Text variant="caption" color={theme.textTertiary}>
-              Reflections
-            </Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
-            <Text variant="hero" color={theme.text}>
-              {streaksData?.longestStreak ?? 0}
-            </Text>
-            <Text variant="caption" color={theme.textTertiary}>
-              Longest streak
-            </Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View
-          style={styles.recapSection}
-          entering={motion.itemEnter(210, 'up')}
-        >
-          <View style={[styles.recapCard, { backgroundColor: theme.surface }]}>
-            <Text variant="bodyMedium">Weekly recap</Text>
-            <Text variant="small" color={theme.textSecondary}>
-              {weeklyMomentCount} moments captured in the last 7 days.
-            </Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View
-          style={styles.momentsSection}
-          entering={motion.itemEnter(280, 'up')}
-        >
-          <Text variant="caption" color={theme.textTertiary} style={styles.sectionTitle}>
-            Recent moments
+        {isLoading && items.length === 0 ? (
+          <Text variant="small" color={theme.textTertiary}>
+            Loading
           </Text>
-
-          {showLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color={theme.textSecondary} />
-            </View>
-          ) : moments.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text variant="body" color={theme.textTertiary} center>
-                No moments yet
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={moments}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <MomentListItem item={item} />}
-              scrollEnabled={false}
-              contentContainerStyle={styles.momentsList}
-            />
-          )}
-        </Animated.View>
-      </View>
+        ) : error ? (
+          <Text variant="small" color={theme.textTertiary} onPress={() => void refetch()}>
+            Could not load. Tap to try again.
+          </Text>
+        ) : items.length === 0 ? (
+          <Text variant="body" color={theme.textTertiary}>
+            Your days will collect here, one moment at a time, once you have a spoken session.
+          </Text>
+        ) : (
+          items.map((item, index) => (
+            <Animated.View key={item.id} entering={motion.itemEnter(Math.min(index, 6) * 50 + 100, 'up')}>
+              <MomentCard card={item.card} createdAt={item.createdAt} />
+            </Animated.View>
+          ))
+        )}
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    paddingTop: spacing.lg,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
-  },
-  stats: {
-    flexDirection: 'row',
-    gap: spacing.xl,
-    marginTop: spacing.xl,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderRadius: 16,
-    paddingVertical: spacing.lg,
-  },
-  momentsSection: {
-    marginTop: spacing.xl,
-    flex: 1,
-  },
-  recapSection: {
-    marginTop: spacing.lg,
-  },
-  recapCard: {
-    borderRadius: 16,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    gap: spacing.xs,
-  },
-  sectionTitle: {
-    marginBottom: spacing.lg,
-  },
-  loadingContainer: {
-    paddingVertical: spacing.xl,
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    paddingVertical: spacing.xl,
-    alignItems: 'center',
-  },
-  momentsList: {
-    paddingBottom: spacing.lg,
-  },
-  momentItem: {
-    paddingVertical: spacing.lg,
-    gap: spacing.xs,
-  },
-  momentText: {
-    lineHeight: 24,
-  },
+  content: { gap: spacing.md, paddingTop: spacing.lg },
+  head: { gap: spacing.lg, marginBottom: spacing.sm },
+  stats: { flexDirection: 'row', gap: spacing.xl },
 });

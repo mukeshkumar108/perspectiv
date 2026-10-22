@@ -114,11 +114,12 @@ export type MomentsListResponse = z.infer<typeof MomentsListResponseSchema>;
 export const LessonItemSchema = z.object({
   id: z.string().optional(),
   title: z.string(),
-  description: z.string().default(''),
+  description: z.string().nullish().transform((v) => v ?? ''),
   audioUrl: z.string(),
-  order: z.number().optional(),
-  tags: z.array(z.string()).optional(),
-  durationSec: z.number().optional(),
+  // The server sends null for what a lesson's metadata file does not say.
+  order: z.number().nullish().transform((v) => v ?? undefined),
+  tags: z.array(z.string()).nullish().transform((v) => v ?? undefined),
+  durationSec: z.number().nullish().transform((v) => v ?? undefined),
 });
 
 export type LessonItem = z.infer<typeof LessonItemSchema>;

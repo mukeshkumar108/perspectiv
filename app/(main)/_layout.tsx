@@ -19,6 +19,13 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="checkin"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="you"
         options={{
           presentation: 'card',
@@ -37,14 +44,6 @@ export default function MainLayout() {
         options={{
           presentation: 'card',
           animation: 'slide_from_right',
-        }}
-      />
-      <Stack.Screen
-        name="capture"
-        options={{
-          presentation: 'transparentModal',
-          animation: 'slide_from_bottom',
-          contentStyle: { backgroundColor: 'transparent' },
         }}
       />
       <Stack.Screen
@@ -86,8 +85,8 @@ export default function MainLayout() {
       <Stack.Screen
         name="account"
         options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
+          presentation: 'card',
+          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen

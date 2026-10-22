@@ -44,7 +44,7 @@ interface MoodPickerProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function MoodFace({ rating, size, color }: { rating: number; size: number; color: string }) {
+export function MoodFace({ rating, size, color }: { rating: number; size: number; color: string }) {
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2 - 2;

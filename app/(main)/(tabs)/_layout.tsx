@@ -9,10 +9,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Home, Clock, Plus, Captions, Wind, Sparkles, Activity, Headphones } from 'lucide-react-native';
+import { Home, Clock, Plus, Wind, Sparkles, Activity, Headphones } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/ui/useTheme';
-import { Text } from '@/src/ui';
+import { Text, sessionAccents } from '@/src/ui';
 import { motionTokens } from '@/src/ui/motion';
 
 export default function TabLayout() {
@@ -53,12 +53,6 @@ export default function TabLayout() {
   }));
 
   const closeQuickMenu = () => setQuickOpen(false);
-  const openCapture = () => {
-    closeQuickMenu();
-    setTimeout(() => {
-      router.push('/(main)/capture' as any);
-    }, 140);
-  };
   const openGuides = () => {
     closeQuickMenu();
     setTimeout(() => {
@@ -174,39 +168,32 @@ export default function TabLayout() {
         style={[styles.quickMenu, quickMenuStyle]}
       >
         <Pressable
-          style={[styles.quickItem, { backgroundColor: theme.surface }]}
+          style={[styles.quickItem, { backgroundColor: sessionAccents.evening.soft }]}
           onPress={openGames}
         >
           <Sparkles size={16} color={theme.text} strokeWidth={2} />
           <Text variant="small" color={theme.text}>Games</Text>
         </Pressable>
         <Pressable
-          style={[styles.quickItem, { backgroundColor: theme.surface }]}
+          style={[styles.quickItem, { backgroundColor: sessionAccents.daytime.soft }]}
           onPress={openAssessments}
         >
           <Activity size={16} color={theme.text} strokeWidth={2} />
           <Text variant="small" color={theme.text}>Assessments</Text>
         </Pressable>
         <Pressable
-          style={[styles.quickItem, { backgroundColor: theme.surface }]}
+          style={[styles.quickItem, { backgroundColor: sessionAccents.ten_things.soft }]}
           onPress={openGuides}
         >
           <Wind size={16} color={theme.text} strokeWidth={2} />
           <Text variant="small" color={theme.text}>Guided sessions</Text>
         </Pressable>
         <Pressable
-          style={[styles.quickItem, { backgroundColor: theme.surface }]}
+          style={[styles.quickItem, { backgroundColor: sessionAccents.morning.soft }]}
           onPress={openLessons}
         >
           <Headphones size={16} color={theme.text} strokeWidth={2} />
           <Text variant="small" color={theme.text}>Lessons</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.quickItem, { backgroundColor: theme.surface }]}
-          onPress={openCapture}
-        >
-          <Captions size={16} color={theme.text} strokeWidth={2} />
-          <Text variant="small" color={theme.text}>Quick capture</Text>
         </Pressable>
       </Animated.View>
     </View>

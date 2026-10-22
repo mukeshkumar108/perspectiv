@@ -52,7 +52,32 @@ export const typography = {
     lineHeight: 18,
     fontWeight: '400' as const,
   },
+  // Small capital labels above a value ("EMAIL"), used for hierarchy on dense screens.
+  overline: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '500' as const,
+  },
 } as const;
+
+/** The one place the brand colours live. Everything coloured in the app comes from here. */
+export const brand = {
+  pink: '#FF7DAF',
+  pinkSoft: '#FFE0EC',
+  ink: '#231E15',
+  grey: '#B8BDCC',
+  greySoft: '#E7E9EF',
+} as const;
+
+/** Each kind of session has its own colour, used on its card, its orb accents and its history entries. */
+export type SessionKind = 'morning' | 'daytime' | 'evening' | 'ten_things' | 'onboarding';
+export const sessionAccents: Record<SessionKind, { base: string; soft: string }> = {
+  morning: { base: '#FFDC61', soft: '#FFF4C2' },
+  daytime: { base: '#98C6FD', soft: '#DCEBFF' },
+  evening: { base: brand.pink, soft: brand.pinkSoft },
+  ten_things: { base: '#76D8AA', soft: '#D9F5E7' },
+  onboarding: { base: brand.grey, soft: brand.greySoft },
+};
 
 // Paper/editorial light theme - warm, premium, minimal
 export const colors = {

@@ -3,7 +3,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Canvas, Circle } from '@shopify/react-native-skia';
 
 import type { VoiceOrbState } from '@/src/voice/sessionLogic';
-import { useTheme } from '@/src/ui/useTheme';
+import { brand } from '@/src/ui/tokens';
 
 type Props = {
   state: VoiceOrbState;
@@ -12,31 +12,36 @@ type Props = {
 };
 
 /**
- * A small, calm core that wakes up as the conversation does. While she speaks, dots stream outward along a star of spokes and
- * shrink and fade as they travel; while you speak they drift inward and gather; while she thinks it is quiet and small.
+ * Black, pink and grey on the app's pale background.
+ * Arriving: a small core blooms in and soft pink rings ripple out, slowly, like a held breath.
+ * Thinking: nearly silent. A pink comet circles the core, trailing off into grey.
+ * You speaking: dots drift inward along a star of spokes and gather.
+ * Her speaking: dots stream outward along the star, shrinking and fading as they go, and follow her voice.
  */
 
 const SPOKES = 12;
 const DOTS = 5;
+const TRAIL = 9;
+const RINGS = 3;
 const TWO_PI = Math.PI * 2;
 
 type Look = {
-  scale: number; // overall reach of the star
+  scale: number; // reach of the star
   spokeAlpha: number;
   flow: number; // dots per second along a spoke; negative flows inward
   core: number; // core size multiplier
-  orbit: number; // alpha of the slow thinking dots
-  ring: number; // alpha of the resting ring
+  ripple: number; // rings rippling out from the core
+  comet: number; // the thinking comet
   levelGain: number;
 };
 
 const LOOK: Record<VoiceOrbState, Look> = {
-  idle: { scale: 0.5, spokeAlpha: 0, flow: 0.05, core: 0.9, orbit: 0, ring: 0.4, levelGain: 0 },
-  thinking: { scale: 0.58, spokeAlpha: 0, flow: 0.05, core: 0.8, orbit: 0.55, ring: 0.12, levelGain: 0 },
-  listening: { scale: 0.8, spokeAlpha: 0.55, flow: -0.2, core: 1.05, orbit: 0, ring: 0, levelGain: 0.9 },
-  recording: { scale: 0.8, spokeAlpha: 0.55, flow: -0.2, core: 1.05, orbit: 0, ring: 0, levelGain: 0.9 },
-  pre_speaking: { scale: 0.9, spokeAlpha: 0.8, flow: 0.28, core: 1.1, orbit: 0, ring: 0, levelGain: 1 },
-  speaking: { scale: 1, spokeAlpha: 1, flow: 0.3, core: 1.1, orbit: 0, ring: 0, levelGain: 1 },
+  idle: { scale: 0.5, spokeAlpha: 0, flow: 0.05, core: 0.9, ripple: 1, comet: 0, levelGain: 0 },
+  thinking: { scale: 0.58, spokeAlpha: 0, flow: 0.05, core: 0.75, ripple: 0, comet: 1, levelGain: 0 },
+  listening: { scale: 0.8, spokeAlpha: 0.6, flow: -0.2, core: 1.05, ripple: 0, comet: 0, levelGain: 0.9 },
+  recording: { scale: 0.8, spokeAlpha: 0.6, flow: -0.2, core: 1.05, ripple: 0, comet: 0, levelGain: 0.9 },
+  pre_speaking: { scale: 0.9, spokeAlpha: 0.8, flow: 0.28, core: 1.1, ripple: 0, comet: 0, levelGain: 1 },
+  speaking: { scale: 1, spokeAlpha: 1, flow: 0.3, core: 1.1, ripple: 0, comet: 0, levelGain: 1 },
 };
 
 function withAlpha(hex: string, alpha: number) {
@@ -46,17 +51,23 @@ function withAlpha(hex: string, alpha: number) {
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const fract = (x: number) => x - Math.floor(x);
+/** Overshoots slightly, then settles: how the core arrives. */
+const easeOutBack = (t: number) => {
+  const x = Math.max(0, Math.min(1, t));
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+};
 
-type Anim = Look & { phase: number; time: number; level: number };
+type Anim = Look & { phase: number; time: number; level: number; enter: number };
 
 export function VoiceOrb({ state, levelRef }: Props) {
-  const theme = useTheme();
   const { width } = useWindowDimensions();
   const size = Math.max(280, Math.min(width - 32, 400));
   const center = size / 2;
 
   const [, setTick] = useState(0);
-  const anim = useRef<Anim>({ ...LOOK.idle, phase: 0, time: 0, level: 0 }).current;
+  const anim = useRef<Anim>({ ...LOOK.idle, phase: 0, time: 0, level: 0, enter: 0 }).current;
   const lastTs = useRef<number | null>(null);
   const lastRender = useRef(0);
 
@@ -73,8 +84,8 @@ export function VoiceOrb({ state, levelRef }: Props) {
       anim.spokeAlpha = lerp(anim.spokeAlpha, target.spokeAlpha, k);
       anim.flow = lerp(anim.flow, target.flow, k);
       anim.core = lerp(anim.core, target.core, k);
-      anim.orbit = lerp(anim.orbit, target.orbit, k);
-      anim.ring = lerp(anim.ring, target.ring, k);
+      anim.ripple = lerp(anim.ripple, target.ripple, k);
+      anim.comet = lerp(anim.comet, target.comet, k);
       anim.levelGain = lerp(anim.levelGain, target.levelGain, k);
 
       // Fast attack, slow release: the star jumps with a syllable and settles after it.
@@ -82,6 +93,7 @@ export function VoiceOrb({ state, levelRef }: Props) {
       anim.level = lerp(anim.level, raw, 1 - Math.exp(-dt * (raw > anim.level ? 20 : 6)));
 
       anim.time += dt;
+      anim.enter = Math.min(1, anim.enter + dt / 1.1);
       anim.phase += dt * anim.flow * (1 + anim.level * 2.4 * anim.levelGain);
 
       if (ts - lastRender.current >= 30) {
@@ -97,22 +109,26 @@ export function VoiceOrb({ state, levelRef }: Props) {
     };
   }, [state, levelRef, anim]);
 
-  const ink = theme.text;
-  const warm = theme.accent;
+  const { ink, pink, grey } = { ink: brand.ink, pink: brand.pink, grey: brand.grey };
   const lvl = anim.level * anim.levelGain;
+  const arrive = easeOutBack(anim.enter);
 
-  const coreR = size * 0.05 * anim.core * (1 + 0.05 * Math.sin(anim.time * 1.6)) + lvl * size * 0.018;
+  const coreR = (size * 0.05 * anim.core * (1 + 0.05 * Math.sin(anim.time * 1.6)) + lvl * size * 0.018) * arrive;
   const reach = size * 0.46 * anim.scale * (1 + lvl * 0.32);
   const maxDot = size * 0.021;
 
   const dots: { key: string; x: number; y: number; r: number; c: string }[] = [];
+  const rings: { key: string; r: number; c: string }[] = [];
 
+  // Spokes: long spokes carry the colour of whoever is speaking (pink for her, ink for you), short ones are grey.
   if (anim.spokeAlpha > 0.01) {
     const drift = anim.time * 0.06;
+    const speaking = anim.flow > 0;
     for (let i = 0; i < SPOKES; i += 1) {
       const angle = (i / SPOKES) * TWO_PI + drift;
-      const length = i % 2 === 0 ? 1 : 0.68; // alternate long and short spokes: a star, not a wheel
-      const color = i % 2 === 0 ? ink : warm;
+      const long = i % 2 === 0;
+      const length = long ? 1 : 0.68;
+      const color = long ? (speaking ? pink : ink) : grey;
       for (let j = 0; j < DOTS; j += 1) {
         const p = fract(anim.phase + j / DOTS + i * 0.037);
         const radius = coreR * 1.7 + p * (reach * length - coreR * 1.7);
@@ -131,26 +147,46 @@ export function VoiceOrb({ state, levelRef }: Props) {
     }
   }
 
-  if (anim.ring > 0.01) {
-    const ringR = size * 0.1 * (1 + 0.04 * Math.sin(anim.time * 1.1));
-    for (let i = 0; i < 8; i += 1) {
-      const a = (i / 8) * TWO_PI + anim.time * 0.08;
-      dots.push({ key: `ring${i}`, x: center + Math.cos(a) * ringR, y: center + Math.sin(a) * ringR, r: size * 0.008, c: withAlpha(ink, anim.ring) });
+  // Arriving: soft pink rings ripple out and fade.
+  if (anim.ripple > 0.01) {
+    for (let i = 0; i < RINGS; i += 1) {
+      const p = fract(anim.time * 0.36 + i / RINGS);
+      rings.push({
+        key: `rp${i}`,
+        r: coreR * 2.2 + p * size * 0.24,
+        c: withAlpha(pink, anim.ripple * Math.pow(1 - p, 1.6) * 0.55 * Math.min(1, anim.enter * 1.5)),
+      });
     }
   }
 
-  if (anim.orbit > 0.01) {
-    const orbitR = size * 0.1;
-    for (let i = 0; i < 3; i += 1) {
-      const a = anim.time * 0.9 + (i / 3) * TWO_PI;
-      dots.push({ key: `orb${i}`, x: center + Math.cos(a) * orbitR, y: center + Math.sin(a) * orbitR, r: size * (0.011 - i * 0.002), c: withAlpha(warm, anim.orbit * (1 - i * 0.28)) });
+  // Thinking: a pink comet with a grey tail, and a faint counter-rotating ring.
+  if (anim.comet > 0.01) {
+    const orbitR = size * 0.105;
+    const head = anim.time * 2.1;
+    for (let i = 0; i < TRAIL; i += 1) {
+      const a = head - i * 0.2;
+      const f = 1 - i / TRAIL;
+      dots.push({
+        key: `cm${i}`,
+        x: center + Math.cos(a) * orbitR,
+        y: center + Math.sin(a) * orbitR,
+        r: size * 0.012 * (0.35 + 0.65 * f),
+        c: withAlpha(i === 0 ? pink : i < 3 ? pink : grey, anim.comet * Math.pow(f, 1.3)),
+      });
+    }
+    for (let i = 0; i < 12; i += 1) {
+      const a = -anim.time * 0.35 + (i / 12) * TWO_PI;
+      dots.push({ key: `tr${i}`, x: center + Math.cos(a) * orbitR * 1.55, y: center + Math.sin(a) * orbitR * 1.55, r: size * 0.0055, c: withAlpha(grey, anim.comet * 0.5) });
     }
   }
 
   return (
     <View style={styles.wrap}>
       <Canvas style={{ width: size, height: size }}>
-        <Circle cx={center} cy={center} r={coreR * 2.6 + lvl * size * 0.04} color={withAlpha(warm, 0.1 + lvl * 0.1)} />
+        <Circle cx={center} cy={center} r={coreR * 2.6 + lvl * size * 0.045} color={withAlpha(pink, 0.1 + lvl * 0.14)} />
+        {rings.map((ring) => (
+          <Circle key={ring.key} cx={center} cy={center} r={ring.r} style="stroke" strokeWidth={1.4} color={ring.c} />
+        ))}
         {dots.map((d) => (
           <Circle key={d.key} cx={d.x} cy={d.y} r={d.r} color={d.c} />
         ))}

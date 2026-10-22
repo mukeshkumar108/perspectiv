@@ -8,6 +8,8 @@ interface TextProps extends RNTextProps {
   variant?: TextVariant;
   color?: string;
   center?: boolean;
+  /** The heavier of the two loaded weights, for labels and emphasis. */
+  medium?: boolean;
 }
 
 const fontFamilyByVariant: Record<TextVariant, string> = {
@@ -17,26 +19,28 @@ const fontFamilyByVariant: Record<TextVariant, string> = {
   bodyMedium: 'InstrumentSans_400Regular',
   small: 'InstrumentSans_400Regular',
   caption: 'InstrumentSans_400Regular',
+  overline: 'InstrumentSans_500Medium',
 };
 
 export function Text({
   variant = 'body',
   color,
   center,
+  medium,
   style,
   children,
   ...props
 }: TextProps) {
   const theme = useTheme();
   const variantStyle = typography[variant];
-  const headingLetterSpacing = variant === 'hero' ? -0.9 : variant === 'title' ? -0.6 : -0.2;
+  const headingLetterSpacing = variant === 'hero' ? -0.9 : variant === 'title' ? -0.6 : variant === 'overline' ? 1.4 : -0.2;
 
   return (
     <RNText
       style={[
         styles.base,
         {
-          fontFamily: fontFamilyByVariant[variant],
+          fontFamily: medium ? 'InstrumentSans_500Medium' : fontFamilyByVariant[variant],
           fontSize: variantStyle.fontSize,
           lineHeight: variantStyle.lineHeight,
           fontWeight: undefined,

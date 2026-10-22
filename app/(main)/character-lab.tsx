@@ -16,7 +16,7 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Button, Card, ScreenContainer, Text, spacing } from '@/src/ui';
+import { Button, Card, ScreenContainer, Text, spacing, ScreenHeader } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 
 function withAlpha(hex: string, alpha: number) {
@@ -307,9 +307,7 @@ export default function CharacterLabScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
+      <ScreenHeader />
 
       <ScrollView
         style={styles.scroll}

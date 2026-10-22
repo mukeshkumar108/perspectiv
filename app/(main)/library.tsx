@@ -1,72 +1,33 @@
-import { ScrollView, StyleSheet, View, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
-import { ScreenContainer, Text, Card, spacing } from '@/src/ui';
+import { ScreenContainer, ScreenHeader, Text, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
+import { MomentCard } from '@/src/components/MomentCard';
 import { useVoiceLibrary } from '@/src/hooks';
-
-const KIND_LABEL: Record<string, string> = { intention: 'Looking forward to', self: 'About me' };
-
-function formatDay(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
 
 export default function LibraryScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const { data, isLoading, error } = useVoiceLibrary();
   const items = data?.items ?? [];
 
   return (
     <ScreenContainer style={styles.container} ambient={false}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={16}>
-          <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
-        </Pressable>
-        <Text variant="bodyMedium">Your moments</Text>
-        <View style={styles.spacer} />
-      </View>
-
+      <ScreenHeader title="My moments" />
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {isLoading ? (
-          <Text variant="small" color={theme.textSecondary}>
+          <Text variant="small" color={theme.textTertiary}>
             Loading
           </Text>
         ) : error ? (
-          <Text variant="small" color={theme.textSecondary}>
+          <Text variant="small" color={theme.textTertiary}>
             Could not load your moments.
           </Text>
         ) : items.length === 0 ? (
-          <Text variant="body" color={theme.textSecondary}>
-            Nothing here yet. After your next spoken session, the moment you named will be kept here.
+          <Text variant="body" color={theme.textTertiary}>
+            Nothing here yet. After your next spoken session, what you named will be kept here.
           </Text>
         ) : (
-          items.map((item) => (
-            <Card key={item.id} style={[styles.card, { borderColor: theme.border, borderWidth: 1 }]}>
-              <Text variant="small" color={theme.textSecondary}>
-                {formatDay(item.createdAt)}
-                {item.card?.kind && KIND_LABEL[item.card.kind] ? `  ·  ${KIND_LABEL[item.card.kind]}` : ''}
-              </Text>
-              {item.card?.headline ? (
-                <Text variant="bodyMedium" style={styles.headline}>
-                  {item.card.headline}
-                </Text>
-              ) : null}
-              <Text variant="body" style={styles.moment}>
-                {item.card?.moment}
-              </Text>
-              {item.card?.tags?.length ? (
-                <Text variant="small" color={theme.textSecondary} style={styles.tags}>
-                  {item.card.tags.join('  ·  ')}
-                </Text>
-              ) : null}
-            </Card>
-          ))
+          items.map((item) => <MomentCard key={item.id} card={item.card} createdAt={item.createdAt} />)
         )}
       </ScrollView>
     </ScreenContainer>
@@ -75,17 +36,5 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  spacer: { width: 22 },
-  list: { gap: spacing.sm, paddingBottom: spacing.xl },
-  card: {},
-  headline: { marginTop: spacing.xs },
-  moment: { marginTop: spacing.xs },
-  tags: { marginTop: spacing.sm },
+  list: { gap: spacing.md, paddingBottom: spacing.xxl },
 });

@@ -3,3 +3,4 @@ export * from './StreakBadge';
 export * from './MoodPicker';
 export * from './Composer';
 export * from './Character';
+export { MomentCard } from './MomentCard';

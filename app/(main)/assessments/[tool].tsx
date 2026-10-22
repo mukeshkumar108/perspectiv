@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 
-import { Button, Card, ScreenContainer, Text, spacing } from '@/src/ui';
+import { Button, Card, ScreenContainer, Text, spacing, ScreenHeader } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import {
   getAssessmentMaxScore,
@@ -75,9 +75,7 @@ export default function AssessmentToolScreen() {
 
   return (
     <ScreenContainer safeBottom={false}>
-      <View style={styles.header}>
-        <Button title="Back" variant="ghost" onPress={() => router.back()} />
-      </View>
+      <ScreenHeader />
 
       <ScrollView
         style={styles.scroll}

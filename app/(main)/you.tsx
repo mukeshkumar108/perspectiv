@@ -1,41 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
 
-import { ScreenContainer, Text, TextInput, spacing } from '@/src/ui';
+import { Overline, Pill, PressScale, ScreenContainer, ScreenHeader, Text, TextInput, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { useProfile, useUpdateProfile } from '@/src/hooks';
 
 const PRONOUNS = ['she/her', 'he/him', 'they/them'];
 const GENDERS = ['Woman', 'Man', 'Non-binary', 'Prefer not to say'];
 
-function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      style={[
-        styles.chip,
-        { borderColor: active ? theme.text : theme.border, backgroundColor: active ? theme.text : 'transparent' },
-      ]}
-    >
-      <Text variant="small" color={active ? theme.background : theme.textSecondary}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   const theme = useTheme();
   return (
     <View style={styles.field}>
-      <Text variant="small" color={theme.textTertiary} style={styles.fieldLabel}>
-        {label.toUpperCase()}
-      </Text>
+      <Overline>{label}</Overline>
       {children}
       {hint ? (
         <Text variant="caption" color={theme.textTertiary}>
@@ -82,11 +60,7 @@ export default function YouScreen() {
   return (
     <ScreenContainer style={styles.container} ambient={false} scroll>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={16} accessibilityLabel="Back">
-            <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
-          </Pressable>
-        </View>
+        <ScreenHeader />
 
         <Text variant="hero" style={styles.title}>
           A bit about you
@@ -117,7 +91,7 @@ export default function YouScreen() {
             <Field label="Pronouns">
               <View style={styles.chips}>
                 {PRONOUNS.map((p) => (
-                  <Chip key={p} label={p} active={pronouns === p} onPress={() => setPronouns(pronouns === p ? null : p)} />
+                  <Pill key={p} label={p} active={pronouns === p} onPress={() => setPronouns(pronouns === p ? null : p)} />
                 ))}
               </View>
             </Field>
@@ -125,7 +99,7 @@ export default function YouScreen() {
             <Field label="Gender">
               <View style={styles.chips}>
                 {GENDERS.map((g) => (
-                  <Chip key={g} label={g} active={gender === g} onPress={() => setGender(gender === g ? null : g)} />
+                  <Pill key={g} label={g} active={gender === g} onPress={() => setGender(gender === g ? null : g)} />
                 ))}
               </View>
             </Field>
@@ -156,16 +130,16 @@ export default function YouScreen() {
               </Text>
             ) : null}
 
-            <Pressable
+            <PressScale
               onPress={save}
               disabled={!canSave}
               accessibilityRole="button"
               style={[styles.save, { backgroundColor: theme.primary, opacity: canSave ? 1 : 0.35 }]}
             >
-              <Text variant="bodyMedium" color={theme.primaryText}>
+              <Text variant="bodyMedium" medium color={theme.primaryText}>
                 {update.isPending ? 'One moment' : 'Done'}
               </Text>
-            </Pressable>
+            </PressScale>
           </>
         )}
       </KeyboardAvoidingView>
@@ -175,14 +149,11 @@ export default function YouScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: spacing.md, marginBottom: spacing.lg },
   title: { marginBottom: spacing.sm },
   lede: { marginBottom: spacing.xl },
   field: { gap: spacing.sm, marginBottom: spacing.xl },
-  fieldLabel: { letterSpacing: 1.8 },
   input: { minHeight: 56, textAlignVertical: 'center', paddingVertical: spacing.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2 },
   readonly: { borderWidth: 1, borderRadius: 12, padding: spacing.md, minHeight: 56, justifyContent: 'center' },
   save: { borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.md + 2, marginTop: spacing.sm, marginBottom: spacing.xxl },
 });

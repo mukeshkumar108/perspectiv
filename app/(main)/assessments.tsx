@@ -2,104 +2,70 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Activity, BrainCircuit, Gauge } from 'lucide-react-native';
 
-import { Button, Card, ScreenContainer, Text, spacing } from '@/src/ui';
+import { AccentCard, Overline, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { getAssessmentTitle, scoreBand, type AssessmentType } from '@/src/assessments/model';
 import { useAssessmentResults } from '@/src/assessments/storage';
+
+const MAX: Record<AssessmentType, number> = { phq9: 27, gad7: 21, cantril: 10 };
 
 export default function AssessmentsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const results = useAssessmentResults(12);
 
-  const latestByType = (type: AssessmentType) =>
-    results.find((entry) => entry.type === type);
+  const latestLine = (type: AssessmentType, blurb: string) => {
+    const latest = results.find((entry) => entry.type === type);
+    return latest ? `${blurb}\nLatest ${latest.score}/${MAX[type]} · ${scoreBand(type, latest.score)}` : `${blurb}\nNo score yet`;
+  };
 
   return (
-    <ScreenContainer safeBottom={false}>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
+    <ScreenContainer safeBottom={false} ambient={false}>
+      <ScreenHeader title="Assessments" />
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text variant="title">Assessments</Text>
-        <Text variant="body" color={theme.textSecondary}>
-          Track PHQ-9, GAD-7 and Cantril Ladder scores over time.
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text variant="body" color={theme.textTertiary}>
+          Short measures you can repeat to see how things move over time.
         </Text>
 
-        <Card style={styles.card}>
-          <View style={styles.cardHead}>
-            <Activity size={18} color={theme.text} strokeWidth={1.9} />
-            <Text variant="bodyMedium">PHQ-9</Text>
-          </View>
-          <Text variant="small" color={theme.textSecondary}>
-            9 items for depressive symptom tracking.
-          </Text>
-          <Text variant="caption" color={theme.textTertiary}>
-            {latestByType('phq9')
-              ? `Latest: ${latestByType('phq9')?.score}/27 (${scoreBand('phq9', latestByType('phq9')?.score ?? 0)})`
-              : 'No score yet'}
-          </Text>
-          <Button
-            title="Start PHQ-9"
-            variant="secondary"
+        <View style={styles.group}>
+          <AccentCard
+            title="PHQ-9"
+            subtitle={latestLine('phq9', 'Nine questions about low mood.')}
+            accent={sessionAccents.evening}
+            icon={<Activity size={20} color={theme.text} strokeWidth={1.8} />}
             onPress={() => router.push('/(main)/assessments/phq9' as any)}
           />
-        </Card>
-
-        <Card style={styles.card}>
-          <View style={styles.cardHead}>
-            <BrainCircuit size={18} color={theme.text} strokeWidth={1.9} />
-            <Text variant="bodyMedium">GAD-7</Text>
-          </View>
-          <Text variant="small" color={theme.textSecondary}>
-            7 items for anxiety symptom tracking.
-          </Text>
-          <Text variant="caption" color={theme.textTertiary}>
-            {latestByType('gad7')
-              ? `Latest: ${latestByType('gad7')?.score}/21 (${scoreBand('gad7', latestByType('gad7')?.score ?? 0)})`
-              : 'No score yet'}
-          </Text>
-          <Button
-            title="Start GAD-7"
-            variant="secondary"
+          <AccentCard
+            title="GAD-7"
+            subtitle={latestLine('gad7', 'Seven questions about worry and anxiety.')}
+            accent={sessionAccents.daytime}
+            icon={<BrainCircuit size={20} color={theme.text} strokeWidth={1.8} />}
             onPress={() => router.push('/(main)/assessments/gad7' as any)}
           />
-        </Card>
-
-        <Card style={styles.card}>
-          <View style={styles.cardHead}>
-            <Gauge size={18} color={theme.text} strokeWidth={1.9} />
-            <Text variant="bodyMedium">Cantril Ladder</Text>
-          </View>
-          <Text variant="small" color={theme.textSecondary}>
-            One quick check on overall life evaluation today.
-          </Text>
-          <Text variant="caption" color={theme.textTertiary}>
-            {latestByType('cantril')
-              ? `Latest: ${latestByType('cantril')?.score}/10 (${scoreBand('cantril', latestByType('cantril')?.score ?? 0)})`
-              : 'No score yet'}
-          </Text>
-          <Button
-            title="Start Cantril"
-            variant="secondary"
+          <AccentCard
+            title="Cantril Ladder"
+            subtitle={latestLine('cantril', 'One question about life overall, today.')}
+            accent={sessionAccents.ten_things}
+            icon={<Gauge size={20} color={theme.text} strokeWidth={1.8} />}
             onPress={() => router.push('/(main)/assessments/cantril' as any)}
           />
-        </Card>
+        </View>
 
         {results.length > 0 ? (
-          <Card style={styles.historyCard}>
-            <Text variant="bodyMedium">Recent submissions</Text>
+          <View style={styles.group}>
+            <Overline>Recent</Overline>
             {results.slice(0, 8).map((entry) => (
-              <Text key={entry.id} variant="caption" color={theme.textTertiary}>
-                {getAssessmentTitle(entry.type)}: {entry.score}/{entry.maxScore} ({scoreBand(entry.type, entry.score)})
-              </Text>
+              <View key={entry.id} style={[styles.row, { borderColor: theme.border }]}>
+                <Text variant="small" medium>
+                  {getAssessmentTitle(entry.type)}
+                </Text>
+                <Text variant="small" color={theme.textSecondary}>
+                  {entry.score}/{entry.maxScore} · {scoreBand(entry.type, entry.score)}
+                </Text>
+              </View>
             ))}
-          </Card>
+          </View>
         ) : null}
       </ScrollView>
     </ScreenContainer>
@@ -107,28 +73,7 @@ export default function AssessmentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  content: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  scroll: {
-    flex: 1,
-  },
-  card: {
-    gap: spacing.sm,
-  },
-  cardHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  historyCard: {
-    gap: spacing.xs,
-  },
+  content: { gap: spacing.lg, paddingBottom: spacing.xxl },
+  group: { gap: spacing.sm },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
 });

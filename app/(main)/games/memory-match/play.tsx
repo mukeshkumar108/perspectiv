@@ -301,6 +301,9 @@ export default function MemoryMatchScreen() {
     <ScreenContainer>
       <View style={styles.content}>
         <View style={styles.topHud}>
+          <Pressable onPress={() => router.back()} style={styles.closeIconButton} hitSlop={12}>
+            <X size={20} color="#FFFFFF" strokeWidth={3} />
+          </Pressable>
           <View style={styles.hudInline}>
             <View style={styles.hudItem}>
               <Clock3 size={14} color="#5E547D" strokeWidth={2.3} />
@@ -319,9 +322,6 @@ export default function MemoryMatchScreen() {
               <Text variant="bodyMedium" color="#1F1A2F" style={styles.hudValue}>{matches}/6</Text>
             </View>
           </View>
-          <Pressable onPress={() => router.back()} style={styles.closeIconButton} hitSlop={12}>
-            <X size={20} color="#FFFFFF" strokeWidth={3} />
-          </Pressable>
         </View>
 
         <View style={styles.gridWrap}>
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#16131F',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: spacing.xs,
+    marginRight: spacing.sm,
   },
   gridWrap: {
     flex: 1,

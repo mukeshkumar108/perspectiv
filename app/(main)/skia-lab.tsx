@@ -12,7 +12,7 @@ import {
   withTiming,
 } from 'react-native-reanimated';
 
-import { ScreenContainer, Card, Text, Button, spacing } from '@/src/ui';
+import { ScreenContainer, Card, Text, Button, spacing, ScreenHeader } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 
 function withAlpha(hex: string, alpha: number) {
@@ -283,9 +283,7 @@ export default function SkiaLabScreen() {
 
   return (
     <ScreenContainer>
-      <View style={styles.header}>
-        <Button title="Close" variant="ghost" onPress={() => router.back()} />
-      </View>
+      <ScreenHeader />
 
       <ScrollView
         style={styles.scroll}

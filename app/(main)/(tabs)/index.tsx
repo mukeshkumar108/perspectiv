@@ -72,15 +72,14 @@ export default function HomeScreen() {
 
   const dateLabel = useMemo(() => formatDateLabel(), []);
   const today = (todayData ?? {}) as any;
-  const hasReflectedToday = today.hasReflected ?? today.hasReflectedToday ?? false;
 
   const dailyHeadline = useMemo(() => {
     const items = homeHeadlines.headlines.map((item) => item.text);
     return pickDailyHeadline(items);
   }, []);
 
-  const handleReflect = () => {
-    router.push('/(main)/reflect' as any);
+  const handleCheckIn = () => {
+    router.push('/(main)/checkin' as any);
   };
 
   const handleVoiceSession = () => {
@@ -173,13 +172,13 @@ export default function HomeScreen() {
           entering={motion.itemEnter(210, 'up')}
         >
           <Button
-            title={hasReflectedToday ? 'Reflect again' : 'Reflect'}
-            onPress={handleReflect}
+            title="Talk to Bluum"
+            onPress={handleVoiceSession}
           />
           <Button
-            title="Voice session"
+            title={today.hasMood ? 'Check in again' : 'Check in'}
             variant="secondary"
-            onPress={handleVoiceSession}
+            onPress={handleCheckIn}
           />
         </Animated.View>
         </View>

@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, ArrowRight } from 'lucide-react-native';
+import { Heart, MessageCircle, Moon, Sparkles, Sunrise } from 'lucide-react-native';
 
-import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
+import { AccentCard, Overline, PressScale, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
+import type { SessionKind } from '@/src/ui/tokens';
 import { useTheme } from '@/src/ui/useTheme';
 import { VoiceOrb } from '@/src/components/VoiceOrb';
 import { useProfile, useVoiceConnect } from '@/src/hooks';
@@ -12,14 +13,14 @@ import type { VoiceOrbState } from '@/src/voice/sessionLogic';
 import { VoicePlaybackHost, type PlaybackHandle } from '@/src/voice/stream/PlaybackHost';
 import { useStreamingVoice, type StreamingVoiceStatus } from '@/src/voice/stream/useStreamingVoice';
 
-type FlowOption = { id: VoiceConnectFlow; title: string; subtitle: string };
+type FlowOption = { id: VoiceConnectFlow & SessionKind; title: string; subtitle: string; Icon: typeof Moon };
 
 const FLOW_OPTIONS: FlowOption[] = [
-  { id: 'morning', title: 'Morning', subtitle: 'First session of the day: what are you looking forward to?' },
-  { id: 'daytime', title: 'Drop-in', subtitle: 'A quick one during the day: something happen, something to catch?' },
-  { id: 'evening', title: 'Evening reflection', subtitle: 'The main practice: one good moment from today.' },
-  { id: 'ten_things', title: 'Ten things about you', subtitle: 'Different today: things you actually like about yourself.' },
-  { id: 'onboarding', title: 'Welcome', subtitle: 'First conversation: what Bluum is and what brought you here.' },
+  { id: 'morning', title: 'Morning', subtitle: 'What are you looking forward to today?', Icon: Sunrise },
+  { id: 'daytime', title: 'Drop-in', subtitle: 'Something happen? Catch it before it goes.', Icon: MessageCircle },
+  { id: 'evening', title: 'Evening reflection', subtitle: 'One good moment from today.', Icon: Moon },
+  { id: 'ten_things', title: 'Ten things about you', subtitle: 'Things you actually like about yourself.', Icon: Heart },
+  { id: 'onboarding', title: 'Welcome', subtitle: 'What Bluum is, and what brought you here.', Icon: Sparkles },
 ];
 
 const STATUS_LABEL: Record<StreamingVoiceStatus, string> = {
@@ -90,90 +91,78 @@ export default function VoiceSessionScreen() {
         onDiag={voice.onPlaybackDiag}
       />
 
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => {
-            voice.stop();
-            router.back();
-          }}
-          hitSlop={16}
-        >
-          <ArrowLeft size={22} color={theme.text} strokeWidth={1.8} />
-        </Pressable>
-        <Text variant="bodyMedium">Voice Session</Text>
-        <View style={styles.headerAction}>
-          {live ? (
+      <ScreenHeader
+        onBack={() => {
+          voice.stop();
+          router.back();
+        }}
+        right={
+          live ? (
             <Pressable onPress={() => setShowText((on) => !on)} hitSlop={12} accessibilityLabel="Show or hide text">
               <Text variant="small" color={theme.textSecondary}>
                 {showText ? 'Hide text' : 'Show text'}
               </Text>
             </Pressable>
-          ) : (
-            <Pressable onPress={() => router.push('/(main)/you' as any)} hitSlop={12} accessibilityLabel="About you">
-              <Text variant="small" color={theme.textSecondary}>
-                About you
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
+          ) : undefined
+        }
+      />
 
       {errorText ? (
-        <Card style={styles.errorCard} variant="subtle">
-          <Text variant="small" color={theme.textSecondary}>
+        <View style={[styles.error, { backgroundColor: theme.errorLight }]}>
+          <Text variant="small" color={theme.error}>
             {errorText}
           </Text>
-        </Card>
+        </View>
       ) : null}
 
       {!live ? (
-        <ScrollView contentContainerStyle={styles.flowPicker} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.picker} showsVerticalScrollIndicator={false}>
+          <View style={styles.titleBlock}>
+            <Text variant="hero">Talk to Bluum</Text>
+            <Text variant="body" color={theme.textTertiary}>
+              Pick a session. Ringer on and volume up.
+            </Text>
+          </View>
+
           {needsName ? (
-            <Pressable
-              onPress={() => router.push('/(main)/you' as any)}
-              accessibilityRole="button"
-              style={[styles.nameCard, { backgroundColor: theme.text }]}
-            >
-              <Text variant="bodyMedium" color={theme.background}>
+            <PressScale onPress={() => router.push('/(main)/you' as any)} style={[styles.nameCard, { backgroundColor: theme.text }]}>
+              <Text variant="bodyMedium" medium color={theme.background}>
                 What should we call you?
               </Text>
-              <Text variant="small" color={theme.background} style={styles.nameCardSub}>
+              <Text variant="small" color={theme.background} style={styles.dim}>
                 A name helps. Tell Bluum a bit about you.
               </Text>
-            </Pressable>
+            </PressScale>
           ) : null}
-          <Text variant="hero" style={styles.pickTitle}>
-            Talk to Bluum
-          </Text>
-          <Text variant="body" color={theme.textTertiary} style={styles.pickSub}>
-            Pick a session. Ringer on and volume up, so you can hear her.
-          </Text>
-          <Button title="Test sound" variant="ghost" onPress={() => void voice.testSound()} />
-          <View style={styles.linkRow}>
-            <Button title="My moments" variant="ghost" onPress={() => router.push('/(main)/library' as any)} />
-            <Button title="Session research" variant="ghost" onPress={() => router.push('/(main)/research' as any)} />
+
+          <View style={styles.list}>
+            {FLOW_OPTIONS.map(({ id, title, subtitle, Icon }) => (
+              <AccentCard
+                key={id}
+                title={title}
+                subtitle={subtitle}
+                accent={sessionAccents[id]}
+                icon={<Icon size={20} color={theme.text} strokeWidth={1.8} />}
+                disabled={connect.isPending}
+                onPress={() => void begin(id)}
+              />
+            ))}
           </View>
-          {FLOW_OPTIONS.map((option) => (
-            <Pressable
-              key={option.id}
-              onPress={() => void begin(option.id)}
-              disabled={connect.isPending}
-              accessibilityRole="button"
-              accessibilityLabel={`Start ${option.title}`}
-              style={({ pressed }) => [
-                styles.flowCard,
-                { backgroundColor: theme.surface, borderColor: theme.border, opacity: pressed || connect.isPending ? 0.7 : 1 },
-              ]}
-            >
-              <View style={styles.flowText}>
-                <Text variant="bodyMedium">{option.title}</Text>
-                <Text variant="small" color={theme.textTertiary} style={styles.flowSubtitle}>
-                  {option.subtitle}
-                </Text>
-              </View>
-              <ArrowRight size={18} color={theme.textTertiary} strokeWidth={1.8} />
+
+          <View style={styles.links}>
+            <Pressable onPress={() => router.push('/(main)/library' as any)} hitSlop={10}>
+              <Overline>My moments</Overline>
             </Pressable>
-          ))}
+            <Pressable onPress={() => router.push('/(main)/you' as any)} hitSlop={10}>
+              <Overline>About you</Overline>
+            </Pressable>
+            <Pressable onPress={() => router.push('/(main)/research' as any)} hitSlop={10}>
+              <Overline>Research</Overline>
+            </Pressable>
+            <Pressable onPress={() => void voice.testSound()} hitSlop={10}>
+              <Overline>Test sound</Overline>
+            </Pressable>
+          </View>
         </ScrollView>
       ) : (
         <View style={styles.live}>
@@ -181,9 +170,7 @@ export default function VoiceSessionScreen() {
             <VoiceOrb state={ORB_STATE[voice.status]} levelRef={voice.levelRef} />
           </Pressable>
           <View style={styles.statusSlot}>
-            <Text variant="small" color={theme.textTertiary} style={styles.statusLabel}>
-              {STATUS_LABEL[voice.status].toUpperCase()}
-            </Text>
+            <Overline>{STATUS_LABEL[voice.status]}</Overline>
           </View>
           {showText ? (
             <ScrollView style={styles.transcript} contentContainerStyle={styles.transcriptContent}>
@@ -199,11 +186,11 @@ export default function VoiceSessionScreen() {
               ) : null}
             </ScrollView>
           ) : null}
-          <Pressable onPress={voice.stop} accessibilityRole="button" style={[styles.endPill, { borderColor: theme.border }]}>
+          <PressScale onPress={voice.stop} style={[styles.endPill, { borderColor: theme.border }]}>
             <Text variant="small" color={theme.textSecondary}>
               End session
             </Text>
-          </Pressable>
+          </PressScale>
         </View>
       )}
     </ScreenContainer>
@@ -212,40 +199,19 @@ export default function VoiceSessionScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  headerAction: { minWidth: 76, alignItems: 'flex-end' },
-  errorCard: { marginBottom: spacing.md },
-  linkRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  flowPicker: { gap: spacing.sm, paddingBottom: spacing.lg },
-  flowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 20,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  flowText: { flex: 1 },
-  pickTitle: { marginTop: spacing.sm },
+  error: { borderRadius: 12, padding: spacing.md, marginBottom: spacing.md },
+  picker: { gap: spacing.lg, paddingBottom: spacing.xl },
+  titleBlock: { gap: spacing.xs, marginTop: spacing.sm },
+  list: { gap: spacing.sm },
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginTop: spacing.sm },
   nameCard: { borderRadius: 20, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, gap: 2 },
-  nameCardSub: { opacity: 0.75 },
-  pickSub: { marginBottom: spacing.sm },
-  endPill: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 999, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  flowSubtitle: { marginTop: spacing.xs },
-  flowAction: { marginTop: spacing.sm, alignItems: 'flex-start' },
+  dim: { opacity: 0.75 },
   live: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.lg },
   orbWrap: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   // A fixed slot, so the label changing never moves anything else.
   statusSlot: { height: 36, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
-  statusLabel: { textAlign: 'center', letterSpacing: 2.4 },
   transcript: { alignSelf: 'stretch', height: 150, marginBottom: spacing.sm },
   transcriptContent: { gap: spacing.xs, paddingHorizontal: spacing.md },
   line: { textAlign: 'center' },
+  endPill: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 999, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm + 2 },
 });

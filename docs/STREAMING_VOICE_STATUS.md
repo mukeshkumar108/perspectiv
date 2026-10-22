@@ -207,3 +207,14 @@ A bad token is refused with 403.
 - `app/(main)/you.tsx`: name, pronouns, gender, birth year (a year, 13+), email read-only. Backend (b_attic `14982e0`): optional `pronouns`, `gender`, `birthYear` columns on `User` (additive migration applied to production),
   `GET/PUT /api/bluum/profile`. Bloom's prompt gets the person's name (and pronouns); age and gender are not put in the prompt.
 - DNS: `api.unknwnfreq.xyz` failed on public resolvers while Spaceship's own servers answered: the registry has a DNSSEC DS record but no matching DNSKEY is served. Fix at Spaceship: turn DNSSEC off or re-enable it properly.
+
+## Design system pass (2026-10-22, night)
+
+- Shared pieces in `src/ui`: `brand` and `sessionAccents` colours (pink `#FF7DAF`, ink, greys; one colour per session kind), `Text` `medium` weight and an `overline` variant, `PressScale` (one press feel), `Overline`, `LabeledValue`,
+  `Pill`, `ScreenHeader` (back on the left, nothing in the top right where the Expo Go dev button floats), `AccentCard`; `src/components/MomentCard` used by My moments and History.
+  New screens use only these; the earlier ones I touched were moved onto them (voice, About you, My moments, History, Research, Settings, Progress, Assessments, Games hub and pregame, Lessons).
+- Settings (`account.tsx`) is a normal card screen, not a modal: pushing Profile and Assessments from a modal did nothing. It now links About you, My moments, Progress, Assessments, Research, Debug, Sign out.
+- Lessons were empty because the server sends `null` for metadata a lesson lacks (`durationSec`), which failed the app's schema; the schema now accepts nulls (test added). The three lessons exist in the blob store.
+- History is now the person's kept moments (from voice sessions), not the old quick-capture list. Quick capture is removed. Home: "Talk to Bluum" and a new simple Check in screen (the old Reflect screen and its mood picker are no longer linked).
+- Games: the exit button moved to the top left (the Expo Go dev button covers the top right in development).
+- Orb: pink, ink and grey; arriving core with slow pink ripples; thinking comet; star spokes while speaking and listening.
