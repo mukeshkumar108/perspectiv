@@ -20,7 +20,7 @@ export function formatDay(iso: string): string {
 }
 
 /** One kept moment. Used wherever a person's cards appear (My moments, History) so they always look the same. */
-export function MomentCard({ card, createdAt }: { card: VoiceCard | null | undefined; createdAt: string }) {
+export function MomentCard({ card, createdAt, showDate = true }: { card: VoiceCard | null | undefined; createdAt: string; showDate?: boolean }) {
   const theme = useTheme();
   const kind = KIND[card?.kind ?? 'moment'] ?? KIND.moment;
   return (
@@ -28,9 +28,15 @@ export function MomentCard({ card, createdAt }: { card: VoiceCard | null | undef
       <View style={styles.meta}>
         <View style={[styles.dot, { backgroundColor: kind.accent.base }]} />
         <Overline color={theme.textSecondary}>{kind.label}</Overline>
-        <Text variant="caption" color={theme.textTertiary} style={styles.date}>
-          {formatDay(createdAt)}
-        </Text>
+        {showDate ? (
+          <Text variant="caption" color={theme.textTertiary} style={styles.date}>
+            {formatDay(createdAt)}
+          </Text>
+        ) : (
+          <Text variant="caption" color={theme.textTertiary} style={styles.date}>
+            {new Date(createdAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+          </Text>
+        )}
       </View>
       {card?.headline ? (
         <Text variant="title" style={styles.headline}>

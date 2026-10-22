@@ -38,14 +38,15 @@ export function AccentCard({ title, subtitle, accent, icon, onPress, disabled }:
           </Text>
         ) : null}
       </View>
-      <ArrowRight size={18} color={theme.text} strokeWidth={1.8} />
+      <ArrowRight size={18} color={theme.text} strokeWidth={1.8} style={styles.arrow} />
     </PressScale>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.xl, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
-  disc: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  text: { flex: 1 },
-  sub: { marginTop: 2 },
+  card: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, borderRadius: radius.xl, padding: spacing.md + 2 },
+  disc: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  text: { flex: 1, paddingTop: 1 },
+  sub: { marginTop: 3 },
+  arrow: { marginTop: 11 },
 });

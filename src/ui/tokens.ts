@@ -23,18 +23,18 @@ export const radius = {
 
 export const typography = {
   hero: {
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 34,
+    lineHeight: 40,
     fontWeight: '600' as const,
   },
   title: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 25,
+    lineHeight: 31,
     fontWeight: '600' as const,
   },
   body: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 25,
     fontWeight: '200' as const,
   },
   bodyMedium: {
@@ -44,11 +44,11 @@ export const typography = {
   },
   small: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     fontWeight: '400' as const,
   },
   caption: {
-    fontSize: 13,
+    fontSize: 12.5,
     lineHeight: 18,
     fontWeight: '400' as const,
   },

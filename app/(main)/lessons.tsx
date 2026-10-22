@@ -1,9 +1,9 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Headphones } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AccentCard, Overline, PressScale, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
+import { Overline, PressScale, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
+import { LessonCard } from '@/src/components/LessonCard';
 import { useTheme } from '@/src/ui/useTheme';
 import { useLessons } from '@/src/hooks';
 import { getLessonRouteId, sortLessons } from '@/src/lessons/model';
@@ -56,14 +56,14 @@ export default function LessonsScreen() {
             <Overline>{`${lessons.length} lessons`}</Overline>
             {lessons.map((item, index) => {
               const routeId = getLessonRouteId(item, index);
-              const minutes = typeof item.durationSec === 'number' ? `${Math.max(1, Math.round(item.durationSec / 60))} min` : null;
               return (
-                <AccentCard
+                <LessonCard
                   key={`${routeId}-${index}`}
+                  index={index}
                   title={item.title}
-                  subtitle={[item.description, minutes].filter(Boolean).join('\n')}
+                  description={item.description}
+                  minutes={typeof item.durationSec === 'number' ? Math.max(1, Math.round(item.durationSec / 60)) : null}
                   accent={ACCENTS[index % ACCENTS.length]}
-                  icon={<Headphones size={20} color={theme.text} strokeWidth={1.8} />}
                   onPress={() => router.push({ pathname: '/(main)/lesson/[id]' as any, params: { id: routeId } })}
                 />
               );

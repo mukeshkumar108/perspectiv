@@ -228,9 +228,7 @@ const styles = StyleSheet.create({
   greetingContainer: {
     marginBottom: spacing.md,
   },
-  headline: {
-    lineHeight: 34,
-  },
+  headline: {},
   greetingSecondary: {
     marginTop: spacing.sm,
   },
