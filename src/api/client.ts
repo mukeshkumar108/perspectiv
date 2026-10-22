@@ -15,6 +15,8 @@ import {
   VoiceConnectRequestSchema,
   VoiceConnectResponseSchema,
   VoiceLibraryResponseSchema,
+  ProfileResponseSchema,
+  ProfileUpdateSchema,
   VoiceResearchResponseSchema,
   VoiceRateRequestSchema,
   VoiceEndRequestSchema,
@@ -37,6 +39,8 @@ import {
   type VoiceConnectRequest,
   type VoiceConnectResponse,
   type VoiceLibraryResponse,
+  type ProfileResponse,
+  type ProfileUpdate,
   type VoiceResearchResponse,
   type VoiceRateRequest,
   type VoiceEndRequest,
@@ -498,6 +502,18 @@ export const api = {
       },
       VoiceConnectResponseSchema,
     );
+  },
+
+  /**
+   * What the person has shared about themselves (name, pronouns, gender, birth year; email is read-only)
+   */
+  getProfile(): Promise<ProfileResponse> {
+    return request("/api/bluum/profile", { method: "GET" }, ProfileResponseSchema);
+  },
+
+  updateProfile(data: ProfileUpdate): Promise<ProfileResponse> {
+    ProfileUpdateSchema.parse(data);
+    return request("/api/bluum/profile", { method: "PUT", body: JSON.stringify(data) }, ProfileResponseSchema);
   },
 
   /**

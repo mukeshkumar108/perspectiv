@@ -19,6 +19,13 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="you"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="library"
         options={{
           presentation: 'card',

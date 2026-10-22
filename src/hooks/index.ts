@@ -7,3 +7,4 @@ export * from './useMoments';
 export * from './useLessons';
 export * from './useVoiceConnect';
 export * from './useVoiceReports';
+export * from './useProfile';

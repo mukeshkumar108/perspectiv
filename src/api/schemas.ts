@@ -232,6 +232,24 @@ export const VoiceRateRequestSchema = z.object({
 });
 export type VoiceRateRequest = z.infer<typeof VoiceRateRequestSchema>;
 
+export const ProfileSchema = z.object({
+  displayName: z.string().nullish(),
+  email: z.string().nullish(),
+  pronouns: z.string().nullish(),
+  gender: z.string().nullish(),
+  birthYear: z.number().nullish(),
+});
+export type Profile = z.infer<typeof ProfileSchema>;
+export const ProfileResponseSchema = z.object({ profile: ProfileSchema });
+export type ProfileResponse = z.infer<typeof ProfileResponseSchema>;
+export const ProfileUpdateSchema = z.object({
+  displayName: z.string().trim().min(1).max(50).optional(),
+  pronouns: z.string().max(30).nullable().optional(),
+  gender: z.string().max(40).nullable().optional(),
+  birthYear: z.number().int().nullable().optional(),
+});
+export type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>;
+
 export const VoiceInputModeSchema = z.enum(['voice', 'text', 'choice']);
 export type VoiceInputMode = z.infer<typeof VoiceInputModeSchema>;
 export const VoiceInputTypeSchema = z.enum(['audio', 'text', 'choice']);

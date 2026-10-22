@@ -198,3 +198,12 @@ A bad token is refused with 403.
   moment); the app labels them in "My moments". Invented memory refs from the model are dropped.
 - App: five buttons (Morning, Drop-in, Evening reflection, Ten things about you, Welcome). The buttons are the test override: pick any session at any time.
 - voice-runtime `905bd91`; Runtime hedge `VOICE_HEDGE_S=2.5` live. Not yet checked in a real session: how well she follows the closing rules and the new flows.
+
+## Orb, About you, profile (2026-10-22, night)
+
+- `src/components/VoiceOrb.tsx` (new, used by the voice screen; the old `VoiceOrbVisualizer` is untouched): a small calm core with a faint ring at rest; a quiet orbit of three dots while she thinks;
+  dots gather inward along a 12-spoke star while you speak; dots stream outward, shrinking and fading, while she speaks, reacting to level. Connecting now shows the small resting state.
+- Voice screen: session picker is tappable cards; calmer status label; "End session" pill; first-run "What should we call you?" card when no name is set; "About you" link.
+- `app/(main)/you.tsx`: name, pronouns, gender, birth year (a year, 13+), email read-only. Backend (b_attic `14982e0`): optional `pronouns`, `gender`, `birthYear` columns on `User` (additive migration applied to production),
+  `GET/PUT /api/bluum/profile`. Bloom's prompt gets the person's name (and pronouns); age and gender are not put in the prompt.
+- DNS: `api.unknwnfreq.xyz` failed on public resolvers while Spaceship's own servers answered: the registry has a DNSSEC DS record but no matching DNSKEY is served. Fix at Spaceship: turn DNSSEC off or re-enable it properly.

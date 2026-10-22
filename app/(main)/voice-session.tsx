@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight } from 'lucide-react-native';
 
 import { ScreenContainer, Text, Button, Card, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
-import { VoiceOrbVisualizer } from '@/src/components/VoiceOrbVisualizer';
-import { useVoiceConnect } from '@/src/hooks';
+import { VoiceOrb } from '@/src/components/VoiceOrb';
+import { useProfile, useVoiceConnect } from '@/src/hooks';
 import type { VoiceConnectFlow } from '@/src/api';
 import type { VoiceOrbState } from '@/src/voice/sessionLogic';
 import { VoicePlaybackHost, type PlaybackHandle } from '@/src/voice/stream/PlaybackHost';
@@ -33,7 +33,7 @@ const STATUS_LABEL: Record<StreamingVoiceStatus, string> = {
 
 const ORB_STATE: Record<StreamingVoiceStatus, VoiceOrbState> = {
   idle: 'idle',
-  connecting: 'thinking',
+  connecting: 'idle',
   listening: 'listening',
   thinking: 'thinking',
   speaking: 'speaking',
@@ -53,6 +53,8 @@ export default function VoiceSessionScreen() {
   const router = useRouter();
   const playbackRef = useRef<PlaybackHandle>(null);
   const connect = useVoiceConnect();
+  const profile = useProfile();
+  const needsName = profile.isSuccess && !profile.data.profile.displayName?.trim();
   const voice = useStreamingVoice(playbackRef);
 
   const live = voice.status !== 'idle' && voice.status !== 'error';
@@ -106,7 +108,13 @@ export default function VoiceSessionScreen() {
                 {showText ? 'Hide text' : 'Show text'}
               </Text>
             </Pressable>
-          ) : null}
+          ) : (
+            <Pressable onPress={() => router.push('/(main)/you' as any)} hitSlop={12} accessibilityLabel="About you">
+              <Text variant="small" color={theme.textSecondary}>
+                About you
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -120,8 +128,25 @@ export default function VoiceSessionScreen() {
 
       {!live ? (
         <ScrollView contentContainerStyle={styles.flowPicker} showsVerticalScrollIndicator={false}>
-          <Text variant="small" color={theme.textSecondary}>
-            Ringer on and volume up, so you can hear her.
+          {needsName ? (
+            <Pressable
+              onPress={() => router.push('/(main)/you' as any)}
+              accessibilityRole="button"
+              style={[styles.nameCard, { backgroundColor: theme.text }]}
+            >
+              <Text variant="bodyMedium" color={theme.background}>
+                What should we call you?
+              </Text>
+              <Text variant="small" color={theme.background} style={styles.nameCardSub}>
+                A name helps. Tell Bluum a bit about you.
+              </Text>
+            </Pressable>
+          ) : null}
+          <Text variant="hero" style={styles.pickTitle}>
+            Talk to Bluum
+          </Text>
+          <Text variant="body" color={theme.textTertiary} style={styles.pickSub}>
+            Pick a session. Ringer on and volume up, so you can hear her.
           </Text>
           <Button title="Test sound" variant="ghost" onPress={() => void voice.testSound()} />
           <View style={styles.linkRow}>
@@ -129,30 +154,35 @@ export default function VoiceSessionScreen() {
             <Button title="Session research" variant="ghost" onPress={() => router.push('/(main)/research' as any)} />
           </View>
           {FLOW_OPTIONS.map((option) => (
-            <Card key={option.id} style={[styles.flowCard, { borderColor: theme.border, borderWidth: 1 }]}>
-              <Text variant="bodyMedium">{option.title}</Text>
-              <Text variant="small" color={theme.textSecondary} style={styles.flowSubtitle}>
-                {option.subtitle}
-              </Text>
-              <View style={styles.flowAction}>
-                <Button
-                  title="Start"
-                  variant="secondary"
-                  onPress={() => void begin(option.id)}
-                  disabled={connect.isPending}
-                />
+            <Pressable
+              key={option.id}
+              onPress={() => void begin(option.id)}
+              disabled={connect.isPending}
+              accessibilityRole="button"
+              accessibilityLabel={`Start ${option.title}`}
+              style={({ pressed }) => [
+                styles.flowCard,
+                { backgroundColor: theme.surface, borderColor: theme.border, opacity: pressed || connect.isPending ? 0.7 : 1 },
+              ]}
+            >
+              <View style={styles.flowText}>
+                <Text variant="bodyMedium">{option.title}</Text>
+                <Text variant="small" color={theme.textTertiary} style={styles.flowSubtitle}>
+                  {option.subtitle}
+                </Text>
               </View>
-            </Card>
+              <ArrowRight size={18} color={theme.textTertiary} strokeWidth={1.8} />
+            </Pressable>
           ))}
         </ScrollView>
       ) : (
         <View style={styles.live}>
           <Pressable style={styles.orbWrap} onPress={voice.interrupt} accessibilityLabel="Orb">
-            <VoiceOrbVisualizer state={ORB_STATE[voice.status]} levelRef={voice.levelRef} />
+            <VoiceOrb state={ORB_STATE[voice.status]} levelRef={voice.levelRef} />
           </Pressable>
           <View style={styles.statusSlot}>
-            <Text variant="bodyMedium" style={styles.statusLabel}>
-              {STATUS_LABEL[voice.status]}
+            <Text variant="small" color={theme.textTertiary} style={styles.statusLabel}>
+              {STATUS_LABEL[voice.status].toUpperCase()}
             </Text>
           </View>
           {showText ? (
@@ -169,7 +199,11 @@ export default function VoiceSessionScreen() {
               ) : null}
             </ScrollView>
           ) : null}
-          <Button title="End" variant="ghost" onPress={voice.stop} />
+          <Pressable onPress={voice.stop} accessibilityRole="button" style={[styles.endPill, { borderColor: theme.border }]}>
+            <Text variant="small" color={theme.textSecondary}>
+              End session
+            </Text>
+          </Pressable>
         </View>
       )}
     </ScreenContainer>
@@ -189,14 +223,28 @@ const styles = StyleSheet.create({
   errorCard: { marginBottom: spacing.md },
   linkRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   flowPicker: { gap: spacing.sm, paddingBottom: spacing.lg },
-  flowCard: {},
+  flowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 20,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  flowText: { flex: 1 },
+  pickTitle: { marginTop: spacing.sm },
+  nameCard: { borderRadius: 20, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, gap: 2 },
+  nameCardSub: { opacity: 0.75 },
+  pickSub: { marginBottom: spacing.sm },
+  endPill: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 999, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   flowSubtitle: { marginTop: spacing.xs },
   flowAction: { marginTop: spacing.sm, alignItems: 'flex-start' },
   live: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.lg },
   orbWrap: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   // A fixed slot, so the label changing never moves anything else.
   statusSlot: { height: 36, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
-  statusLabel: { textAlign: 'center' },
+  statusLabel: { textAlign: 'center', letterSpacing: 2.4 },
   transcript: { alignSelf: 'stretch', height: 150, marginBottom: spacing.sm },
   transcriptContent: { gap: spacing.xs, paddingHorizontal: spacing.md },
   line: { textAlign: 'center' },
