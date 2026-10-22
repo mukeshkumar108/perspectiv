@@ -23,13 +23,13 @@ export const radius = {
 
 export const typography = {
   hero: {
-    fontSize: 34,
+    fontSize: 32,
     lineHeight: 40,
     fontWeight: '600' as const,
   },
   title: {
-    fontSize: 25,
-    lineHeight: 31,
+    fontSize: 23,
+    lineHeight: 30,
     fontWeight: '600' as const,
   },
   body: {
@@ -143,3 +143,10 @@ export type Colors = {
   success: string;
   successLight: string;
 };
+
+/** A pale wash for the page that follows the time of day: yellow in the morning, blue by day, pink in the evening. */
+export const daypartTint = {
+  morning: '#FFF7D6',
+  day: '#E6F1FF',
+  evening: '#FFE9F1',
+} as const;

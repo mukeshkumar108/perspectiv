@@ -3,10 +3,11 @@ import { useAuthReady } from '../auth';
 import { api, type ApiError } from '../api';
 import type { ProfileResponse, ProfileUpdate } from '../api/schemas';
 import { queryKeys } from '../state';
+import { useCachedQuery } from '../storage';
 
 export function useProfile() {
   const authReady = useAuthReady();
-  return useQuery<ProfileResponse>({
+  return useCachedQuery<ProfileResponse>('profile', {
     queryKey: queryKeys.profile,
     queryFn: () => api.getProfile(),
     enabled: authReady,

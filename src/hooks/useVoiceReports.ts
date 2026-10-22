@@ -3,10 +3,11 @@ import { useAuthReady } from '../auth';
 import { api, type ApiError } from '../api';
 import type { VoiceLibraryResponse, VoiceRateRequest, VoiceResearchResponse } from '../api/schemas';
 import { queryKeys } from '../state';
+import { useCachedQuery } from '../storage';
 
 export function useVoiceLibrary() {
   const authReady = useAuthReady();
-  return useQuery<VoiceLibraryResponse>({
+  return useCachedQuery<VoiceLibraryResponse>('voiceLibrary', {
     queryKey: queryKeys.voiceLibrary,
     queryFn: () => api.getVoiceLibrary(),
     enabled: authReady,

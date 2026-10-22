@@ -7,3 +7,6 @@ export { MomentCard } from './MomentCard';
 export { LessonCard } from './LessonCard';
 export { WeekStrip } from './WeekStrip';
 export { AudioPlayerScreen } from './AudioPlayerScreen';
+export { LiveVoiceView } from './LiveVoiceView';
+export { BluumTabBar } from './BluumTabBar';
+export { BluumMark } from './BluumMark';

@@ -1,249 +1,128 @@
-import { useMemo, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  Image,
-} from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/js-tabs';
-import homeHeadlines from '@/src/content/homeHeadlines.json';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import { Settings } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Flame } from 'lucide-react-native';
 
-import { ScreenContainer, Text, Button, spacing } from '@/src/ui';
+import { Overline, PressScale, PrimaryButton, ScreenContainer, Text, brand, daypartTint, sessionAccents, spacing } from '@/src/ui';
 import { motion } from '@/src/ui/motion';
 import { useTheme } from '@/src/ui/useTheme';
-import { StreakBadge, Character } from '@/src/components';
-import { useToday, useStreaks } from '@/src/hooks';
+import { BluumMark } from '@/src/components/BluumMark';
+import { VoiceOrb } from '@/src/components/VoiceOrb';
+import { WeekStrip } from '@/src/components/WeekStrip';
+import { useDayPlan, useNeedsOnboarding, useNudge, useVoiceLibrary } from '@/src/hooks';
+import type { SessionKind } from '@/src/ui/tokens';
 
-let hasPlayedHomeCharacterIntro = false;
+const FLOW_ACCENT: Record<string, SessionKind> = { onboarding: 'onboarding', morning: 'morning', daytime: 'daytime', evening: 'evening' };
 
-function formatDateLabel(): string {
-  const now = new Date();
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  const day = dayNames[now.getDay()];
-  const date = now.getDate();
-  const month = monthNames[now.getMonth()];
-  return `${day} · ${date} ${month}`;
-}
-
-function formatDateKey(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function pickDailyHeadline(headlines: string[]): string {
-  if (headlines.length === 0) return 'Today';
-  const dateKey = formatDateKey();
-  let hash = 0;
-  for (let i = 0; i < dateKey.length; i += 1) {
-    hash = (hash * 31 + dateKey.charCodeAt(i)) >>> 0;
-  }
-  const index = hash % headlines.length;
-  return headlines[index];
-}
-
-export default function HomeScreen() {
-  const router = useRouter();
+export default function TodayScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
-  const introTranslateY = useSharedValue(8);
+  const { plan, greeting, streak } = useDayPlan();
+  const { data: library } = useVoiceLibrary();
+  const accent = sessionAccents[FLOW_ACCENT[plan.flow] ?? 'daytime'];
+  const keptDates = (library?.items ?? []).map((i) => new Date(i.createdAt));
 
-  const {
-    data: todayData,
-  } = useToday();
-  const {
-    data: streaksData,
-  } = useStreaks();
+  const { nudge, dismiss } = useNudge(library?.items.length ?? 0);
+  const needsOnboarding = useNeedsOnboarding();
+  useEffect(() => {
+    if (needsOnboarding) router.replace('/(main)/onboarding' as any);
+  }, [needsOnboarding, router]);
 
-  const dateLabel = useMemo(() => formatDateLabel(), []);
-  const today = (todayData ?? {}) as any;
-
-  const dailyHeadline = useMemo(() => {
-    const items = homeHeadlines.headlines.map((item) => item.text);
-    return pickDailyHeadline(items);
-  }, []);
-
-  const handleCheckIn = () => {
-    router.push('/(main)/checkin' as any);
-  };
-
-  const handleVoiceSession = () => {
-    router.push('/(main)/voice-session' as any);
-  };
-
-  const runCharacterIntro = useCallback(() => {
-    if (hasPlayedHomeCharacterIntro) {
-      introTranslateY.value = 8;
-      return;
-    }
-    hasPlayedHomeCharacterIntro = true;
-    introTranslateY.value = 42;
-    introTranslateY.value = withSequence(
-      withTiming(-4, {
-        duration: 360,
-        easing: Easing.out(Easing.cubic),
-      }),
-      withTiming(8, {
-        duration: 520,
-        easing: Easing.out(Easing.exp),
-      })
-    );
-  }, [introTranslateY]);
-
-  useFocusEffect(
-    useCallback(
-      () => {
-        runCharacterIntro();
-        return undefined;
-      },
-      [runCharacterIntro]
-    )
-  );
-
-  const characterIntroStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: introTranslateY.value },
-    ],
-  }));
+  const talk = () => router.push('/(main)/talk' as any);
 
   return (
-    <ScreenContainer padded={false} safeBottom={false}>
-      <View style={styles.root}>
-        <View style={styles.content}>
-        {/* Top row: date on left, streak + settings on right */}
-        <Animated.View
-          style={styles.topRow}
-          entering={motion.itemEnter(70, 'up')}
-        >
-          <View style={styles.logoWrap}>
-            <Image
-              source={require('../../../assets/images/bluum-logo-v1.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.dateCenter}>
-            <Text variant="caption" color={theme.textTertiary}>
-              {dateLabel}
+    <ScreenContainer ambient={false} safeBottom={false} tint={daypartTint[plan.daypart]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + spacing.xxxl }]} showsVerticalScrollIndicator={false}>
+        <Animated.View entering={motion.itemEnter(40, 'up')} style={styles.top}>
+          <BluumMark size={38} />
+          <PressScale onPress={() => router.push('/(main)/(tabs)/moments' as any)} accessibilityLabel={`${streak} day streak`} style={[styles.streak, { backgroundColor: theme.surface }]}>
+            <Flame size={16} color={streak > 0 ? brand.pink : theme.textTertiary} fill={streak > 0 ? brand.pink : 'transparent'} strokeWidth={2} />
+            <Text variant="small" medium>
+              {streak}
             </Text>
-          </View>
-          <View style={styles.topRowActions}>
-            <StreakBadge count={streaksData?.currentStreak ?? 0} />
-            <Pressable
-              onPress={() => router.push('/(main)/account' as any)}
-              hitSlop={12}
-            >
-              <Settings size={20} color={theme.textTertiary} strokeWidth={1.5} />
-            </Pressable>
-          </View>
+          </PressScale>
         </Animated.View>
 
-        {/* Greeting headline */}
-        <Animated.View
-          style={styles.greetingContainer}
-          entering={motion.itemEnter(140, 'up')}
-        >
-          <Text variant="hero" style={styles.headline}>
-            {dailyHeadline}
+        <Animated.View entering={motion.itemEnter(120, 'up')} style={styles.greeting}>
+          <Text variant="hero">{greeting.headline}</Text>
+          <Text variant="body" color={theme.textSecondary}>
+            {greeting.sub}
           </Text>
         </Animated.View>
 
-        {/* Spacer to reserve room for ambient character */}
-        <View style={styles.spacer} />
+        <PressScale onPress={talk} accessibilityRole="button" accessibilityLabel="Talk to Bluum" scaleTo={0.99} style={styles.orbStage}>
+          <VoiceOrb state="idle" />
+        </PressScale>
 
-        {/* Actions */}
-        <Animated.View
-          style={styles.actions}
-          entering={motion.itemEnter(210, 'up')}
-        >
-          <Button
-            title="Talk to Bluum"
-            onPress={handleVoiceSession}
-          />
-          <Button
-            title={today.hasMood ? 'Check in again' : 'Check in'}
-            variant="secondary"
-            onPress={handleCheckIn}
-          />
+        <Animated.View entering={FadeInDown.delay(260).duration(380)} style={[styles.next, { backgroundColor: accent.soft }]}>
+          <View style={[styles.glow, { backgroundColor: accent.base }]} />
+          <Overline color={theme.textSecondary}>Next up</Overline>
+          <Text variant="title">{plan.title}</Text>
+          <Text variant="small" color={theme.textSecondary}>
+            {plan.subtitle}
+          </Text>
+          <View style={styles.cta}>
+            <PrimaryButton title="Talk to Bluum" arrow onPress={talk} />
+          </View>
+          {plan.eveningOpensAtHour ? (
+            <Text variant="caption" color={theme.textSecondary}>
+              {`Your evening reflection opens at ${plan.eveningOpensAtHour > 12 ? plan.eveningOpensAtHour - 12 : plan.eveningOpensAtHour} pm.`}
+            </Text>
+          ) : null}
         </Animated.View>
-        </View>
-        <Animated.View
-          style={[styles.characterDock, { bottom: tabBarHeight }, characterIntroStyle]}
-          pointerEvents="none"
-        >
-          <Character state="idle" sizeScale={0.665} liftScale={-0.02} visibleRatio={0.5} />
+
+        {nudge ? (
+          <Animated.View entering={FadeInDown.delay(320).duration(380)} style={[styles.nudge, { backgroundColor: theme.surface }]}>
+            <Overline>A small suggestion</Overline>
+            <Text variant="bodyMedium" medium>
+              {nudge.title}
+            </Text>
+            <Text variant="small" color={theme.textSecondary}>
+              {nudge.why}
+            </Text>
+            <View style={styles.nudgeRow}>
+              <View style={styles.nudgeMain}>
+                <PrimaryButton title={nudge.cta} variant="outline" onPress={() => router.push(nudge.route as any)} />
+              </View>
+              <PressScale onPress={() => dismiss(nudge.id)} style={styles.notNow}>
+                <Text variant="small" color={theme.textTertiary}>
+                  Not now
+                </Text>
+              </PressScale>
+            </View>
+          </Animated.View>
+        ) : null}
+
+        <Animated.View entering={FadeInDown.delay(380).duration(380)} style={[styles.week, { backgroundColor: theme.surface }]}>
+          <View style={styles.weekHead}>
+            <Overline>This week</Overline>
+            <Text variant="caption" color={theme.textTertiary}>
+              {streak > 0 ? `${streak} day${streak === 1 ? '' : 's'} in a row` : 'A fresh start'}
+            </Text>
+          </View>
+          <WeekStrip dates={keptDates} />
         </Animated.View>
-      </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingTop: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    zIndex: 2,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xxl,
-  },
-  logoWrap: {
-    marginLeft: -spacing.md,
-  },
-  logo: {
-    width: 72,
-    height: 72,
-  },
-  dateCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  topRowActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  greetingContainer: {
-    marginBottom: spacing.md,
-  },
-  headline: {},
-  greetingSecondary: {
-    marginTop: spacing.sm,
-  },
-  spacer: {
-    height: spacing.md,
-  },
-  actions: {
-    gap: spacing.sm,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
-  },
-  characterDock: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 1,
-  },
+  content: { gap: spacing.lg, paddingTop: spacing.md },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginRight: 56 },
+  streak: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: spacing.md, paddingVertical: 8 },
+  greeting: { gap: spacing.sm },
+  orbStage: { alignItems: 'center', justifyContent: 'center', marginVertical: -spacing.md },
+  next: { borderRadius: 32, padding: spacing.lg, gap: spacing.sm, overflow: 'hidden' },
+  glow: { position: 'absolute', width: 200, height: 200, borderRadius: 100, right: -70, top: -90, opacity: 0.4 },
+  cta: { marginTop: spacing.md },
+  nudge: { borderRadius: 28, padding: spacing.lg, gap: spacing.sm },
+  nudgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  nudgeMain: { flex: 1 },
+  notNow: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  week: { borderRadius: 28, padding: spacing.lg, gap: spacing.md },
+  weekHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

@@ -11,6 +11,8 @@ interface ScreenContainerProps extends ViewProps {
   refreshControl?: ScrollViewProps['refreshControl'];
   ambient?: boolean;
   ambientIntensity?: number;
+  /** Replaces the page background, e.g. the pale wash that follows the time of day. */
+  tint?: string;
 }
 
 export function ScreenContainer({
@@ -21,6 +23,7 @@ export function ScreenContainer({
   refreshControl,
   ambient = false,
   ambientIntensity = 1,
+  tint,
   style,
   children,
   ...props
@@ -41,7 +44,7 @@ export function ScreenContainer({
 
   if (scroll) {
     return (
-      <View style={[styles.base, { backgroundColor: theme.background }]}>
+      <View style={[styles.base, { backgroundColor: tint ?? theme.background }]}>
         <ScrollView
           style={styles.base}
           contentContainerStyle={[containerStyle, { flexGrow: 1 }]}
@@ -57,7 +60,7 @@ export function ScreenContainer({
   }
 
   return (
-    <View style={[styles.base, { backgroundColor: theme.background }]}>
+    <View style={[styles.base, { backgroundColor: tint ?? theme.background }]}>
       <View style={containerStyle} {...props}>
         {children}
       </View>

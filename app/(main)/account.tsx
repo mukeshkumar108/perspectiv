@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import { Activity, BarChart3, Bug, FlaskConical, Heart, LogOut, UserRound } from 'lucide-react-native';
+import { Activity, BarChart3, Bug, FlaskConical, Heart, LogOut, TestTube2, UserRound } from 'lucide-react-native';
 
 import { AccentCard, Overline, PressScale, ScreenContainer, ScreenHeader, Text, brand, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
@@ -39,6 +39,7 @@ export default function SettingsScreen() {
 
         <View style={styles.group}>
           <Overline>Behind the scenes</Overline>
+          <AccentCard title="Lab" subtitle="Start any session, at any time." accent={sessionAccents.morning} icon={<TestTube2 color={theme.text} {...ICON} />} onPress={go('/(main)/lab/sessions')} />
           <AccentCard title="Session research" subtitle="What each session recorded." accent={sessionAccents.onboarding} icon={<FlaskConical color={theme.text} {...ICON} />} onPress={go('/(main)/research')} />
           <AccentCard title="Debug" subtitle="Connection and logs." accent={{ base: brand.greySoft, soft: theme.surface }} icon={<Bug color={theme.text} {...ICON} />} onPress={go('/(main)/debug')} />
         </View>

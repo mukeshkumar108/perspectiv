@@ -183,7 +183,9 @@ export const VoiceCardSchema = z.object({
 export type VoiceCard = z.infer<typeof VoiceCardSchema>;
 
 export const VoiceLibraryResponseSchema = z.object({
-  items: z.array(z.object({ id: z.string(), createdAt: z.string(), card: VoiceCardSchema.nullable() })),
+  items: z.array(z.object({ id: z.string(), createdAt: z.string(), card: VoiceCardSchema.nullable(), flow: z.string().nullish() })),
+  // Every recent session, with or without a card: lets the app know which of today's sessions have happened.
+  recent: z.array(z.object({ flow: z.string().nullable(), createdAt: z.string() })).default([]),
 });
 export type VoiceLibraryResponse = z.infer<typeof VoiceLibraryResponseSchema>;
 

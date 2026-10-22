@@ -8,3 +8,6 @@ export * from './useLessons';
 export * from './useVoiceConnect';
 export * from './useVoiceReports';
 export * from './useProfile';
+export * from './useDayPlan';
+export * from './useOnboardingGate';
+export * from './useNudge';

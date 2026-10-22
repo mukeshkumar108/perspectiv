@@ -2,17 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Alert, useColorScheme, View, Image } from 'react-native';
+import { Alert, useColorScheme, View } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
+  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withDelay,
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
+import { useFonts as useBitterFonts, Bitter_500Medium, Bitter_600SemiBold } from '@expo-google-fonts/bitter';
 import {
   useFonts as useInstrumentSansFonts,
   InstrumentSans_400Regular,
@@ -20,6 +22,7 @@ import {
 } from '@expo-google-fonts/instrument-sans';
 
 import { AuthProvider, useAuthReady } from '@/src/auth';
+import { BluumMark } from '@/src/components/BluumMark';
 import { setOnUnauthorized } from '@/src/api';
 import { useOutboxSync } from '@/src/storage';
 
@@ -85,6 +88,7 @@ export default function RootLayout() {
     InstrumentSans_400Regular,
     InstrumentSans_500Medium,
   });
+  const [bitterLoaded] = useBitterFonts({ Bitter_500Medium, Bitter_600SemiBold });
   const [showSplashOverlay, setShowSplashOverlay] = useState(true);
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
   const splashOpacity = useSharedValue(1);
@@ -106,7 +110,7 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
-  const fontsReady = instrumentLoaded;
+  const fontsReady = instrumentLoaded && bitterLoaded;
 
   useEffect(() => {
     if (!fontsReady || !minSplashElapsed) return;
@@ -124,11 +128,9 @@ export default function RootLayout() {
           <StatusBar style="auto" />
           {showSplashOverlay ? (
             <Animated.View style={[styles.splashOverlay, splashStyle]}>
-              <Image
-                source={require('../assets/images/bluum-logo-v1.png')}
-                style={styles.splashLogo}
-                resizeMode="contain"
-              />
+              <Animated.View entering={ZoomIn.duration(700).springify().damping(13)}>
+                <BluumMark size={170} />
+              </Animated.View>
             </Animated.View>
           ) : null}
         </ThemeProvider>
@@ -144,7 +146,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#D79637',
+    backgroundColor: '#F1F3F5',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },

@@ -12,7 +12,22 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
-        name="voice-session"
+        name="onboarding"
+        options={{
+          presentation: 'card',
+          animation: 'fade',
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="talk"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="lab/sessions"
         options={{
           presentation: 'card',
           animation: 'slide_from_right',

@@ -13,8 +13,8 @@ interface TextProps extends RNTextProps {
 }
 
 const fontFamilyByVariant: Record<TextVariant, string> = {
-  hero: 'InstrumentSans_400Regular',
-  title: 'InstrumentSans_500Medium',
+  hero: 'Bitter_500Medium',
+  title: 'Bitter_500Medium',
   body: 'InstrumentSans_400Regular',
   bodyMedium: 'InstrumentSans_400Regular',
   small: 'InstrumentSans_400Regular',
@@ -34,7 +34,7 @@ export function Text({
   const theme = useTheme();
   const variantStyle = typography[variant];
   const headingLetterSpacing =
-    variant === 'hero' ? -0.9 : variant === 'title' ? -0.55 : variant === 'overline' ? 1.4 : variant === 'bodyMedium' ? -0.15 : 0;
+    variant === 'hero' ? -0.5 : variant === 'title' ? -0.3 : variant === 'overline' ? 1.4 : variant === 'bodyMedium' ? -0.15 : 0;
 
   return (
     <RNText

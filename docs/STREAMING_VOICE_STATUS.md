@@ -229,3 +229,14 @@ A bad token is refused with 403.
 - Type scale retuned (hero 34/40, title 25/31, body 16/25); `Text` has `medium`; `PrimaryButton` is the full-width button for new screens; `Burst` and `CountUp` are shared reward pieces.
 - Welcome now leads with the orb and says Bluum; sign-in and sign-up use full-width buttons.
 - Not seen on a device. Expo Go off Wi-Fi needs `npx expo login` then `npx expo start --tunnel`.
+
+## The everyday flow, identity, onboarding (2026-10-22, night)
+
+- Front door: the tab bar is Today, Moments, a living Talk button, Explore, You (the plus menu is gone). `planSession` (src/voice/sessionPlan.ts, tested) picks the session from the person's own clock:
+  never talked -> Welcome; first session of a morning (before 12) -> Morning; from 18:00 -> Evening (once); otherwise Drop-in. `greetingFor` writes the greeting (name, time of day, streak, days away; no exclamation marks).
+- Talk (`app/(main)/talk.tsx`): greeting, orb, one button; the session is fixed when the screen opens; a warm closing screen; library and streak refresh after the report lands. The Lab (`lab/sessions.tsx`, from You > Lab) is the old session picker.
+- Today: time-of-day wash (yellow / blue / pink), greeting, orb, next up (and when the evening opens), one gentle nudge (Flash after 5 days, Cantril after 14) with a why line and Not now, week strip. Explore groups lessons, breathing, games, assessments, each with a line on what it is for.
+- First run: five steps (promise, a day with Bluum, the research and privacy stance, name, sound check) then the Welcome conversation; Today sends anyone with no name and no completed run there.
+- Identity: Bitter (500) for headlines, Instrument Sans for the rest; the Bluum mark (core plus a star of shrinking dots) is the logo, splash, icon and tab bar; the orb is the character. App icon and splash images regenerated.
+- Data: moments, lessons and profile are cached on the phone and shown at once while they refresh. Backend (b_attic `aca0105`): a spoken session that produced a card now counts for the day's streak; the library returns `flow` and `recent`.
+- Known: the streak endpoint counts back from the most recent completed day even if it was days ago (existing behaviour, pinned by tests); not changed.
