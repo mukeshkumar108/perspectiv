@@ -127,3 +127,14 @@ A bad token is refused with 403.
   fallbacks `qwen3.8-flash`. Verified in the production container: a luna request ran on qwen3.8-27b via NanoGPT at $0.
   Unset the flag to return to the old behaviour. Full Cortex suite: 884 passed.
 - The same chain idea for speech recognition (Parakeet, then Lemonfox) is not built yet.
+
+## Bloom model fix and voice features (2026-10-22)
+
+- MiniMax-m3 was never actually used: it was missing from the Runtime's NanoGPT model ids (`NANOGPT_MODEL_IDS`), so the pinned-provider
+  check rejected it every turn and Bloom fell through to DeepSeek. Fixed (companion-runtime `main` @ `0d0f148`); live turns now run
+  `minimax/minimax-m3` on NanoGPT at 1.2-2.1 s. A test now fails if any model in Bloom's chain cannot route to NanoGPT.
+- Voice features (voice-runtime `consumer-cutover` @ `d38cc6d`, `VOICE_FEATURES_ENABLED=true` on the VPS): each user utterance is measured
+  (pitch, loudness, pauses, speaking rate, jitter, shimmer, HNR; Praat via `parselmouth`) in a separate low-priority subprocess; at most 4
+  queued, extras are skipped; no audio is stored; any failure drops the measurement silently. Bloom calls log one `voice-features {...}` JSON
+  line at session end. Same scripted calls with the worker on and off showed the same latency spread (brain 1.2-2.1 s; the spread is the Lemonfox
+  default voice in the test script). Not yet stored anywhere but the server log; no per-person baseline yet.
