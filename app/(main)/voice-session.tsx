@@ -123,6 +123,10 @@ export default function VoiceSessionScreen() {
             Ringer on and volume up, so you can hear her.
           </Text>
           <Button title="Test sound" variant="ghost" onPress={() => void voice.testSound()} />
+          <View style={styles.linkRow}>
+            <Button title="What I was grateful for" variant="ghost" onPress={() => router.push('/(main)/library' as any)} />
+            <Button title="Session research" variant="ghost" onPress={() => router.push('/(main)/research' as any)} />
+          </View>
           {FLOW_OPTIONS.map((option) => (
             <Card key={option.id} style={[styles.flowCard, { borderColor: theme.border, borderWidth: 1 }]}>
               <Text variant="bodyMedium">{option.title}</Text>
@@ -182,6 +186,7 @@ const styles = StyleSheet.create({
   },
   headerAction: { minWidth: 76, alignItems: 'flex-end' },
   errorCard: { marginBottom: spacing.md },
+  linkRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   flowPicker: { gap: spacing.sm, paddingBottom: spacing.lg },
   flowCard: {},
   flowSubtitle: { marginTop: spacing.xs },

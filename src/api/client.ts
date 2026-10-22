@@ -14,6 +14,9 @@ import {
   TodayResponseSchema,
   VoiceConnectRequestSchema,
   VoiceConnectResponseSchema,
+  VoiceLibraryResponseSchema,
+  VoiceResearchResponseSchema,
+  VoiceRateRequestSchema,
   VoiceEndRequestSchema,
   VoiceEndResponseSchema,
   VoiceStartRequestSchema,
@@ -33,6 +36,9 @@ import {
   type TodayResponse,
   type VoiceConnectRequest,
   type VoiceConnectResponse,
+  type VoiceLibraryResponse,
+  type VoiceResearchResponse,
+  type VoiceRateRequest,
   type VoiceEndRequest,
   type VoiceEndResponse,
   type VoiceStartRequest,
@@ -491,6 +497,32 @@ export const api = {
         body: JSON.stringify(data),
       },
       VoiceConnectResponseSchema,
+    );
+  },
+
+  /**
+   * The person's gratitude cards from finished voice sessions
+   */
+  getVoiceLibrary(): Promise<VoiceLibraryResponse> {
+    return request("/api/bluum/voice/library", { method: "GET" }, VoiceLibraryResponseSchema);
+  },
+
+  /**
+   * Session reports and what we remember, for the research view
+   */
+  getVoiceResearch(): Promise<VoiceResearchResponse> {
+    return request("/api/bluum/voice/research", { method: "GET" }, VoiceResearchResponseSchema);
+  },
+
+  /**
+   * Mark one remembered item right or wrong
+   */
+  rateVoiceMemory(data: VoiceRateRequest): Promise<{ ok: boolean }> {
+    VoiceRateRequestSchema.parse(data);
+    return request(
+      "/api/bluum/voice/rate",
+      { method: "POST", body: JSON.stringify(data) },
+      z.object({ ok: z.boolean() }),
     );
   },
 

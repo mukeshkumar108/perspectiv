@@ -19,6 +19,20 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="library"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="research"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="capture"
         options={{
           presentation: 'transparentModal',

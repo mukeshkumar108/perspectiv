@@ -33,4 +33,6 @@ export const queryKeys = {
   me: ['me'] as const,
   moments: ['moments'] as const,
   lessons: ['lessons'] as const,
+  voiceLibrary: ['voiceLibrary'] as const,
+  voiceResearch: ['voiceResearch'] as const,
 };

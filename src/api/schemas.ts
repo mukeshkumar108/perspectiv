@@ -167,6 +167,66 @@ export const VoiceConnectResponseSchema = z.object({
 });
 export type VoiceConnectResponse = z.infer<typeof VoiceConnectResponseSchema>;
 
+// Session reports (gratitude library + research view). Loose on purpose: the profile and voice numbers are hypotheses we are still shaping.
+export const VoiceCardSchema = z.object({
+  headline: z.string().nullish(),
+  moment: z.string().nullish(),
+  theme: z.string().nullish(),
+  tags: z.array(z.string()).nullish(),
+});
+export type VoiceCard = z.infer<typeof VoiceCardSchema>;
+
+export const VoiceLibraryResponseSchema = z.object({
+  items: z.array(z.object({ id: z.string(), createdAt: z.string(), card: VoiceCardSchema.nullable() })),
+});
+export type VoiceLibraryResponse = z.infer<typeof VoiceLibraryResponseSchema>;
+
+export const MemoryItemSchema = z
+  .object({
+    id: z.string(),
+    basis: z.string().nullish(),
+    correct: z.boolean().nullish(),
+    sensitivity: z.string().nullish(),
+  })
+  .passthrough();
+export type MemoryItem = z.infer<typeof MemoryItemSchema>;
+
+export const VoiceResearchResponseSchema = z.object({
+  reports: z.array(
+    z.object({
+      id: z.string(),
+      createdAt: z.string(),
+      flow: z.string().nullish(),
+      durationSeconds: z.number().nullish(),
+      card: VoiceCardSchema.nullish(),
+      profile: z.record(z.string(), z.unknown()).nullish(),
+      voiceFeatures: z.record(z.string(), z.unknown()).nullish(),
+      memoryUpdates: z
+        .array(z.object({ id: z.string(), kind: z.string(), action: z.string(), basis: z.string().nullish(), correct: z.boolean().nullish() }))
+        .nullish(),
+      costUsd: z.number().nullish(),
+      models: z.record(z.string(), z.unknown()).nullish(),
+      promptVersion: z.string().nullish(),
+      ruleVersion: z.string().nullish(),
+    }),
+  ),
+  memory: z.object({
+    people: z.array(MemoryItemSchema),
+    themes: z.array(MemoryItemSchema),
+    facts: z.array(MemoryItemSchema),
+    openThreads: z.array(MemoryItemSchema),
+    style: z.object({ notes: z.array(z.string()) }).passthrough(),
+  }),
+});
+export type VoiceResearchResponse = z.infer<typeof VoiceResearchResponseSchema>;
+
+export const VoiceRateRequestSchema = z.object({
+  id: z.string(),
+  correct: z.boolean().nullable(),
+  reportId: z.string().optional(),
+});
+export type VoiceRateRequest = z.infer<typeof VoiceRateRequestSchema>;
+
 export const VoiceInputModeSchema = z.enum(['voice', 'text', 'choice']);
 export type VoiceInputMode = z.infer<typeof VoiceInputModeSchema>;
 export const VoiceInputTypeSchema = z.enum(['audio', 'text', 'choice']);

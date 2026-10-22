@@ -151,3 +151,15 @@ A bad token is refused with 403.
   transcript gave `meaning_signal: high` with brief wording, the intended behaviour.
 - Not built yet: the app's gratitude library and research ("last session") screens, adaptive v0 (injecting due threads and a style note into the next
   session's prompt), the accuracy-rating tap, baselines.
+
+## Library, research view and adaptive v0 (2026-10-22)
+
+- b_attic (`main` @ `1211b7a`): the voice context now appends a "what you know about them" block to Bloom's prompt (known nominal people, due
+  non-sensitive threads, style notes, plus rules `relational_pivot`, `short_answers_ok`, `lighter_touch`; version `rules-v0`, in
+  `src/lib/voice/directive.ts`). A thread surfaced at session start is marked `followed_up` so it is offered once. The report records the rule
+  version and which rules applied. Clerk-authenticated: `GET /api/bluum/voice/library`, `GET /api/bluum/voice/research`, `POST /api/bluum/voice/rate`.
+  Verified live with a throwaway user (deleted): block present, thread offered once, rule version stored.
+- App: `app/(main)/library.tsx` (cards, newest first) and `app/(main)/research.tsx` (memory + per-session card, descriptive profile, raw voice numbers,
+  memory updates with Right/Wrong taps, prompt and rule versions, cost; no transcripts). Linked from the voice session picker. Typecheck is clean apart
+  from the untracked `useLogActivity.ts`; 47 jest tests pass; `expo export` bundles.
+- `lighter_touch` compares the latest session with the person's own previous three (needs 4 reports) and is a first guess, not a validated signal.
