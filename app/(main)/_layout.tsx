@@ -160,6 +160,20 @@ export default function MainLayout() {
         }}
       />
       <Stack.Screen
+        name="games/flash"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="games/flash/play"
+        options={{
+          presentation: 'card',
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="assessments"
         options={{
           presentation: 'card',

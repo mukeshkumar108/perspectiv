@@ -13,6 +13,8 @@ type GamePregameProps = {
   howToPlay: string[];
   playPath: string;
   recentLines?: string[];
+  /** For games that are not timed, there is no length to choose. */
+  hideLength?: boolean;
 };
 
 function Block({ title, lines, numbered }: { title: string; lines: string[]; numbered?: boolean }) {
@@ -30,7 +32,7 @@ function Block({ title, lines, numbered }: { title: string; lines: string[]; num
   );
 }
 
-export function GamePregame({ title, subtitle, whyItHelps, whatItMeasures, howToPlay, playPath, recentLines }: GamePregameProps) {
+export function GamePregame({ title, subtitle, whyItHelps, whatItMeasures, howToPlay, playPath, recentLines, hideLength }: GamePregameProps) {
   const router = useRouter();
   const theme = useTheme();
   const [durationSec, setDurationSec] = useState<30 | 60>(30);
@@ -50,6 +52,7 @@ export function GamePregame({ title, subtitle, whyItHelps, whatItMeasures, howTo
           </Text>
         </View>
 
+        {hideLength ? null : (
         <View style={styles.block}>
           <Overline>Length</Overline>
           <View style={styles.row}>
@@ -57,6 +60,7 @@ export function GamePregame({ title, subtitle, whyItHelps, whatItMeasures, howTo
             <Pill label="60 seconds" active={durationSec === 60} onPress={() => setDurationSec(60)} />
           </View>
         </View>
+        )}
 
         <Button title="Start" onPress={openPlay} />
 

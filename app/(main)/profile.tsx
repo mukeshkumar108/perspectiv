@@ -7,6 +7,7 @@ import { useAssessmentResults } from '@/src/assessments/storage';
 import { useImpulsePopHistory } from '@/src/games/impulsePop/storage';
 import { useMemoryMatchHistory } from '@/src/games/memoryMatch/storage';
 import { useStroopBloomHistory } from '@/src/games/stroopBloom/storage';
+import { useFlashHistory } from '@/src/games/flash/storage';
 
 type Accent = { base: string; soft: string };
 
@@ -28,6 +29,7 @@ export default function ProgressScreen() {
   const impulse = useImpulsePopHistory(20);
   const memory = useMemoryMatchHistory(20);
   const stroop = useStroopBloomHistory(20);
+  const flash = useFlashHistory(20);
 
   const best = (items: { score: number }[]) => items.reduce((b, item) => Math.max(b, item.score), 0);
   const latest = assessments[0];
@@ -44,6 +46,7 @@ export default function ProgressScreen() {
           <LabeledValue label="Impulse Pop" value={String(best(impulse))} />
           <LabeledValue label="Memory Match" value={String(best(memory))} />
           <LabeledValue label="Stroop Bloom" value={String(best(stroop))} />
+          <LabeledValue label="Flash" value={String(best(flash))} />
         </Panel>
 
         <Panel title="Latest assessment" accent={sessionAccents.evening}>

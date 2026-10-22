@@ -15,3 +15,4 @@ export { ScreenHeader } from './ScreenHeader';
 export { AccentCard } from './AccentCard';
 export { PrimaryButton } from './PrimaryButton';
 export { Burst } from './Burst';
+export { CountUp } from './CountUp';

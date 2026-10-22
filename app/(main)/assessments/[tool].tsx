@@ -5,7 +5,7 @@ import Animated, { FadeInRight, FadeOutLeft, FadeInUp, useAnimatedStyle, useShar
 import * as Haptics from 'expo-haptics';
 import { Check } from 'lucide-react-native';
 
-import { Burst, Overline, PressScale, PrimaryButton, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
+import { Burst, CountUp, Overline, PressScale, PrimaryButton, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import {
   getAssessmentMaxScore,
@@ -25,27 +25,6 @@ function isAssessmentType(value: string): value is AssessmentType {
 
 const ACCENT = { phq9: sessionAccents.evening, gad7: sessionAccents.daytime, cantril: sessionAccents.ten_things } as const;
 const MINUTES = { phq9: 2, gad7: 1, cantril: 1 } as const;
-
-/** Counts up to a number, so a result arrives instead of just appearing. */
-function CountUp({ to }: { to: number }) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    if (to <= 0) return;
-    const steps = Math.min(24, to * 3);
-    let i = 0;
-    const id = setInterval(() => {
-      i += 1;
-      setValue(Math.round((to * i) / steps));
-      if (i >= steps) clearInterval(id);
-    }, 34);
-    return () => clearInterval(id);
-  }, [to]);
-  return (
-    <Text variant="hero" style={styles.bigScore}>
-      {value}
-    </Text>
-  );
-}
 
 function ProgressBar({ ratio, color }: { ratio: number; color: string }) {
   const theme = useTheme();
@@ -253,7 +232,7 @@ export default function AssessmentToolScreen() {
               <Burst color={accent.base} run={burst} spread={120} />
               <Overline color={theme.textSecondary}>Your result</Overline>
               <View style={styles.scoreRow}>
-                <CountUp to={score} />
+                <CountUp to={score} style={styles.bigScore} />
                 <Text variant="title" color={theme.textSecondary}>
                   {` / ${maxScore}`}
                 </Text>

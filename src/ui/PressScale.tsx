@@ -7,7 +7,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface PressScaleProps extends Omit<PressableProps, 'style' | 'children'> {
   style?: StyleProp<ViewStyle>;
-  children: ReactNode;
+  children?: ReactNode;
   /** How far it sinks when pressed. */
   scaleTo?: number;
 }

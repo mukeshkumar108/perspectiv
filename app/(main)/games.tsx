@@ -1,12 +1,13 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Brain, Palette, Zap } from 'lucide-react-native';
+import { Brain, Palette, Timer, Zap } from 'lucide-react-native';
 
 import { AccentCard, Overline, ScreenContainer, ScreenHeader, Text, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { useImpulsePopHistory } from '@/src/games/impulsePop/storage';
 import { useMemoryMatchHistory } from '@/src/games/memoryMatch/storage';
 import { useStroopBloomHistory } from '@/src/games/stroopBloom/storage';
+import { useFlashHistory } from '@/src/games/flash/storage';
 
 export default function GamesHubScreen() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function GamesHubScreen() {
   const impulse = useImpulsePopHistory(20);
   const memory = useMemoryMatchHistory(20);
   const stroop = useStroopBloomHistory(20);
+  const flash = useFlashHistory(20);
   const best = (items: { score: number }[]) => items.reduce((b, item) => Math.max(b, item.score), 0);
 
   return (
@@ -46,6 +48,13 @@ export default function GamesHubScreen() {
             accent={sessionAccents.ten_things}
             icon={<Palette size={20} color={theme.text} strokeWidth={1.8} />}
             onPress={() => router.push('/(main)/games/stroop-bloom' as any)}
+          />
+          <AccentCard
+            title="Flash"
+            subtitle={`Reaction time, eight rounds.\nBest ${best(flash)}`}
+            accent={sessionAccents.morning}
+            icon={<Timer size={20} color={theme.text} strokeWidth={1.8} />}
+            onPress={() => router.push('/(main)/games/flash' as any)}
           />
         </View>
       </ScrollView>
