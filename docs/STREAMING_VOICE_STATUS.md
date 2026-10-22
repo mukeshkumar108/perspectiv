@@ -138,3 +138,16 @@ A bad token is refused with 403.
   queued, extras are skipped; no audio is stored; any failure drops the measurement silently. Bloom calls log one `voice-features {...}` JSON
   line at session end. Same scripted calls with the worker on and off showed the same latency spread (brain 1.2-2.1 s; the spread is the Lemonfox
   default voice in the test script). Not yet stored anywhere but the server log; no per-person baseline yet.
+
+## End-of-session report and per-person memory (2026-10-22)
+
+- b_attic (`main` @ `33bbf53`, additive migration `20261022120000_voice_session_reports` applied to the production Neon DB): tables `VoiceSessionReport`
+  and `UserMemory`; `POST /api/voice/session-report` and `GET /api/voice/memory` (bearer = the call's token, honoured for 3 h after it expires so
+  long calls can still report). Memory merging (ids, counts, expiry, `notBefore`/`expiresAt`, `sensitivity`) is plain code in `src/lib/voice/memory.ts`;
+  sensitive threads are never offered proactively. Items carry a paraphrased `basis` (no quotes) and a `correct` flag for reviewers.
+- voice-runtime (`consumer-cutover` @ `b60f477`, `SESSION_REPORT_ENABLED=true`, `NANO_API_KEY` copied to its env on the VPS): when a Bloom call ends, a
+  background thread makes two NanoGPT calls (card + descriptive profile; memory delta against what we know) and posts the result. The transcript is
+  never sent to the host. Verified live with a throwaway user (since deleted): report + memory stored. Probe on a quiet "walk with Dad, we didn't say much"
+  transcript gave `meaning_signal: high` with brief wording, the intended behaviour.
+- Not built yet: the app's gratitude library and research ("last session") screens, adaptive v0 (injecting due threads and a style note into the next
+  session's prompt), the accuracy-rating tap, baselines.
