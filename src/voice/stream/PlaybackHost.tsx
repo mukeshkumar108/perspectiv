@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef, type ComponentRef } from 'react';
 import { View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
@@ -118,7 +118,7 @@ export const VoicePlaybackHost = forwardRef<PlaybackHandle, Props>(function Voic
   { onState, onLevel, onDiag, onError },
   ref,
 ) {
-  const webRef = useRef<WebView>(null);
+  const webRef = useRef<ComponentRef<typeof WebView>>(null);
   const booted = useRef(false);
   const queue = useRef<string[]>([]);
   const readyWaiters = useRef<((ok: boolean) => void)[]>([]);

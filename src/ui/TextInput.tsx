@@ -6,11 +6,11 @@ import {
 } from 'react-native';
 import { spacing, radius, typography } from './tokens';
 import { useTheme } from './useTheme';
-import type { RefObject } from 'react';
+import type { ComponentRef, RefObject } from 'react';
 
 interface TextInputProps extends RNTextInputProps {
   error?: boolean;
-  inputRef?: RefObject<RNTextInput | null>;
+  inputRef?: RefObject<ComponentRef<typeof RNTextInput> | null>;
 }
 
 const fontFamily = Platform.select({

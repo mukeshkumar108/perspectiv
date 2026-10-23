@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "perspectiv",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mk1080.perspectiv",
@@ -47,7 +46,9 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      "expo-image",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -36,7 +36,7 @@ function TalkButton({ onPress }: { onPress: () => void }) {
 }
 
 /** Today, Moments, Talk (the big one), Explore, You. Settings and the Lab live behind You. */
-export function BluumTabBar({ state, navigation }: BottomTabBarProps) {
+export function BluumTabBar({ state, navigateToTab }: BottomTabBarProps) {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -45,7 +45,7 @@ export function BluumTabBar({ state, navigation }: BottomTabBarProps) {
   const renderItem = ({ route, label, Icon }: Item) => {
     const active = activeName === route;
     return (
-      <PressScale key={route} onPress={() => navigation.navigate(route as never)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={label} style={styles.item}>
+      <PressScale key={route} onPress={() => navigateToTab(state.routes.find((r) => r.name === route)?.key ?? route)} accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={label} style={styles.item}>
         <Icon size={22} color={active ? theme.text : theme.textTertiary} strokeWidth={active ? 2 : 1.6} />
         <Text variant="caption" medium={active} color={active ? theme.text : theme.textTertiary}>
           {label}

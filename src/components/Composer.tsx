@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, type ComponentRef } from 'react';
 import {
   View,
   TextInput as RNTextInput,
@@ -47,7 +47,7 @@ export function Composer({
   maxHeight = 160,
 }: ComposerProps) {
   const theme = useTheme();
-  const inputRef = useRef<RNTextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof RNTextInput>>(null);
   const [inputHeight, setInputHeight] = useState(minHeight);
 
   const buttonScale = useSharedValue(1);
