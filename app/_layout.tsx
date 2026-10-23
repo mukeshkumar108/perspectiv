@@ -27,12 +27,14 @@ import { BluumMark } from '@/src/components/BluumMark';
 import { setOnUnauthorized } from '@/src/api';
 import { useOutboxSync } from '@/src/storage';
 import { useAccountScope } from '@/src/storage/accountScope';
+import { SCREENSHOT_MODE, useScreenshotSeed } from '@/src/dev/screenshotMode';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutNav() {
   const { isLoaded, isSignedIn, userId } = useAuth();
+  const seeded = useScreenshotSeed();
   const scopeReady = useAccountScope(!isLoaded ? undefined : isSignedIn ? (userId ?? null) : null);
   const authReady = useAuthReady();
   const segments = useSegments();
@@ -44,6 +46,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isLoaded) return;
     setAppIsReady(true);
+    if (SCREENSHOT_MODE) return;
 
     const inAuthGroup = (segments[0] as string) === '(auth)';
 
@@ -80,7 +83,7 @@ function RootLayoutNav() {
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      {scopeReady ? <Slot /> : null}
+      {scopeReady && seeded ? <Slot /> : null}
     </View>
   );
 }
