@@ -8,6 +8,9 @@ import * as Haptics from 'expo-haptics';
 import { Burst, PrimaryButton, ScreenContainer, ScreenHeader, Text, brand, sessionAccents, spacing } from '@/src/ui';
 import { useTheme } from '@/src/ui/useTheme';
 import { LiveVoiceView } from '@/src/components/LiveVoiceView';
+import { ExperienceOfferCard } from '@/src/components/ExperienceOfferCard';
+import { VoiceDemoBreathingOverlay } from '@/src/components/VoiceDemoBreathingOverlay';
+import { useExperienceOffers } from '@/src/voice/useExperienceOffers';
 import { VoiceOrb } from '@/src/components/VoiceOrb';
 import { useDayPlan } from '@/src/hooks';
 import { queryKeys } from '@/src/state';
@@ -31,6 +34,7 @@ export default function TalkScreen() {
   const queryClient = useQueryClient();
   const { plan, greeting } = useDayPlan();
   const { playbackRef, voice, begin, live, errorText, connecting } = useBeginVoice();
+  const experiences = useExperienceOffers(voice, live);
   const [finished, setFinished] = useState(false);
   const [burst, setBurst] = useState(0);
   const wasLive = useRef(false);
@@ -75,7 +79,20 @@ export default function TalkScreen() {
       />
 
       {live ? (
-        <LiveVoiceView voice={voice} />
+        <>
+          <LiveVoiceView voice={voice} />
+          {experiences.offer && !experiences.running ? (
+            <ExperienceOfferCard offer={experiences.offer} onAccept={experiences.accept} onDecline={experiences.decline} />
+          ) : null}
+          {experiences.offer ? (
+            <VoiceDemoBreathingOverlay
+              visible={experiences.running}
+              slug={experiences.offer.experienceId}
+              onComplete={({ outcome, durationSec }) => experiences.finish({ outcome, durationSec })}
+              onDismiss={() => experiences.finish({ outcome: 'EXITED', durationSec: 0 })}
+            />
+          ) : null}
+        </>
       ) : finished ? (
         <View style={styles.center}>
           <Animated.View entering={FadeIn.duration(500)} style={styles.closing}>

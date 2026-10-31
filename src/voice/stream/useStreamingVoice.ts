@@ -66,6 +66,11 @@ const log = (...args: unknown[]) => console.log('[voice]', ...args);
 export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
   const [status, setStatusState] = useState<StreamingVoiceStatus>('idle');
   const [userText, setUserText] = useState('');
+  // Counters the app watches without reading protocol details: a finished assistant reply, and a finished spoken user turn.
+  const [repliesDone, setRepliesDone] = useState(0);
+  const [userTurns, setUserTurns] = useState(0);
+  const micPausedRef = useRef(false);
+  const connectionUrlRef = useRef<string | null>(null);
   const [assistantText, setAssistantText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -133,7 +138,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
       }
       if (statusRef.current === 'listening') levelRef.current = Math.min(1, rms(samples) * 9);
       for (const chunk of chunkerRef.current.push(samples)) {
-        if (!gateRef.current.canSendMic(now)) continue;
+        if (micPausedRef.current || !gateRef.current.canSendMic(now)) continue;
         send({ type: 'input_audio_buffer.append', audio: int16ToBase64(chunk) });
       }
     },
@@ -271,6 +276,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
           break;
         case 'conversation.item.input_audio_transcription.completed':
           setUserText(typeof message.transcript === 'string' ? message.transcript : '');
+          setUserTurns((n) => n + 1);
           userTurnOpenRef.current = true;
           gate.userTurnEnded(now);
           refreshStatus();
@@ -293,6 +299,7 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
           responseOpenRef.current = false;
           userTurnOpenRef.current = false;
           cancellingRef.current = false;
+          setRepliesDone((n) => n + 1);
           gate.responseDone(now);
           // Nothing more is coming: start whatever the pre-roll buffer is still holding.
           playback.current?.drain();
@@ -355,6 +362,8 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
         const ready = await playback.current?.ensureReady();
         if (!ready) throw new Error('Audio output did not start.');
         const socket = new WebSocket(connection.url);
+        connectionUrlRef.current = connection.url;
+        micPausedRef.current = false;
         socketRef.current = socket;
         socket.onerror = () => fail('Could not reach the voice server.');
         socket.onclose = () => {
@@ -460,7 +469,26 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
     };
   }, []);
 
+  /** Said on the person's behalf by the app (for example that an exercise finished): a user text turn the companion answers in the same sitting. */
+  const sendText = useCallback(
+    (text: string) => {
+      send({ type: 'conversation.item.create', item: { type: 'message', role: 'user', content: [{ type: 'input_text', text }] } });
+      send({ type: 'response.create' });
+    },
+    [send],
+  );
+
+  /** While a native activity runs, the microphone is not sent, so its audio is never taken for speech. */
+  const setMicPaused = useCallback((paused: boolean) => {
+    micPausedRef.current = paused;
+  }, []);
+
   return {
+    connectionUrlRef,
+    repliesDone,
+    userTurns,
+    sendText,
+    setMicPaused,
     status,
     userText,
     assistantText,
