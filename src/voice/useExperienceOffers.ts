@@ -82,7 +82,7 @@ export function useExperienceOffers(voice: Voice, live: boolean) {
     if (!o || runningRef.current) return;
     runningRef.current = true;           // synchronous: a second tap in the same instant must see it
     voice.interrupt();
-    voice.setMicPaused(true);
+    void voice.setMicPaused(true);
     setRunning(true);
     void report(o.offerId, 'accepted');
   }, [report, voice]);
@@ -111,7 +111,7 @@ export function useExperienceOffers(voice: Voice, live: boolean) {
     offerRef.current = null;
     setRunning(false);
     setOffer(null);
-    voice.setMicPaused(false);
+    void voice.setMicPaused(false);
     void report(o.offerId, result.outcome === 'COMPLETED' ? 'completed' : 'exited', result.durationSec).then(() => {
       voice.sendText(resumeLine(result.outcome, o.title, result.durationSec));
     });

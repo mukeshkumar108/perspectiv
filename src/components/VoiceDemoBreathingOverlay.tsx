@@ -48,6 +48,12 @@ export function VoiceDemoBreathingOverlay({
   const soundRef = useRef<Sound | null>(null);
   const playbackStartedAtRef = useRef(false);
 
+  // The parent passes new function objects on every render; keeping the latest in refs means a re-render never reloads the sound and restarts the exercise.
+  const onCompleteRef = useRef(onComplete);
+  const onDismissRef = useRef(onDismiss);
+  onCompleteRef.current = onComplete;
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
     if (!visible || !session) return;
     let mounted = true;
@@ -69,7 +75,7 @@ export function VoiceDemoBreathingOverlay({
             setIsPlaying(status.isPlaying);
             if (status.didJustFinish) {
               playbackStartedAtRef.current = false;
-              onComplete({
+              onCompleteRef.current({
                 outcome: 'COMPLETED',
                 durationSec: Math.round((status.durationMillis ?? 0) / 1000),
                 completedPct: 1,
@@ -79,7 +85,7 @@ export function VoiceDemoBreathingOverlay({
         );
         soundRef.current = sound;
       } catch {
-        onDismiss();
+        onDismissRef.current();
       }
     };
 
@@ -97,7 +103,7 @@ export function VoiceDemoBreathingOverlay({
         void sound.unloadAsync();
       }
     };
-  }, [visible, session, onComplete, onDismiss]);
+  }, [visible, session]);
 
   const togglePlayback = async () => {
     const sound = soundRef.current;
@@ -207,8 +213,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   preStartActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     gap: spacing.sm,
   },
   progressRow: {

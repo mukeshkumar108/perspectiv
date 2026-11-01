@@ -478,10 +478,30 @@ export function useStreamingVoice(playback: RefObject<PlaybackHandle | null>) {
     [send],
   );
 
-  /** While a native activity runs, the microphone is not sent, so its audio is never taken for speech. */
-  const setMicPaused = useCallback((paused: boolean) => {
-    micPausedRef.current = paused;
-  }, []);
+  /**
+   * While a native activity runs, the microphone is stopped outright: the activity takes over the audio session (its own playback mode turns recording off on iOS), so a stream left running
+   * would stall and end the call. When the activity is over the stream is started again and the duplex audio mode restored, so the conversation carries on in the same sitting.
+   */
+  const setMicPaused = useCallback(async (paused: boolean) => {
+    if (paused) {
+      micPausedRef.current = true;
+      stopMic();
+      return;
+    }
+    micPausedRef.current = false;
+    if (!socketRef.current) return;
+    // The activity left the audio session in playback-only mode: recording has to be allowed again BEFORE the mic stream can start. One retry, because iOS can need a moment to hand the session back.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await setAudioModeAsync(DUPLEX_AUDIO_MODE);
+        await startMic();
+        return;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
+    fail('The microphone could not restart after the exercise.');
+  }, [fail, startMic, stopMic]);
 
   return {
     connectionUrlRef,
